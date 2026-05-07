@@ -10,6 +10,8 @@ class Site extends Model
         'libelle',
         'wilaya_id',
         'programme_id',
+         'commune_id',
+              'user_id'
     ];
 
     public function wilaya()
