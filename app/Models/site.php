@@ -9,7 +9,7 @@ class Site extends Model
     protected $fillable = [
         'libelle',
         'wilaya_id',
-        'programme_id',
+       
     ];
 
     public function wilaya()
