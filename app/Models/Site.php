@@ -11,7 +11,7 @@ class Site extends Model
         'wilaya_id',
         'programme_id',
          'commune_id',
-              'user_id'
+         'user_id'
     ];
 
     public function wilaya()
