@@ -11,6 +11,9 @@ class Site extends Model
         'wilaya_id',
         'programme_id',
          'commune_id',
+         'num_convention_bnh',  // ← NOUVEAU
+        'nom_agence',          // ← NOUVEAU
+        'num_agence',
          'user_id'
     ];
 
@@ -22,6 +25,10 @@ class Site extends Model
     public function programme()
     {
         return $this->belongsTo(Programme::class);
+    }
+     public function commune()
+    {
+        return $this->belongsTo(Commune::class);
     }
 
     public function logements()

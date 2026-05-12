@@ -11,39 +11,78 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    /**
-     * Affiche le tableau de bord.
-     * - Par défaut : liste des sites avec Programme, Wilaya, Site.
-     * - Avec ?view_site_id=X : liste des logements du site X.
-     */
     public function index(Request $request)
     {
         $wilayas    = Wilaya::orderBy('nom')->get();
         $programmes = Programme::where('is_active', 1)->get();
         $sites      = Site::with('wilaya', 'programme')->orderBy('libelle')->get();
 
-        // ── Statistiques globales ──────────────────────────────────────────
+        // ── Statistiques globales logements ────────────────────────────────
         $totalLogements = Logement::count();
-        $vendus         = Logement::where('flag', 2)->count();
+        $soldes         = Logement::where('flag', 2)->count();
         $inscrits       = Logement::where('flag', 1)->count();
         $libres         = Logement::where('flag', 0)->count();
-        $desistes       = Logement::where('flag', 3)->count();
+        $remplaces      = Logement::where('flag', 3)->count();
 
-        // ── Mode par défaut : liste des sites ──────────────────────────────
+        // ── Nouvelles statistiques BNH/OV/VSP ──────────────────────────────
+
+        // 1. Souscripteurs ayant une décision BNH (type = 'bnh' dans table aides)
+        $decisionBnh = \DB::table('souscripteurs')
+            ->join('aides', 'souscripteurs.id', '=', 'aides.souscripteur_id')
+            ->where('aides.type', 'bnh')
+            ->distinct('souscripteurs.id')
+            ->count('souscripteurs.id');
+
+        // 2. OV Payées : ordres_versement ayant au moins 1 paiement
+        $ovPayees = \DB::table('ordres_versement')
+            ->whereExists(function ($query) {
+                $query->select(\DB::raw(1))
+                    ->from('paiements')
+                    ->whereColumn('paiements.ov_id', 'ordres_versement.id');
+            })
+            ->count();
+
+        // 3. OV Non Payées : ordres_versement sans paiement
+        $ovNonPayees = \DB::table('ordres_versement')
+            ->whereNotExists(function ($query) {
+                $query->select(\DB::raw(1))
+                    ->from('paiements')
+                    ->whereColumn('paiements.ov_id', 'ordres_versement.id');
+            })
+            ->count();
+
+        // 4. VSP par projet (en supposant qu'il existe une colonne is_vsp dans logements)
+       // 4. VSP par projet — via ordres_versement.vsp → souscripteurs → logements → sites
+$vspParProjet = \DB::table('sites')
+    ->join('logements', 'logements.site_id', '=', 'sites.id')
+    ->join('souscripteurs', 'souscripteurs.code_loge_lpl', '=', 'logements.code_loge_lpl')
+    ->join('ordres_versement', function ($join) {
+        $join->on('ordres_versement.souscripteur_id', '=', 'souscripteurs.id')
+             ->whereNotNull('ordres_versement.vsp')
+             ->where('ordres_versement.vsp', '!=', '');
+    })
+    ->groupBy('sites.id', 'sites.libelle')
+    ->orderByDesc('vsp_count')
+    ->get(\DB::raw('sites.id, sites.libelle, COUNT(DISTINCT ordres_versement.id) as vsp_count'))
+    ->filter(fn($s) => $s->vsp_count > 0);
+
+$totalVsp = \DB::table('ordres_versement')
+    ->whereNotNull('vsp')
+    ->where('vsp', '!=', '')
+    ->count();
+
+        // ── Filtres et pagination des sites ────────────────────────────────
         $sitesQuery = Site::with('wilaya', 'programme', 'logements')
             ->orderBy('libelle');
 
-        // Filtre wilaya
         if ($request->filled('wilaya_id')) {
             $sitesQuery->where('wilaya_id', $request->wilaya_id);
         }
 
-        // Filtre programme
         if ($request->filled('programme_id')) {
             $sitesQuery->where('programme_id', $request->programme_id);
         }
 
-        // Recherche libellé site
         if ($request->filled('search')) {
             $sitesQuery->where('libelle', 'like', '%' . $request->search . '%');
         }
@@ -52,12 +91,13 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'sitesPaginated',
-            'totalLogements', 'vendus', 'inscrits', 'libres', 'desistes',
+            'totalLogements', 'soldes', 'inscrits', 'libres', 'remplaces',
+            'decisionBnh', 'ovPayees', 'ovNonPayees', 'totalVsp', 'vspParProjet',
             'programmes', 'wilayas', 'sites'
         ));
     }
 
-    // ── Endpoints API pour cascades ────────────────────────────────────────
+    // ── Endpoints API (inchangés) ───────────────────────────────────────
 
     public function programmesByWilaya($wilayaId)
     {
@@ -103,9 +143,6 @@ class DashboardController extends Controller
         return response()->json($communes);
     }
 
-    /**
-     * API — Retourne tous les logements d'un site avec le souscripteur lié.
-     */
     public function logementsBySite($siteId)
     {
         $site = Site::with('wilaya', 'programme')->findOrFail($siteId);
@@ -131,13 +168,13 @@ class DashboardController extends Controller
                         'id'             => $l->souscripteur->id,
                         'nom'            => $l->souscripteur->nom,
                         'prenom'         => $l->souscripteur->prenom,
-                        'nom_arabe'      => $l->souscripteur->nom_arabe,
-                        'prenom_arabe'   => $l->souscripteur->prenom_arabe,
-                        'telephone'      => $l->souscripteur->telephone,
-                        'email'          => $l->souscripteur->email,
+                        'nom_arabe'      => $l->souscripteur->nom_arabe ?? null,
+                        'prenom_arabe'   => $l->souscripteur->prenom_arabe ?? null,
+                        'telephone'      => $l->souscripteur->telephone ?? null,
+                        'email'          => $l->souscripteur->email ?? null,
                         'nin'            => $l->souscripteur->nin,
                         'date_naissance' => $l->souscripteur->date_naissance,
-                        'adresse'        => $l->souscripteur->adresse,
+                        'adresse'        => $l->souscripteur->adresse ?? null,
                         'wilaya_nais'    => $l->souscripteur->wilaya_nais ?? null,
                         'situation_fam'  => $l->souscripteur->situation_familiale ?? null,
                         'profession'     => $l->souscripteur->profession ?? null,

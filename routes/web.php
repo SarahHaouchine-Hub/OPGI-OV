@@ -45,7 +45,11 @@ Route::middleware(['auth', 'decode.hashids'])->group(function () {
     Route::get('/ajouter-souscripteur',    [SouscripteurController::class, 'create'])->name('souscripteur.create');
     Route::post('/save',                   [SouscripteurController::class, 'store'])->name('souscripteur.store');
     Route::get('/souscripteur/fiche/{id}', [SouscripteurController::class, 'generateFiche'])->name('souscripteur.fiche');
-    Route::post('/souscripteurs/import',   [SouscripteurController::class, 'import'])->name('souscripteur.import');
+
+    Route::post('/souscripteurs/import/lpl', [SouscripteurController::class, 'importLpl'])->name('souscripteur.import.lpl');
+    Route::post('/souscripteurs/import/lsp', [SouscripteurController::class, 'importLsp'])->name('souscripteur.import.lsp');
+    Route::post('/souscripteurs/import/lpa', [SouscripteurController::class, 'importLpa'])->name('souscripteur.import.lpa');
+
     Route::post('/logements/import',       [SouscripteurController::class, 'importLogements'])->name('logements.import');
 
     // ── Ordres de versement (OV) ──────────────────────────────────────
@@ -55,9 +59,11 @@ Route::middleware(['auth', 'decode.hashids'])->group(function () {
     Route::post('/ov/store/lpa',               [OvController::class, 'storeLpa'])->name('ov.store.lpa');
     Route::post('/ov/store/lsp',               [OvController::class, 'storeLsp'])->name('ov.store.lsp');
     Route::post('/ov/aide/store',              [OvController::class, 'storeAide'])->name('ov.aide.store');
+    Route::post('/ov/credit/store',            [OvController::class, 'storeCreditBancaire'])->name('ov.credit.store'); // ← AJOUTÉ
     Route::get('/ov/pdf/{id}',                 [OvController::class, 'generatePDF'])->name('ov.pdf');
     Route::get('/ov/paiement/{ovId}',          [OvController::class, 'createPaiement'])->name('paiement.create');
     Route::post('/ov/paiement/store',          [OvController::class, 'storePaiement'])->name('paiement.store');
+    Route::post('/ov/credit/ov-diff', [OvController::class, 'storeOvCredit'])->name('ov.credit.ov_diff');
 
     // ── Désistements ──────────────────────────────────────────────────
     Route::get('/desistement',                      [DesistementController::class, 'listLogements'])->name('desistement');

@@ -109,7 +109,7 @@
                     {{ $agence }}
                 </td>
                 <td style="width:20%; text-align:right;">
-                    <img src="data:image/png;base64,{{ $logoAADL }}" style="width:80%; height:auto;">
+                    <img src="data:image/png;base64,{{ $logoOPGI }}" style="width:80%; height:auto;">
                 </td>
             </tr>
         </table>
@@ -251,7 +251,7 @@
             @endif
         </div>
 
-        Document officiel généré le {{ now()->format('d/m/Y à H:i') }} — Services AADL
+        Document officiel généré le {{ now()->format('d/m/Y à H:i') }} — Services OPGI
     </div>
 
 </body>

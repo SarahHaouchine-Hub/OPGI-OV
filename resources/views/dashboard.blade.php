@@ -16,7 +16,7 @@
     .btn-outline-secondary { border-radius: 8px; border-color: #6c757d; color: #6c757d; transition: all 0.3s ease; }
     .btn-outline-secondary:hover { background-color: #6c757d; border-color: #6c757d; color: white; }
 
-    /* ── STAT CARDS ── */
+    /* ── STAT CARDS ROW 1 ── */
     #cardstat1 { background-color: #1e3c72; transition: all 0.3s ease; cursor: pointer; }
     #cardstat1:hover { background-color: #152a52 !important; box-shadow: 0 4px 12px rgba(206,214,248,0.4); transform: translateY(-1px); }
     #cardstat2 { background-color: #1e3c72; transition: all 0.3s ease; cursor: pointer; }
@@ -27,6 +27,38 @@
     #cardstat4:hover { background-color: rgb(23,98,63) !important; box-shadow: 0 4px 12px rgba(206,214,248,0.4); transform: translateY(-1px); }
     #cardstat5 { transition: all 0.3s ease; cursor: pointer; }
     #cardstat5:hover { background-color: rgb(163,28,41) !important; box-shadow: 0 4px 12px rgba(206,214,248,0.4); transform: translateY(-1px); }
+
+    /* ── STAT CARDS ROW 2 (nouvelles) ── */
+    .stat-card-new { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.07); overflow: hidden; transition: all 0.3s ease; cursor: pointer; }
+    .stat-card-new:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+
+    #cardstat_bnh { background: linear-gradient(135deg, #6f42c1, #8b5cf6); }
+    #cardstat_bnh:hover { background: linear-gradient(135deg, #5a32a3, #7c3aed) !important; }
+
+    #cardstat_ov_paye { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+    #cardstat_ov_paye:hover { background: linear-gradient(135deg, #0284c7, #0369a1) !important; }
+
+    #cardstat_ov_npaye { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    #cardstat_ov_npaye:hover { background: linear-gradient(135deg, #d97706, #b45309) !important; }
+
+    #cardstat_vsp { background: linear-gradient(135deg, #10b981, #059669); }
+    #cardstat_vsp:hover { background: linear-gradient(135deg, #059669, #047857) !important; }
+
+    .stat-card-new .card-body { padding: 1rem; }
+    .stat-card-new h6 { font-size: 0.72rem; letter-spacing: 0.5px; opacity: 0.85; margin-bottom: 0.3rem; }
+    .stat-card-new h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0; }
+    .stat-card-new .stat-sub { font-size: 0.7rem; opacity: 0.75; margin-top: 2px; }
+
+    /* ── Séparateur section stats ── */
+    .stats-section-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        padding-left: 2px;
+    }
 
     /* ── BUTTONS ── */
     .btn-action-site { background: linear-gradient(45deg,#1e3c72,#2a5298); border:none; border-radius:10px; color:white; font-weight:600; padding:10px 20px; transition:all 0.3s ease; box-shadow:0 4px 12px rgba(30,60,114,0.3); }
@@ -95,20 +127,110 @@
     </div>
 @endif
 
-{{-- ─── STATISTIQUES ─────────────────────────────────────────────────────── --}}
-<div class="row mb-4 gap-2" style="justify-content:center">
-    <div class="col-md-2"><div class="card text-white shadow-sm border-0" id="cardstat1"><div class="card-body"><h6 class="text-uppercase small">Total Logements</h6><h2 class="mb-0">{{ $totalLogements }}</h2></div></div></div>
-    <div class="col-md-2"><div class="card bg-primary text-white shadow-sm border-0" id="cardstat2"><div class="card-body"><h6 class="text-uppercase small">Libres</h6><h2 class="mb-0">{{ $libres }}</h2></div></div></div>
-    <div class="col-md-2"><div class="card bg-info text-white shadow-sm border-0" id="cardstat3"><div class="card-body"><h6 class="text-uppercase small">Inscrits</h6><h2 class="mb-0">{{ $inscrits }}</h2></div></div></div>
-    <div class="col-md-2"><div class="card bg-success text-white shadow-sm border-0" id="cardstat4"><div class="card-body"><h6 class="text-uppercase small">Vendus</h6><h2 class="mb-0">{{ $vendus }}</h2></div></div></div>
-    <div class="col-md-2"><div class="card bg-danger text-white shadow-sm border-0" id="cardstat5"><div class="card-body"><h6 class="text-uppercase small">Désistés</h6><h2 class="mb-0">{{ $desistes }}</h2></div></div></div>
+{{-- ─── STATISTIQUES — LIGNE 1 : Logements ──────────────────────────────── --}}
+<div class="stats-section-label"><i class="bi bi-houses me-1"></i> Logements</div>
+<div class="row mb-3 g-2">
+    <div class="col-6 col-sm-4 col-md-2">
+        <div class="card text-white shadow-sm border-0" id="cardstat1">
+            <div class="card-body py-3 px-3">
+                <h6 class="text-uppercase small mb-1" style="font-size:0.7rem;opacity:0.85">Total Logements</h6>
+                <h2 class="mb-0 fw-bold">{{ $totalLogements }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-4 col-md-2">
+        <div class="card bg-primary text-white shadow-sm border-0" id="cardstat2">
+            <div class="card-body py-3 px-3">
+                <h6 class="text-uppercase small mb-1" style="font-size:0.7rem;opacity:0.85">Libres</h6>
+                <h2 class="mb-0 fw-bold">{{ $libres }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-4 col-md-2">
+        <div class="card bg-info text-white shadow-sm border-0" id="cardstat3">
+            <div class="card-body py-3 px-3">
+                <h6 class="text-uppercase small mb-1" style="font-size:0.7rem;opacity:0.85">Affectés</h6>
+                <h2 class="mb-0 fw-bold">{{ $inscrits }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-4 col-md-2">
+        {{-- Anciennement "Vendus" → renommé "Soldés" --}}
+        <div class="card bg-success text-white shadow-sm border-0" id="cardstat4">
+            <div class="card-body py-3 px-3">
+                <h6 class="text-uppercase small mb-1" style="font-size:0.7rem;opacity:0.85">Soldés</h6>
+                <h2 class="mb-0 fw-bold">{{ $soldes }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-4 col-md-2">
+        {{-- Anciennement "Désistés" → renommé "Remplacés" --}}
+        <div class="card bg-danger text-white shadow-sm border-0" id="cardstat5">
+            <div class="card-body py-3 px-3">
+                <h6 class="text-uppercase small mb-1" style="font-size:0.7rem;opacity:0.85">Remplacés</h6>
+                <h2 class="mb-0 fw-bold">{{ $remplaces }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ─── STATISTIQUES — LIGNE 2 : Nouvelles stats ───────────────────────── --}}
+<div class="stats-section-label mt-1"><i class="bi bi-bar-chart-fill me-1"></i> Suivi BNH / OV / VSP</div>
+<div class="row mb-4 g-2">
+
+    {{-- Décision BNH --}}
+    <div class="col-6 col-sm-6 col-md-3">
+        <div class="card stat-card-new text-white" id="cardstat_bnh">
+            <div class="card-body">
+                <h6 class="text-uppercase"><i class="bi bi-bank me-1"></i> Décision BNH</h6>
+                <h2>{{ $decisionBnh }}</h2>
+                <div class="stat-sub">Souscripteurs avec décision BNH</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- OV Payées --}}
+    <div class="col-6 col-sm-6 col-md-3">
+        <div class="card stat-card-new text-white" id="cardstat_ov_paye">
+            <div class="card-body">
+                <h6 class="text-uppercase"><i class="bi bi-check2-circle me-1"></i> OV Payées</h6>
+                <h2>{{ $ovPayees }}</h2>
+                <div class="stat-sub">Ordres de virement réglés</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- OV Non Payées --}}
+    <div class="col-6 col-sm-6 col-md-3">
+        <div class="card stat-card-new text-white" id="cardstat_ov_npaye">
+            <div class="card-body">
+                <h6 class="text-uppercase"><i class="bi bi-hourglass-split me-1"></i> OV Non Payées</h6>
+                <h2>{{ $ovNonPayees }}</h2>
+                <div class="stat-sub">Ordres de virement en attente</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- VSP Total --}}
+    <div class="col-6 col-sm-6 col-md-3">
+        <div class="card stat-card-new text-white" id="cardstat_vsp"
+             data-bs-toggle="modal" data-bs-target="#modalVspProjet"
+             title="Voir le détail par projet">
+            <div class="card-body">
+                <h6 class="text-uppercase"><i class="bi bi-list-ol me-1"></i> Total VSP</h6>
+                <h2>{{ $totalVsp }}</h2>
+                <div class="stat-sub">Ventes sur plan — <span style="text-decoration:underline;opacity:0.9">Détail par projet ›</span></div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════════════════
-     LISTE DES SITES
+     LISTE DES PROJETS
      ══════════════════════════════════════════════════════════════════════════ --}}
 
-{{-- Filtres sites --}}
+{{-- Filtres projets --}}
 <div class="card custom-card mb-3">
     <div class="card-header card-header-gradient">
         <h4 class="mb-0">
@@ -142,8 +264,8 @@
                 </div>
 
                 <div class="col-sm-12 col-md-4 col-lg-3">
-                    <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Libellé du site</label>
-                    <input type="text" name="search" class="form-control" placeholder="Rechercher un site..." value="{{ request('search') }}">
+                    <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Libellé du projet</label>
+                    <input type="text" name="search" class="form-control" placeholder="Rechercher un projet..." value="{{ request('search') }}">
                 </div>
 
                 <div class="col-sm-12 col-lg-3">
@@ -158,13 +280,13 @@
     </div>
 </div>
 
-{{-- Tableau sites --}}
+{{-- Tableau projets --}}
 <div class="card custom-card mb-2">
     <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
         <h4 class="mb-0">
-            <i class="bi bi-geo-alt-fill me-2"></i> Liste des sites
+            <i class="bi bi-geo-alt-fill me-2"></i> Liste des projets
         </h4>
-        <span class="badge bg-secondary fs-6">{{ $sitesPaginated->total() }} site(s)</span>
+        <span class="badge bg-secondary fs-6">{{ $sitesPaginated->total() }} projet(s)</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -174,7 +296,7 @@
                         <th>N°</th>
                         <th>Programme</th>
                         <th>Wilaya</th>
-                        <th>Site</th>
+                        <th>Projet</th>
                         <th>Nb Logements</th>
                         <th>Action</th>
                     </tr>
@@ -190,7 +312,6 @@
                                 <span class="badge bg-secondary">{{ $site->logements->count() }}</span>
                             </td>
                             <td>
-                                {{-- Bouton qui ouvre le popup logements (plus de redirection) --}}
                                 <button type="button" class="btn btn-voir"
                                     onclick="ouvrirLogements(
                                         {{ $site->id }},
@@ -206,7 +327,7 @@
                         <tr><td colspan="6" class="text-center py-5">
                             <div class="text-muted">
                                 <i class="bi bi-geo-alt display-4 d-block mb-3 opacity-50"></i>
-                                <h5>Aucun site trouvé</h5>
+                                <h5>Aucun projet trouvé</h5>
                                 <p class="small mb-0">Essayez de modifier vos filtres</p>
                             </div>
                         </td></tr>
@@ -226,7 +347,7 @@
 {{-- ─── BOUTONS D'ACTION EN BAS ─────────────────────────────────────────── --}}
 <div class="d-flex justify-content-center gap-3 mt-4 pt-2 border-top">
     <button class="btn btn-action-site px-4" data-bs-toggle="modal" data-bs-target="#modalSite">
-        <i class="bi bi-geo-alt-fill me-2"></i> Ajouter un nouveau site
+        <i class="bi bi-geo-alt-fill me-2"></i> Ajouter un nouveau projet
     </button>
     <button class="btn btn-action-logement px-4" data-bs-toggle="modal" data-bs-target="#modalLogement">
         <i class="bi bi-house-fill me-2"></i> Ajouter un nouveau logement
@@ -237,7 +358,65 @@
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════════════════
-     MODAL 1 — LOGEMENTS DU SITE (popup)
+     MODAL — VSP PAR PROJET
+     ══════════════════════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modalVspProjet" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#10b981,#059669);color:white;border-radius:14px 14px 0 0;padding:1.1rem 1.5rem">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-list-ol me-2"></i> VSP par projet
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1)"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div style="max-height:460px;overflow-y:auto">
+                    <table class="table table-hover mb-0" style="font-size:0.85rem">
+                        <thead style="position:sticky;top:0;z-index:2;background:#f1f4f9;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.5px">
+                            <tr>
+                                <th class="ps-3">N°</th>
+                                <th>Projet</th>
+                                <th class="text-center">Nb VSP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($vspParProjet->where('vsp_count', '>', 0) as $index => $projet)
+                                <tr>
+                                    <td class="ps-3 text-muted">{{ $index + 1 }}</td>
+                                    <td class="fw-semibold">{{ $projet->libelle }}</td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill" style="background:#10b981;font-size:0.8rem;padding:4px 12px">
+                                            {{ $projet->vsp_count }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox d-block fs-3 mb-2 opacity-50"></i>
+                                        Aucun VSP enregistré
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div style="background:#f8f9fa;border-top:1px solid #e9ecef;padding:0.6rem 1rem;font-size:0.82rem" class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Total général</span>
+                    <span class="badge" style="background:#10b981;font-size:0.85rem;padding:4px 14px">{{ $totalVsp }} VSP</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #e9ecef;padding:0.6rem 1rem">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ══════════════════════════════════════════════════════════════════════════
+     MODAL 1 — LOGEMENTS DU PROJET (popup)
      ══════════════════════════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="modalLogementsSite" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width:95vw">
@@ -276,8 +455,8 @@
                             <option value="">Tous statuts</option>
                             <option value="0">Libre</option>
                             <option value="1">Inscrit</option>
-                            <option value="2">Vendu</option>
-                            <option value="3">Désisté</option>
+                            <option value="2">Soldé</option>
+                            <option value="3">Remplacé</option>
                         </select>
                     </div>
                     <div class="col-6 col-sm-auto">
@@ -366,12 +545,12 @@
     </div>
 </div>
 
-{{-- ─── MODAL SITE ────────────────────────────────────────────────────────── --}}
+{{-- ─── MODAL PROJET ──────────────────────────────────────────────────────── --}}
 <div class="modal fade" id="modalSite" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header modal-header-site">
-                <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt-fill me-2"></i> Ajouter un nouveau site</h5>
+                <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt-fill me-2"></i> Ajouter un nouveau projet</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('site.store') }}" method="POST">
@@ -379,7 +558,7 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Libellé du site</label>
+                            <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Libellé du projet</label>
                             <input type="text" name="libelle" class="form-control" placeholder="Ex : Cité des 500 logements" required>
                         </div>
                         <div class="col-12">
@@ -406,6 +585,18 @@
                                 <option value="">-- Choisir d'abord une wilaya --</option>
                             </select>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-file-earmark-text me-1"></i> N° Convention BNH</label>
+                            <input type="text" name="num_convention_bnh" class="form-control" placeholder="Ex : CONV-2025-001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Nom de l'agence</label>
+                            <input type="text" name="nom_agence" class="form-control" placeholder="Ex : Agence El Djazair">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-hash me-1"></i> N° Agence</label>
+                            <input type="text" name="num_agence" class="form-control" placeholder="Ex : AG-007">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -417,7 +608,7 @@
     </div>
 </div>
 
-{{-- ─── MODAL LOGEMENT ────────────────────────────────────────────────────── --}}
+{{-- ─── MODAL LOGEMENT ─────────────────────────────────────────────────────── --}}
 <div class="modal fade" id="modalLogement" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -439,7 +630,16 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold"><span class="step-badge" id="mb2">2</span> Site</label>
+                            <label class="form-label fw-semibold"><i class="bi bi-grid me-1"></i> Programme</label>
+                            <select name="programme_id" class="form-select" required>
+                                <option value="">-- Choisir un programme --</option>
+                                @foreach($programmes as $programme)
+                                    <option value="{{ $programme->id }}">{{ $programme->libelle }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold"><span class="step-badge" id="mb2">2</span> Projet</label>
                             <div id="mwrap_site">
                                 <select name="site_id" id="log_site" class="form-select" required disabled>
                                     <option value="">-- Choisir d'abord une wilaya --</option>
@@ -480,15 +680,6 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold"><i class="bi bi-cash-stack me-1"></i> Prix (DA)</label>
                             <input type="number" step="0.01" name="prix" class="form-control" placeholder="Ex : 5000000" min="0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-grid me-1"></i> Programme</label>
-                            <select name="programme_id" class="form-select" required>
-                                <option value="">-- Choisir un programme --</option>
-                                @foreach($programmes as $programme)
-                                    <option value="{{ $programme->id }}">{{ $programme->libelle }}</option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -544,7 +735,6 @@ document.addEventListener("DOMContentLoaded", function () {
         finally { spin(wrapId, false); }
     }
 
-    // ─── Fonction pour sélectionner Alger par défaut dans un select ──────
     function setDefaultAlger(selectEl) {
         if (!selectEl) return;
         const options = Array.from(selectEl.options);
@@ -556,12 +746,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return false;
     }
 
-    // ─── FILTRES SITES EN CASCADE ──────────────────────────────────────
+    // ─── FILTRES PROJETS EN CASCADE ──────────────────────────────────────
     const fWilaya = $("f_wilaya");
     const fProg   = $("f_programme");
 
     if (fWilaya && fProg) {
-        // Définir la fonction de changement
         const onFWilayaChange = async function () {
             resetSel(fProg, "Tous");
             if (!this.value) { badge('fb1','active'); return; }
@@ -575,22 +764,18 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         fWilaya.addEventListener('change', onFWilayaChange);
 
-        // Sélection par défaut d'Alger (si aucune wilaya n'est déjà sélectionnée dans la requête)
         if (!fWilaya.value) {
             if (setDefaultAlger(fWilaya)) {
-                // Déclencher manuellement le changement pour charger les programmes
                 fWilaya.dispatchEvent(new Event('change'));
             }
         } else {
-            // Si une wilaya est déjà sélectionnée (via request), on l'utilise telle quelle
-            // mais on force le chargement des programmes si nécessaire
             if (fWilaya.value) {
                 fWilaya.dispatchEvent(new Event('change'));
             }
         }
     }
 
-    // ─── MODAL LOGEMENT — Wilaya → Sites ──────────────────────────────
+    // ─── MODAL LOGEMENT — Wilaya → Projets ──────────────────────────────
     const logWilaya = $("log_wilaya");
     const logSite   = $("log_site");
 
@@ -598,7 +783,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const onLogWilayaChange = async function () {
             resetSel(logSite, "-- Choisir d'abord une wilaya --");
             if (!this.value) { badge('mb1','active'); return; }
-            logSite.innerHTML = '<option value="">-- Choisir un site --</option>';
+            logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
             const ok = await loadInto(
                 `/api/sites/${this.value}`,
                 logSite, 'mwrap_site',
@@ -609,13 +794,12 @@ document.addEventListener("DOMContentLoaded", function () {
         logWilaya.addEventListener('change', onLogWilayaChange);
         logSite.addEventListener('change', function () { if (this.value) badge('mb2','done'); });
 
-        // Sélection par défaut d'Alger dans le modal logement
         if (setDefaultAlger(logWilaya)) {
             logWilaya.dispatchEvent(new Event('change'));
         }
     }
 
-    // ─── MODAL SITE — Wilaya → Communes ──────────────────────────────
+    // ─── MODAL PROJET — Wilaya → Communes ──────────────────────────────
     const modalWilaya  = $("modal_wilaya");
     const modalCommune = $("modal_commune");
 
@@ -632,7 +816,6 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         modalWilaya.addEventListener('change', onModalWilayaChange);
 
-        // Sélection par défaut d'Alger dans le modal site
         if (setDefaultAlger(modalWilaya)) {
             modalWilaya.dispatchEvent(new Event('change'));
         }
@@ -643,7 +826,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (alertEl) setTimeout(() => new bootstrap.Alert(alertEl).close(), 3000);
 
     // ═══════════════════════════════════════════════════════════════════
-    // LOGIQUE POPUP LOGEMENTS (inchangée)
+    // LOGIQUE POPUP LOGEMENTS
     // ═══════════════════════════════════════════════════════════════════
 
     window._allLogements      = [];
@@ -707,8 +890,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const map = {
             0: '<span class="badge-libre">Libre</span>',
             1: '<span class="badge-inscrit">Inscrit</span>',
-            2: '<span class="badge-vendu">Vendu</span>',
-            3: '<span class="badge-desiste">Désisté</span>',
+            2: '<span class="badge-vendu">Soldé</span>',
+            3: '<span class="badge-desiste">Remplacé</span>',
         };
         return map[flag] ?? `<span class="badge bg-secondary">${flag}</span>`;
     }
@@ -767,7 +950,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td style="white-space:nowrap">${formatPrix(l.prix)}</td>
                     <td>${statutBadge(l.flag)}</td>
                     <td>${souscBtn}</td>
-                </tr>`;
+                 </tr>`;
         }).join('');
     }
 
@@ -838,7 +1021,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // LOGIQUE POPUP SOUSCRIPTEUR (affichage simplifié)
+    // LOGIQUE POPUP SOUSCRIPTEUR
     // ═══════════════════════════════════════════════════════════════════
 
     window.ouvrirSouscripteur = function(logement) {

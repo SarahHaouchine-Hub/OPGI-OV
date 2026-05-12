@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Imports\LplImport;
+use App\Imports\LspImport;
+use App\Imports\LpaImport;
 
 use ArPHP\I18N\Arabic;
 use Vinkla\Hashids\Facades\Hashids;
@@ -113,16 +116,40 @@ class SouscripteurController extends Controller
     public function store(Request $request)
     {
       $request->validate([
+    // Identité principale
     'nom'            => 'required|string|max:255',
     'prenom'         => 'required|string|max:255',
-    'nom_ar'         => 'required|string|max:255',
-    'prenom_ar'      => 'required|string|max:255',
     'date_naissance' => 'required|date',
-    'nin'            => 'required|string|max:18|unique:souscripteurs,nin', // ← ajout
-    'wilaya_id'      => 'required|exists:wilayas,id',
-    'programme_id'   => 'required|exists:programmes,id',
-    'site_id'        => 'required|exists:sites,id',
-    'logement_id'    => 'required|exists:logements,id',
+    'nin'            => 'required|string|max:18|unique:souscripteurs,nin',
+ 
+    // État civil & lieu de naissance
+    'situation_familiale' => 'required|in:celibataire,marie,divorce,veuf',
+    'lieu_naissance'      => 'nullable|string|max:255',
+ 
+    // Parents du souscripteur
+    'nom_pere'    => 'nullable|string|max:255',
+    'prenom_pere' => 'nullable|string|max:255',
+    'nom_mere'    => 'nullable|string|max:255',
+    'prenom_mere' => 'nullable|string|max:255',
+ 
+    // Conjoint (obligatoire uniquement si marié)
+    'conjoint_nom'            => 'required_if:situation_familiale,marie|nullable|string|max:255',
+    'conjoint_prenom'         => 'required_if:situation_familiale,marie|nullable|string|max:255',
+    'conjoint_nin'            => 'required_if:situation_familiale,marie|nullable|string|max:18',
+    'conjoint_date_naissance' => 'required_if:situation_familiale,marie|nullable|date',
+    'conjoint_lieu_naissance' => 'nullable|string|max:255',
+ 
+    // Parents du conjoint
+    'conjoint_nom_pere'    => 'nullable|string|max:255',
+    'conjoint_prenom_pere' => 'nullable|string|max:255',
+    'conjoint_nom_mere'    => 'nullable|string|max:255',
+    'conjoint_prenom_mere' => 'nullable|string|max:255',
+ 
+    // Affectation
+    'wilaya_id'    => 'required|exists:wilayas,id',
+    'programme_id' => 'required|exists:programmes,id',
+    'site_id'      => 'required|exists:sites,id',
+    'logement_id'  => 'required|exists:logements,id',
 ]);
 
         DB::beginTransaction();
@@ -148,7 +175,7 @@ class SouscripteurController extends Controller
 
             // ── Données QR ────────────────────────────────────────────
             $qrDataPlain  = implode(' | ', [
-                'AADL',
+                'OPGI',
                 'Nom: '      . strtoupper($request->nom),
                 'Prénom: '   . $request->prenom,
                 'Programme: '. ($logement->programme->libelle ?? ''),
@@ -167,22 +194,44 @@ class SouscripteurController extends Controller
                 'code_loge_lpl' => $codeLPL,
                 'flag'          => 1,
             ]);
-
-            // ── Création du souscripteur ──────────────────────────────
-    $souscripteur = Souscripteur::create([
-    'nom'               => $request->nom,
-    'prenom'            => $request->prenom,
-    'nom_arabe'         => $request->nom_ar,
-    'prenom_arabe'      => $request->prenom_ar,
-    'date_naissance'    => $request->date_naissance,
-    'nin'               => $request->nin,              // ← ajout
+$souscripteur = Souscripteur::create([
+    // Identité principale
+    'nom'          => $request->nom,
+    'prenom'       => $request->prenom,
+    'date_naissance' => $request->date_naissance,
+    'nin'            => $request->nin,
+ 
+    // État civil & lieu de naissance
+    'situation_familiale' => $request->situation_familiale,
+    'lieu_naissance'      => $request->lieu_naissance,
+ 
+    // Parents du souscripteur
+    'nom_pere'    => $request->nom_pere,
+    'prenom_pere' => $request->prenom_pere,
+    'nom_mere'    => $request->nom_mere,
+    'prenom_mere' => $request->prenom_mere,
+ 
+    // Conjoint
+    'conjoint_nom'            => $request->conjoint_nom,
+    'conjoint_prenom'         => $request->conjoint_prenom,
+    'conjoint_nin'            => $request->conjoint_nin,
+    'conjoint_date_naissance' => $request->conjoint_date_naissance,
+    'conjoint_lieu_naissance' => $request->conjoint_lieu_naissance,
+ 
+    // Parents du conjoint
+    'conjoint_nom_pere'    => $request->conjoint_nom_pere,
+    'conjoint_prenom_pere' => $request->conjoint_prenom_pere,
+    'conjoint_nom_mere'    => $request->conjoint_nom_mere,
+    'conjoint_prenom_mere' => $request->conjoint_prenom_mere,
+ 
+    // QR & logement
     'code_loge_lpl'     => $codeLPL,
     'qr_content_plain'  => $qrDataPlain,
     'qr_content_hashed' => $qrDataHashed,
     'qrcode'            => $qrcodeData,
     'user_id'           => Auth::id(),
 ]);
-
+  
             DB::commit();
 
             $hashedId = Hashids::encode($souscripteur->id);
@@ -219,10 +268,10 @@ class SouscripteurController extends Controller
         $Arabic     = new Arabic();
         $republique = $Arabic->utf8Glyphs('الجمهورية الجزائرية الديمقراطية الشعبية');
         $ministere  = $Arabic->utf8Glyphs('وزارة السكن والعمران والمدينة و التهيئة العمرانية');
-        $agence     = $Arabic->utf8Glyphs('الوكالة الوطنية لتحسين السكن وتطويره');
+        $agence     = $Arabic->utf8Glyphs('ديوان الترقية والتسيير العقاريت');
 
         // ── Images en base64 ─────────────────────────────────────────
-        $logoAADL = base64_encode(file_get_contents(public_path('images/AADL_logo.jpg')));
+        $logoOPGI = base64_encode(file_get_contents(public_path('images/OPGI.jpg')));
         $algeria  = base64_encode(file_get_contents(public_path('images/algeria.jpg')));
 
         $pdf = Pdf::loadView('pdf.fiche_inscription', compact(
@@ -231,31 +280,74 @@ class SouscripteurController extends Controller
             'ministere',
             'republique',
             'agence',
-            'logoAADL',
+            'logoOPGI',
             'algeria'
         ));
 
         return $pdf->stream('Fiche_Inscription.pdf');
     }
-   public function import(Request $request)
+  // ─────────────────────────────────────────────────────────────────────────────
+//  Import LPL Promotionnel
+// ─────────────────────────────────────────────────────────────────────────────
+public function importLpl(Request $request)
 {
     $request->validate([
-        'excel_file' => 'required|file|mimes:xlsx,xls,csv'
+        'excel_file_lpl' => 'required|file|mimes:xlsx,xls,csv|max:10240',
     ]);
-
-    $import = new SouscripteursImport();
-    Excel::import($import, $request->file('excel_file'));
-
-    $msg = "{$import->imported} souscripteur(s) importé(s) avec succès.";
-
-    if (!empty($import->errors)) {
-        $msg .= " Erreurs : " . implode(' | ', $import->errors);
+ 
+    $import = new LplImport();
+    Excel::import($import, $request->file('excel_file_lpl'));
+ 
+    return $this->buildImportRedirect($import, 'LPL Promotionnel');
+}
+ 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Import LSP
+// ─────────────────────────────────────────────────────────────────────────────
+public function importLsp(Request $request)
+{
+    $request->validate([
+        'excel_file_lsp' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+    ]);
+ 
+    $import = new LspImport();
+    Excel::import($import, $request->file('excel_file_lsp'));
+ 
+    return $this->buildImportRedirect($import, 'LSP');
+}
+ 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Import LPA
+// ─────────────────────────────────────────────────────────────────────────────
+public function importLpa(Request $request)
+{
+    $request->validate([
+        'excel_file_lpa' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+    ]);
+ 
+    $import = new LpaImport();
+    Excel::import($import, $request->file('excel_file_lpa'));
+ 
+    return $this->buildImportRedirect($import, 'LPA');
+}
+ 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Helper commun
+// ─────────────────────────────────────────────────────────────────────────────
+private function buildImportRedirect($import, string $programmeName)
+{
+    $successCount = $import->imported;
+    $errors       = $import->errors;
+ 
+    $msg = "{$successCount} souscripteur(s) {$programmeName} importé(s) avec succès.";
+ 
+    if (!empty($errors)) {
+        $msg .= " — " . count($errors) . " erreur(s) détectée(s).";
         return redirect()->route('souscripteur.create')
             ->with('success', $msg)
-            ->withErrors($import->errors);
+            ->with('import_errors', $errors);
     }
-
+ 
     return redirect()->route('souscripteur.create')->with('success', $msg);
 }
-
 }
