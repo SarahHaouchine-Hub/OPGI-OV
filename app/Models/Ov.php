@@ -15,7 +15,8 @@ class Ov extends Model
         'montant_paye',
         'montant_restant',
         'numero_tranche',    // ← NOUVEAU
-        'vsp',               // ← NOUVEAU
+        'vsp', 
+        'type_ov',           // ← NOUVEAU
         'qr_content_plain',
         'qr_content_hashed',
         'qrcode',
@@ -23,7 +24,7 @@ class Ov extends Model
     ];
 
     protected $casts = [
-        'vsp' => 'boolean',  // ← NOUVEAU
+        'vsp' => 'integer',  // ← NOUVEAU
     ];
 
     public function souscripteur()

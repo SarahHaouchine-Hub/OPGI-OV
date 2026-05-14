@@ -17,7 +17,15 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /**
  * Classe de base partagée par LplImport, LspImport, LpaImport.
- * Contient tous les helpers communs (site, logement, QR, paiement, parseurs).
+ *
+ * CHANGELOG
+ * ─────────────────────────────────────────────────────────────────────────────
+ * v12 — resolveOrCreateSite() accepte deux nouveaux paramètres optionnels :
+ *       • $adresseAgence   → sites.adresse_agence
+ *       • $numCompteAgence → sites.num_compte_agence
+ *       Même règle que v11 : on n'écrase jamais une valeur déjà renseignée.
+ * v11 — resolveOrCreateSite() accepte num_convention_bnh, nom_agence, num_agence.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 abstract class BaseImport implements ToCollection, WithStartRow
 {
@@ -33,27 +41,67 @@ abstract class BaseImport implements ToCollection, WithStartRow
 
     // ── Site ──────────────────────────────────────────────────────────────────
 
+    /**
+     * Résout ou crée un site.
+     *
+     * v12 : deux nouveaux paramètres optionnels :
+     *   - $adresseAgence   → sites.adresse_agence
+     *   - $numCompteAgence → sites.num_compte_agence
+     */
     protected function resolveOrCreateSite(
-        Wilaya $wilaya, Programme $programme,
-        string $siteVal, string $communeVal
+        Wilaya    $wilaya,
+        Programme $programme,
+        string    $siteVal,
+        string    $communeVal,
+        string    $numConvBnh      = '',
+        string    $nomAgence       = '',
+        string    $numAgence       = '',
+        string    $adresseAgence   = '',   // ← nouveau v12
+        string    $numCompteAgence = ''    // ← nouveau v12
     ): Site {
-        // Correspondance exacte
+
+        // ── Recherche exacte ──────────────────────────────────────────────
         $site = Site::where('wilaya_id', $wilaya->id)
             ->where('programme_id', $programme->id)
             ->whereRaw('LOWER(TRIM(libelle)) = ?', [strtolower($siteVal)])
             ->first();
 
+        // ── Recherche partielle si pas trouvé ─────────────────────────────
         if (!$site) {
-            // Correspondance partielle
             $site = Site::where('wilaya_id', $wilaya->id)
                 ->where('programme_id', $programme->id)
                 ->whereRaw('LOWER(libelle) LIKE ?', ['%'.strtolower($siteVal).'%'])
                 ->first();
         }
 
-        if ($site) return $site;
+        // ── Site trouvé → mise à jour partielle des champs agence/convention
+        if ($site) {
+            $toUpdate = [];
 
-        // Résolution commune
+            if ($numConvBnh !== '' && empty($site->num_convention_bnh)) {
+                $toUpdate['num_convention_bnh'] = $numConvBnh;
+            }
+            if ($nomAgence !== '' && empty($site->nom_agence)) {
+                $toUpdate['nom_agence'] = $nomAgence;
+            }
+            if ($numAgence !== '' && empty($site->num_agence)) {
+                $toUpdate['num_agence'] = $numAgence;
+            }
+            if ($adresseAgence !== '' && empty($site->adresse_agence)) {       // ← nouveau v12
+                $toUpdate['adresse_agence'] = $adresseAgence;
+            }
+            if ($numCompteAgence !== '' && empty($site->num_compte_agence)) {  // ← nouveau v12
+                $toUpdate['num_compte_agence'] = $numCompteAgence;
+            }
+
+            if (!empty($toUpdate)) {
+                $site->update($toUpdate);
+            }
+
+            return $site;
+        }
+
+        // ── Site introuvable → résolution de la commune puis création ─────
         $commune = Commune::where('wilaya_id', $wilaya->id)
             ->whereRaw('LOWER(TRIM(nom)) = ?', [strtolower(trim($communeVal))])
             ->first();
@@ -73,11 +121,16 @@ abstract class BaseImport implements ToCollection, WithStartRow
         }
 
         return Site::create([
-            'libelle'      => $siteVal,
-            'wilaya_id'    => $wilaya->id,
-            'programme_id' => $programme->id,
-            'commune_id'   => $commune->id,
-            'user_id'      => Auth::id(),
+            'libelle'            => $siteVal,
+            'wilaya_id'          => $wilaya->id,
+            'programme_id'       => $programme->id,
+            'commune_id'         => $commune->id,
+            'num_convention_bnh' => $numConvBnh      ?: null,
+            'nom_agence'         => $nomAgence        ?: null,
+            'num_agence'         => $numAgence        ?: null,
+            'adresse_agence'     => $adresseAgence    ?: null,   // ← nouveau v12
+            'num_compte_agence'  => $numCompteAgence  ?: null,   // ← nouveau v12
+            'user_id'            => Auth::id(),
         ]);
     }
 
@@ -155,9 +208,6 @@ abstract class BaseImport implements ToCollection, WithStartRow
         return [$plain, $hashed, $svg];
     }
 
-    /**
-     * QR pour la fiche souscripteur (sans montant).
-     */
     protected function buildQrSous(
         string $nom, string $prenom,
         string $progLibelle, string $siteLibelle, string $codeLPL
@@ -177,13 +227,6 @@ abstract class BaseImport implements ToCollection, WithStartRow
 
     // ── Paiement ──────────────────────────────────────────────────────────────
 
-    /**
-     * Crée un paiement si au moins nom_agence et date_paiement sont renseignés.
-     *
-     * @param array $arr     Tableau complet de la ligne
-     * @param int   $offset  Index 0-based de la colonne num_recu
-     * @param int   $ovId    ID de l'OV déjà créé
-     */
     protected function createPaiementIfPresent(array $arr, int $offset, int $ovId): void
     {
         $numRecu   = $this->str($arr[$offset]     ?? '');
@@ -191,7 +234,6 @@ abstract class BaseImport implements ToCollection, WithStartRow
         $numAgence = $this->str($arr[$offset + 2] ?? '');
         $datePaie  = $this->parseDate($arr[$offset + 3] ?? '');
 
-        // Tout vide → pas de paiement
         if ($numRecu === '' && $nomAgence === '' && $numAgence === '' && $datePaie === '') {
             return;
         }
@@ -203,18 +245,17 @@ abstract class BaseImport implements ToCollection, WithStartRow
             throw new \Exception("Date paiement obligatoire quand la section paiement est renseignée.");
         }
 
-        // num_recu unique si fourni
         if ($numRecu !== '' && Paiement::where('num_recu', $numRecu)->exists()) {
             throw new \Exception("Numéro de reçu déjà utilisé : «{$numRecu}»");
         }
 
         Paiement::create([
             'ov_id'         => $ovId,
-            'num_recu'      => $numRecu ?: null,   // NULL si vide (nullable)
+            'num_recu'      => $numRecu    ?: null,
             'nom_agence'    => $nomAgence,
-            'num_agence'    => $numAgence ?: null,
+            'num_agence'    => $numAgence  ?: null,
             'date_paiement' => $datePaie,
-            'recu_pdf'      => '',                 // chaîne vide — uploadé manuellement
+            'recu_pdf'      => '',
             'user_id'       => Auth::id(),
         ]);
     }
@@ -241,7 +282,6 @@ abstract class BaseImport implements ToCollection, WithStartRow
     {
         if ($raw === null) return '';
         $str = (string)$raw;
-        // Notation scientifique Excel (ex: 4.33218E+17)
         if (is_numeric($raw) && stripos($str, 'E') !== false) {
             return number_format((float)$raw, 0, '.', '');
         }

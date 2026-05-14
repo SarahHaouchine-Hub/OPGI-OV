@@ -124,79 +124,79 @@
                             </div>
                             <div class="p-4">
 
-                                {{-- Nom / Prénom (FR) --}}
-                                <div class="row g-4 mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Nom (FR)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                            <input type="text" name="nom"
-                                                   class="form-control @error('nom') is-invalid @enderror"
-                                                   value="{{ old('nom') }}" required placeholder="NOM">
-                                        </div>
-                                        @error('nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Prénom (FR)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                            <input type="text" name="prenom"
-                                                   class="form-control @error('prenom') is-invalid @enderror"
-                                                   value="{{ old('prenom') }}" required placeholder="Prénom">
-                                        </div>
-                                        @error('prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                </div>
+                               {{-- NIN --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">
+            NIN <span class="text-muted fw-normal">(Numéro d'Identification Nationale)</span>
+        </label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+            <input type="text" name="nin"
+                   class="form-control @error('nin') is-invalid @enderror"
+                   value="{{ old('nin') }}" required maxlength="18"
+                   placeholder="Ex: 1 99999999999999 99"
+                   pattern="[0-9\s]{18,20}">
+        </div>
+        @error('nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
 
-                                {{-- Date naissance / Lieu naissance --}}
-                                <div class="row g-4 mb-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Date de Naissance</label>
-                                        <input type="date" name="date_naissance"
-                                               class="form-control @error('date_naissance') is-invalid @enderror"
-                                               value="{{ old('date_naissance') }}" required style="border-radius:8px;">
-                                        @error('date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Lieu de Naissance</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                            <input type="text" name="lieu_naissance"
-                                                   class="form-control @error('lieu_naissance') is-invalid @enderror"
-                                                   value="{{ old('lieu_naissance') }}" placeholder="Ville / Commune">
-                                        </div>
-                                        @error('lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Situation Familiale</label>
-                                        <select name="situation_familiale" id="sel_situation"
-                                                class="form-select @error('situation_familiale') is-invalid @enderror" required>
-                                            <option value="celibataire" {{ old('situation_familiale','celibataire') == 'celibataire' ? 'selected':'' }}>Célibataire</option>
-                                            <option value="marie"       {{ old('situation_familiale') == 'marie'       ? 'selected':'' }}>Marié(e)</option>
-                                            <option value="divorce"     {{ old('situation_familiale') == 'divorce'     ? 'selected':'' }}>Divorcé(e)</option>
-                                            <option value="veuf"        {{ old('situation_familiale') == 'veuf'        ? 'selected':'' }}>Veuf / Veuve</option>
-                                        </select>
-                                        @error('situation_familiale')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                </div>
+{{-- Nom / Prénom (FR) --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Nom (FR)</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" name="nom"
+                   class="form-control @error('nom') is-invalid @enderror"
+                   value="{{ old('nom') }}" required placeholder="NOM">
+        </div>
+        @error('nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Prénom (FR)</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" name="prenom"
+                   class="form-control @error('prenom') is-invalid @enderror"
+                   value="{{ old('prenom') }}" required placeholder="Prénom">
+        </div>
+        @error('prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
 
-                                {{-- NIN --}}
-                                <div class="row g-4">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">
-                                            NIN <span class="text-muted fw-normal">(Numéro d'Identification Nationale)</span>
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-                                            <input type="text" name="nin"
-                                                   class="form-control @error('nin') is-invalid @enderror"
-                                                   value="{{ old('nin') }}" required maxlength="18"
-                                                   placeholder="Ex: 1 99999999999999 99"
-                                                   pattern="[0-9\s]{18,20}">
-                                        </div>
-                                        @error('nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                </div>
+{{-- Date naissance / Lieu naissance / Situation --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">Date de Naissance</label>
+        <input type="date" name="date_naissance"
+               class="form-control @error('date_naissance') is-invalid @enderror"
+               value="{{ old('date_naissance') }}" required style="border-radius:8px;">
+        @error('date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">Lieu de Naissance</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <input type="text" name="lieu_naissance"
+                   class="form-control @error('lieu_naissance') is-invalid @enderror"
+                   value="{{ old('lieu_naissance') }}" placeholder="Ville / Commune">
+        </div>
+        @error('lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">Situation Familiale</label>
+        <select name="situation_familiale" id="sel_situation"
+                class="form-select @error('situation_familiale') is-invalid @enderror" required>
+            <option value="celibataire" {{ old('situation_familiale','celibataire') == 'celibataire' ? 'selected':'' }}>Célibataire</option>
+            <option value="marie"       {{ old('situation_familiale') == 'marie'       ? 'selected':'' }}>Marié(e)</option>
+            <option value="divorce"     {{ old('situation_familiale') == 'divorce'     ? 'selected':'' }}>Divorcé(e)</option>
+            <option value="veuf"        {{ old('situation_familiale') == 'veuf'        ? 'selected':'' }}>Veuf / Veuve</option>
+        </select>
+        @error('situation_familiale')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
 
                             </div>
                         </div>{{-- /BLOC 1 --}}
@@ -277,59 +277,67 @@
                             <div class="p-4" style="background-color:#fffdf5;">
 
                                 <div class="section-divider">Identité</div>
-                                <div class="row g-4 mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Nom du Conjoint (FR)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
-                                            <input type="text" name="conjoint_nom"
-                                                   class="form-control @error('conjoint_nom') is-invalid @enderror"
-                                                   value="{{ old('conjoint_nom') }}" placeholder="Nom">
-                                        </div>
-                                        @error('conjoint_nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Prénom du Conjoint (FR)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
-                                            <input type="text" name="conjoint_prenom"
-                                                   class="form-control @error('conjoint_prenom') is-invalid @enderror"
-                                                   value="{{ old('conjoint_prenom') }}" placeholder="Prénom">
-                                        </div>
-                                        @error('conjoint_prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                </div>
 
-                                <div class="row g-4 mb-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">NIN du Conjoint</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-                                            <input type="text" name="conjoint_nin"
-                                                   class="form-control @error('conjoint_nin') is-invalid @enderror"
-                                                   value="{{ old('conjoint_nin') }}" maxlength="18"
-                                                   placeholder="Ex: 2 99999999999999 99">
-                                        </div>
-                                        @error('conjoint_nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Date de Naissance du Conjoint</label>
-                                        <input type="date" name="conjoint_date_naissance"
-                                               class="form-control @error('conjoint_date_naissance') is-invalid @enderror"
-                                               value="{{ old('conjoint_date_naissance') }}" style="border-radius:8px;">
-                                        @error('conjoint_date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Lieu de Naissance (FR)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                            <input type="text" name="conjoint_lieu_naissance"
-                                                   class="form-control @error('conjoint_lieu_naissance') is-invalid @enderror"
-                                                   value="{{ old('conjoint_lieu_naissance') }}" placeholder="Ville / Commune">
-                                        </div>
-                                        @error('conjoint_lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                                    </div>
-                                </div>
+
+{{-- NIN conjoint --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-4">
+        <label class="form-label small fw-bold">NIN du Conjoint</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+            <input type="text" name="conjoint_nin"
+                   class="form-control @error('conjoint_nin') is-invalid @enderror"
+                   value="{{ old('conjoint_nin') }}" maxlength="18"
+                   placeholder="Ex: 2 99999999999999 99">
+        </div>
+        @error('conjoint_nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
+
+{{-- Nom / Prénom conjoint --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Nom du Conjoint (FR)</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
+            <input type="text" name="conjoint_nom"
+                   class="form-control @error('conjoint_nom') is-invalid @enderror"
+                   value="{{ old('conjoint_nom') }}" placeholder="Nom">
+        </div>
+        @error('conjoint_nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Prénom du Conjoint (FR)</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
+            <input type="text" name="conjoint_prenom"
+                   class="form-control @error('conjoint_prenom') is-invalid @enderror"
+                   value="{{ old('conjoint_prenom') }}" placeholder="Prénom">
+        </div>
+        @error('conjoint_prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
+
+{{-- Date / Lieu naissance conjoint --}}
+<div class="row g-4 mb-3">
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Date de Naissance du Conjoint</label>
+        <input type="date" name="conjoint_date_naissance"
+               class="form-control @error('conjoint_date_naissance') is-invalid @enderror"
+               value="{{ old('conjoint_date_naissance') }}" style="border-radius:8px;">
+        @error('conjoint_date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-6">
+        <label class="form-label small fw-bold">Lieu de Naissance (FR)</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <input type="text" name="conjoint_lieu_naissance"
+                   class="form-control @error('conjoint_lieu_naissance') is-invalid @enderror"
+                   value="{{ old('conjoint_lieu_naissance') }}" placeholder="Ville / Commune">
+        </div>
+        @error('conjoint_lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    </div>
+</div>
 
                                 {{-- Parents du conjoint — Père --}}
                                 <div class="section-divider"><i class="bi bi-people me-1"></i> Parents du Conjoint — Père</div>

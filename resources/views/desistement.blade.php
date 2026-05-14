@@ -268,22 +268,16 @@
                                             <span class="badge bg-secondary">—</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        <form action="{{ route('createDesistement', Hashids::encode($logement->id)) }}" method="POST">
-                                            @csrf
-                                            <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="Swal.fire({
-                                                    title: 'Confirmer le désistement ?',
-                                                    text: 'Cette action est irréversible.',
-                                                    icon: 'warning',
-                                                    showCancelButton: true,
-                                                    confirmButtonText: 'Oui, désister',
-                                                    cancelButtonText: 'Annuler'
-                                                }).then(r => { if (r.isConfirmed) this.closest('form').submit(); })">
-                                                <i class="bi bi-x-circle me-1"></i> Désister
-                                            </button>
-                                        </form>
-                                    </td>
+                                <td>
+    <button type="button" class="btn btn-sm btn-warning"
+        onclick="ouvrirModalRemplacement(
+            '{{ Hashids::encode($logement->id) }}',
+            '{{ $logement->code_loge_lpl }}',
+            '{{ strtoupper($logement->souscripteur->nom ?? '') }} {{ strtoupper($logement->souscripteur->prenom ?? '') }}'
+        )">
+        <i class="bi bi-arrow-repeat me-1"></i> Remplacer
+    </button>
+</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -334,59 +328,91 @@
             <div class="modal-body p-0">
                 <div style="max-height:60vh; overflow-y:auto">
                     <table class="table table-modern table-hover mb-0">
-                        <thead style="position:sticky;top:0;z-index:2;background:#f1f4f9;
-                                      text-transform:uppercase;font-size:0.75rem;letter-spacing:0.5px">
-                            <tr class="text-center">
-                                <th>N°</th>
-                                <th>Code Logement</th>
-                                <th>Souscripteur</th>
-                                <th>Bât / Étage / Porte</th>
-                                <th>Site</th>
-                                <th>Date Désistement</th>
-                                <th>Prix Logement</th>
-                                <th>Total Payé</th>
-                            </tr>
-                        </thead>
-                        <tbody id="desist_tbody">
-                            @forelse ($desistements as $desistement)
-                                <tr class="text-center desist-row"
-                                    data-souscripteur="{{ strtolower(($desistement->souscripteur->nom ?? '').' '.($desistement->souscripteur->prenom ?? '')) }}">
-                                    <td class="text-muted">{{ $loop->iteration }}</td>
-                                    <td class="fw-bold">{{ $desistement->code_loge_lpl }}</td>
-                                    <td>
-                                        {{ strtoupper($desistement->souscripteur->nom    ?? '') }}
-                                        {{ strtoupper($desistement->souscripteur->prenom ?? '') }}
-                                    </td>
-                                    <td>
-                                        Bât.&nbsp;{{ $desistement->logement->num_batiment ?? '—' }} —
-                                        Ét.&nbsp;{{ $desistement->logement->num_etage    ?? '—' }} —
-                                        Porte&nbsp;{{ $desistement->logement->num_porte  ?? '—' }}
-                                    </td>
-                                    {{-- ✅ Site lu depuis la relation BDD --}}
-                                    <td>{{ $desistement->logement->site->libelle ?? '—' }}</td>
-                                    <td class="text-danger fw-bold">
-                                        {{ \Carbon\Carbon::parse($desistement->date_desistement)->format('d/m/Y') }}
-                                    </td>
-                                    <td class="price-tag">
-                                        {{ number_format($desistement->logement->prix ?? 0, 2, ',', ' ') }} DA
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info text-dark">
-                                            {{ number_format($desistement->souscripteur->ovs->sum('montant_paye'), 2, ',', ' ') }} DA
-                                        </span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
-                                            <h5>Aucun désistement enregistré</h5>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
+                      {{-- thead du modal --}}
+<tr class="text-center">
+    <th>N°</th>
+    <th>Type</th>
+    <th>Code Logement</th>
+    <th>Ancien Souscripteur</th>
+    <th>Nouveau Souscripteur</th>
+    <th>Bât / Étage / Porte</th>
+    <th>Site</th>
+    <th>Date</th>
+    <th>Prix Logement</th>
+    <th>Total Payé</th>
+</tr>
+
+{{-- tbody du modal --}}
+@forelse ($desistements as $desistement)
+    <tr class="text-center desist-row"
+        data-souscripteur="{{ strtolower(($desistement->souscripteur->nom ?? '').' '.($desistement->souscripteur->prenom ?? '')) }}">
+        <td class="text-muted">{{ $loop->iteration }}</td>
+
+        {{-- Type --}}
+        <td>
+            @if ($desistement->type === 'remplacement')
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-arrow-repeat me-1"></i> Remplacement
+                </span>
+            @else
+                <span class="badge bg-danger">
+                    <i class="bi bi-x-circle me-1"></i> Désistement
+                </span>
+            @endif
+        </td>
+
+        <td class="fw-bold font-monospace">{{ $desistement->code_loge_lpl }}</td>
+
+        {{-- Ancien --}}
+        <td>
+            {{ strtoupper($desistement->souscripteur->nom    ?? '') }}
+            {{ strtoupper($desistement->souscripteur->prenom ?? '') }}
+        </td>
+
+        {{-- Nouveau --}}
+        <td>
+            @if ($desistement->type === 'remplacement' && $desistement->nouveauSouscripteur)
+                <span class="text-success fw-bold">
+                    {{ strtoupper($desistement->nouveauSouscripteur->nom) }}
+                    {{ strtoupper($desistement->nouveauSouscripteur->prenom) }}
+                </span>
+            @else
+                <span class="text-muted">—</span>
+            @endif
+        </td>
+
+        <td>
+            Bât.&nbsp;{{ $desistement->logement->num_batiment ?? '—' }} —
+            Ét.&nbsp;{{ $desistement->logement->num_etage    ?? '—' }} —
+            Porte&nbsp;{{ $desistement->logement->num_porte  ?? '—' }}
+        </td>
+
+        <td>{{ $desistement->logement->site->libelle ?? '—' }}</td>
+
+        <td class="text-danger fw-bold">
+            {{ \Carbon\Carbon::parse($desistement->date_desistement)->format('d/m/Y') }}
+        </td>
+
+        <td class="price-tag">
+            {{ number_format($desistement->logement->prix ?? 0, 2, ',', ' ') }} DA
+        </td>
+
+        <td>
+            <span class="badge bg-info text-dark">
+                {{ number_format($desistement->souscripteur->ovs->sum('montant_paye'), 2, ',', ' ') }} DA
+            </span>
+        </td>
+    </tr>
+@empty
+    <tr>
+        <td colspan="10" class="text-center py-5">
+            <div class="text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                <h5>Aucun enregistrement</h5>
+            </div>
+        </td>
+    </tr>
+@endforelse
                     </table>
                 </div>
             </div>
@@ -402,7 +428,172 @@
         </div>
     </div>
 </div>
+{{-- ══════════════════════════════════════════════════════════════════
+     MODAL — Remplacement de souscripteur
+     ══════════════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modalRemplacement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width:850px">
+        <div class="modal-content">
 
+            <div class="modal-header" style="background: linear-gradient(45deg,#e67e22,#d35400);color:white;border-radius:14px 14px 0 0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-arrow-repeat me-2"></i>
+                    Remplacement — <span id="modal_code_loge" class="font-monospace"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1)"></button>
+            </div>
+
+            <div class="modal-body p-4">
+
+                {{-- Info ancien souscripteur --}}
+                <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-4">
+                    <i class="bi bi-person-dash-fill fs-5"></i>
+                    <div>
+                        Ancien souscripteur : <strong id="modal_ancien_nom"></strong>
+                        — sera marqué <span class="badge bg-danger">Désisté</span>
+                    </div>
+                </div>
+
+                {{-- Recherche NIN --}}
+                <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="bi bi-search me-2 text-primary"></i>
+                        Rechercher un souscripteur existant par NIN
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="search_nin" class="form-control"
+                               placeholder="Saisir le NIN..." maxlength="18">
+                        <button type="button" class="btn btn-primary px-4" id="btn_search_nin">
+                            <i class="bi bi-search me-1"></i> Rechercher
+                        </button>
+                    </div>
+                    <div id="nin_feedback" class="mt-2 small"></div>
+                </div>
+
+                {{-- Formulaire nouveau souscripteur --}}
+                <form id="formRemplacement" method="POST" action="">
+                    @csrf
+                  
+
+                    <h6 class="fw-bold mb-3">
+                        <i class="bi bi-person-plus-fill me-2 text-success"></i>
+                        Informations du nouveau souscripteur
+                    </h6>
+
+                    {{-- Bloc : Identité principale --}}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">NIN <span class="text-danger">*</span></label>
+                            <input type="text" name="nin" id="f_nin" class="form-control" required maxlength="18">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" id="f_nom" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" name="prenom" id="f_prenom" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Date de naissance <span class="text-danger">*</span></label>
+                            <input type="date" name="date_naissance" id="f_date_naissance" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Lieu de naissance</label>
+                            <input type="text" name="lieu_naissance" id="f_lieu_naissance" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Situation familiale <span class="text-danger">*</span></label>
+                            <select name="situation_familiale" id="f_situation_familiale" class="form-select" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="celibataire">Célibataire</option>
+                                <option value="marie">Marié(e)</option>
+                                <option value="divorce">Divorcé(e)</option>
+                                <option value="veuf">Veuf/Veuve</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Bloc : Parents --}}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Nom du père</label>
+                            <input type="text" name="nom_pere" id="f_nom_pere" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Prénom du père</label>
+                            <input type="text" name="prenom_pere" id="f_prenom_pere" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Nom de la mère</label>
+                            <input type="text" name="nom_mere" id="f_nom_mere" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Prénom de la mère</label>
+                            <input type="text" name="prenom_mere" id="f_prenom_mere" class="form-control">
+                        </div>
+                    </div>
+
+                    {{-- Bloc : Conjoint (visible si marié) --}}
+                    <div id="bloc_conjoint" style="display:none">
+                        <hr class="my-3">
+                        <h6 class="fw-bold mb-3 text-secondary">
+                            <i class="bi bi-people-fill me-2"></i> Informations du conjoint
+                        </h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Nom conjoint</label>
+                                <input type="text" name="conjoint_nom" id="f_conjoint_nom" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Prénom conjoint</label>
+                                <input type="text" name="conjoint_prenom" id="f_conjoint_prenom" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">NIN conjoint</label>
+                                <input type="text" name="conjoint_nin" id="f_conjoint_nin" class="form-control" maxlength="18">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Date naissance conjoint</label>
+                                <input type="date" name="conjoint_date_naissance" id="f_conjoint_date_naissance" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Lieu naissance conjoint</label>
+                                <input type="text" name="conjoint_lieu_naissance" id="f_conjoint_lieu_naissance" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Nom père conjoint</label>
+                                <input type="text" name="conjoint_nom_pere" id="f_conjoint_nom_pere" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Prénom père conjoint</label>
+                                <input type="text" name="conjoint_prenom_pere" id="f_conjoint_prenom_pere" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Nom mère conjoint</label>
+                                <input type="text" name="conjoint_nom_mere" id="f_conjoint_nom_mere" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Prénom mère conjoint</label>
+                                <input type="text" name="conjoint_prenom_mere" id="f_conjoint_prenom_mere" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer px-0 pb-0 mt-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-warning fw-bold px-4">
+                            <i class="bi bi-arrow-repeat me-1"></i> Confirmer le remplacement
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -512,6 +703,100 @@ document.addEventListener("DOMContentLoaded", function () {
     // ── Auto-fermeture des alertes ──────────────────────────────────────────
     const alertEl = $('alert');
     if (alertEl) setTimeout(() => new bootstrap.Alert(alertEl).close(), 3000);
+});
+// ── Modal Remplacement ──────────────────────────────────────────────────────
+function ouvrirModalRemplacement(hashedId, codeLoge, ancienNom) {
+    // Réinitialiser le formulaire
+    document.getElementById('formRemplacement').reset();
+    document.getElementById('nin_feedback').innerHTML = '';
+    document.getElementById('bloc_conjoint').style.display = 'none';
+
+    // Remplir les infos affichées
+    document.getElementById('modal_code_loge').textContent = codeLoge;
+    document.getElementById('modal_ancien_nom').textContent = ancienNom;
+
+    // Mettre à jour l'action du formulaire
+    document.getElementById('formRemplacement').action = `/desistement/${hashedId}/remplacer`;
+
+    // Ouvrir le modal
+    new bootstrap.Modal(document.getElementById('modalRemplacement')).show();
+}
+
+// Recherche NIN
+document.getElementById('btn_search_nin').addEventListener('click', async function () {
+    const nin      = document.getElementById('search_nin').value.trim();
+    const feedback = document.getElementById('nin_feedback');
+
+    if (!nin) {
+        feedback.innerHTML = '<span class="text-danger">Veuillez saisir un NIN.</span>';
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Recherche...';
+
+    try {
+        const res  = await fetch(`/api/souscripteur/search-nin/${nin}`);
+        const data = await res.json();
+
+        if (data.found) {
+            feedback.innerHTML = `<span class="text-success fw-bold">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Souscripteur trouvé : ${data.nom} ${data.prenom} — formulaire pré-rempli.
+            </span>`;
+            remplirFormulaire(data);
+        } else {
+            feedback.innerHTML = `<span class="text-warning fw-bold">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Aucun souscripteur trouvé. Vous pouvez saisir manuellement.
+            </span>`;
+            // Pré-remplir uniquement le NIN
+            document.getElementById('f_nin').value = nin;
+        }
+    } catch (e) {
+        feedback.innerHTML = '<span class="text-danger">Erreur lors de la recherche.</span>';
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-search me-1"></i> Rechercher';
+    }
+});
+
+function remplirFormulaire(d) {
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val ?? '';
+    };
+
+    set('f_nin',                     d.nin);
+    set('f_nom',                     d.nom);
+    set('f_prenom',                  d.prenom);
+    set('f_date_naissance',          d.date_naissance);
+    set('f_lieu_naissance',          d.lieu_naissance);
+    set('f_situation_familiale',     d.situation_familiale);
+    set('f_nom_pere',                d.nom_pere);
+    set('f_prenom_pere',             d.prenom_pere);
+    set('f_nom_mere',                d.nom_mere);
+    set('f_prenom_mere',             d.prenom_mere);
+    set('f_conjoint_nom',            d.conjoint_nom);
+    set('f_conjoint_prenom',         d.conjoint_prenom);
+    set('f_conjoint_nin',            d.conjoint_nin);
+    set('f_conjoint_date_naissance', d.conjoint_date_naissance);
+    set('f_conjoint_lieu_naissance', d.conjoint_lieu_naissance);
+    set('f_conjoint_nom_pere',       d.conjoint_nom_pere);
+    set('f_conjoint_prenom_pere',    d.conjoint_prenom_pere);
+    set('f_conjoint_nom_mere',       d.conjoint_nom_mere);
+    set('f_conjoint_prenom_mere',    d.conjoint_prenom_mere);
+
+    // Afficher bloc conjoint si marié
+    if (d.situation_familiale === 'marie') {
+        document.getElementById('bloc_conjoint').style.display = 'block';
+    }
+}
+
+// Afficher/masquer bloc conjoint selon situation familiale
+document.getElementById('f_situation_familiale').addEventListener('change', function () {
+    document.getElementById('bloc_conjoint').style.display =
+        this.value === 'marie' ? 'block' : 'none';
 });
 </script>
 

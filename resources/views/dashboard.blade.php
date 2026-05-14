@@ -556,50 +556,62 @@
             <form action="{{ route('site.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Libellé du projet</label>
-                            <input type="text" name="libelle" class="form-control" placeholder="Ex : Cité des 500 logements" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold"><i class="bi bi-grid me-1"></i> Programme</label>
-                            <select name="programme_id" class="form-select" required>
-                                <option value="">-- Choisir un programme --</option>
-                                @foreach($programmes as $programme)
-                                    <option value="{{ $programme->id }}">{{ $programme->libelle }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-map me-1"></i> Wilaya</label>
-                            <select name="wilaya_id" id="modal_wilaya" class="form-select" required>
-                                <option value="">-- Choisir une wilaya --</option>
-                                @foreach($wilayas as $wilaya)
-                                    <option value="{{ $wilaya->id }}">{{ $wilaya->nom }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-pin-map me-1"></i> Commune</label>
-                            <select name="commune_id" id="modal_commune" class="form-select" required disabled>
-                                <option value="">-- Choisir d'abord une wilaya --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-file-earmark-text me-1"></i> N° Convention BNH</label>
-                            <input type="text" name="num_convention_bnh" class="form-control" placeholder="Ex : CONV-2025-001">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Nom de l'agence</label>
-                            <input type="text" name="nom_agence" class="form-control" placeholder="Ex : Agence El Djazair">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-hash me-1"></i> N° Agence</label>
-                            <input type="text" name="num_agence" class="form-control" placeholder="Ex : AG-007">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-map me-1"></i> Wilaya</label>
+            <select name="wilaya_id" id="modal_wilaya" class="form-select" required>
+                <option value="">-- Choisir une wilaya --</option>
+                @foreach($wilayas as $wilaya)
+                    <option value="{{ $wilaya->id }}">{{ $wilaya->nom }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-pin-map me-1"></i> Commune</label>
+            <select name="commune_id" id="modal_commune" class="form-select" required disabled>
+                <option value="">-- Choisir d'abord une wilaya --</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold"><i class="bi bi-grid me-1"></i> Programme</label>
+            <select name="programme_id" class="form-select" required>
+                <option value="">-- Choisir un programme --</option>
+                @foreach($programmes as $programme)
+                    <option value="{{ $programme->id }}">{{ $programme->libelle }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Libellé du projet</label>
+            <input type="text" name="libelle" class="form-control" placeholder="Ex : Cité des 500 logements" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-file-earmark-text me-1"></i> N° Convention BNH</label>
+            <input type="text" name="num_convention_bnh" class="form-control" placeholder="Ex : CONV-2025-001">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Nom de l'agence</label>
+            <input type="text" name="nom_agence" class="form-control" placeholder="Ex : Agence El Djazair">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-hash me-1"></i> N° Agence</label>
+            <input type="text" name="num_agence" class="form-control" placeholder="Ex : AG-007">
+        </div>
+
+        {{-- ← NOUVEAU --}}
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-credit-card me-1"></i> N° Compte agence</label>
+            <input type="text" name="num_compte_agence" class="form-control" placeholder="Ex : 00012345678901234567">
+        </div>
+
+        {{-- ← NOUVEAU --}}
+        <div class="col-12">
+            <label class="form-label fw-semibold"><i class="bi bi-geo me-1"></i> Adresse agence</label>
+            <input type="text" name="adresse_agence" class="form-control" placeholder="Ex : 12 Rue Didouche Mourad, Alger">
+        </div>
+    </div>
+</div>
+              <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-action-site"><i class="bi bi-check-circle me-1"></i> Enregistrer</button>
                 </div>
@@ -619,70 +631,67 @@
             <form action="{{ route('logement.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><span class="step-badge active" id="mb1">1</span> Wilaya</label>
-                            <select id="log_wilaya" class="form-select" required>
-                                <option value="">-- Choisir une wilaya --</option>
-                                @foreach($wilayas as $w)
-                                    <option value="{{ $w->id }}">{{ $w->nom }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-grid me-1"></i> Programme</label>
-                            <select name="programme_id" class="form-select" required>
-                                <option value="">-- Choisir un programme --</option>
-                                @foreach($programmes as $programme)
-                                    <option value="{{ $programme->id }}">{{ $programme->libelle }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold"><span class="step-badge" id="mb2">2</span> Projet</label>
-                            <div id="mwrap_site">
-                                <select name="site_id" id="log_site" class="form-select" required disabled>
-                                    <option value="">-- Choisir d'abord une wilaya --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Bâtiment</label>
-                            <input type="text" name="num_batiment" class="form-control" placeholder="Ex : A, B, C" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-layers me-1"></i> Étage</label>
-                            <input type="number" name="num_etage" class="form-control" placeholder="Ex : 1" min="0" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-door-closed me-1"></i> N° Porte</label>
-                            <input type="number" name="num_porte" class="form-control" placeholder="Ex : 12" min="1" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-hash me-1"></i> N° Lot</label>
-                            <input type="text" name="num_lot" class="form-control" placeholder="Ex : LOT-001">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-rulers me-1"></i> Surface (m²)</label>
-                            <input type="number" step="0.01" name="surface" class="form-control" placeholder="Ex : 85.50" min="0">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold"><i class="bi bi-layout-text-window me-1"></i> Typologie</label>
-                            <select name="typologie" class="form-select">
-                                <option value="">-- Choisir --</option>
-                                <option value="F2">F2</option>
-                                <option value="F3">F3</option>
-                                <option value="F4">F4</option>
-                                <option value="F5">F5</option>
-                                <option value="F6">F6</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold"><i class="bi bi-cash-stack me-1"></i> Prix (DA)</label>
-                            <input type="number" step="0.01" name="prix" class="form-control" placeholder="Ex : 5000000" min="0" required>
-                        </div>
-                    </div>
-                </div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><span class="step-badge active" id="mb1">1</span> Wilaya</label>
+            <select id="log_wilaya" class="form-select" required>
+                <option value="">-- Choisir une wilaya --</option>
+                @foreach($wilayas as $w)
+                    <option value="{{ $w->id }}">{{ $w->nom }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><span class="step-badge" id="mb2">2</span> Programme</label>
+            <select id="log_programme" name="programme_id" class="form-select" required disabled>
+                <option value="">-- Choisir d'abord une wilaya --</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold"><span class="step-badge" id="mb3">3</span> Projet</label>
+            <div id="mwrap_site">
+                <select name="site_id" id="log_site" class="form-select" required disabled>
+                    <option value="">-- Choisir d'abord un programme --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Bâtiment</label>
+            <input type="text" name="num_batiment" class="form-control" placeholder="Ex : A, B, C" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-layers me-1"></i> Étage</label>
+            <input type="number" name="num_etage" class="form-control" placeholder="Ex : 1" min="0" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-door-closed me-1"></i> N° Porte</label>
+            <input type="number" name="num_porte" class="form-control" placeholder="Ex : 12" min="1" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-hash me-1"></i> N° Lot</label>
+            <input type="text" name="num_lot" class="form-control" placeholder="Ex : LOT-001">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-rulers me-1"></i> Surface (m²)</label>
+            <input type="number" step="0.01" name="surface" class="form-control" placeholder="Ex : 85.50" min="0">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold"><i class="bi bi-layout-text-window me-1"></i> Typologie</label>
+            <select name="typologie" class="form-select">
+                <option value="">-- Choisir --</option>
+                <option value="F2">F2</option>
+                <option value="F3">F3</option>
+                <option value="F4">F4</option>
+                <option value="F5">F5</option>
+                <option value="F6">F6</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="bi bi-cash-stack me-1"></i> Prix (DA)</label>
+            <input type="number" step="0.01" name="prix" class="form-control" placeholder="Ex : 5000000" min="0" required>
+        </div>
+    </div>
+</div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-action-logement"><i class="bi bi-check-circle me-1"></i> Enregistrer</button>
@@ -775,30 +784,52 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // ─── MODAL LOGEMENT — Wilaya → Projets ──────────────────────────────
-    const logWilaya = $("log_wilaya");
-    const logSite   = $("log_site");
+   // ─── MODAL LOGEMENT — Wilaya → Programme → Projet ────────────────────
+const logWilaya   = $("log_wilaya");
+const logProg     = $("log_programme");
+const logSite     = $("log_site");
 
-    if (logWilaya && logSite) {
-        const onLogWilayaChange = async function () {
-            resetSel(logSite, "-- Choisir d'abord une wilaya --");
-            if (!this.value) { badge('mb1','active'); return; }
-            logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
-            const ok = await loadInto(
-                `/api/sites/${this.value}`,
-                logSite, 'mwrap_site',
-                (o,s) => { o.value=s.id; o.textContent=s.libelle; }
-            );
-            if (ok) { badge('mb1','done'); badge('mb2','active'); }
-        };
-        logWilaya.addEventListener('change', onLogWilayaChange);
-        logSite.addEventListener('change', function () { if (this.value) badge('mb2','done'); });
+if (logWilaya && logProg && logSite) {
 
-        if (setDefaultAlger(logWilaya)) {
-            logWilaya.dispatchEvent(new Event('change'));
-        }
+    // Wilaya change → charger les programmes
+    logWilaya.addEventListener('change', async function () {
+        resetSel(logProg, "-- Choisir d'abord une wilaya --");
+        resetSel(logSite, "-- Choisir d'abord un programme --");
+        badge('mb1', 'active'); badge('mb2', 'pending'); badge('mb3', 'pending');
+        if (!this.value) return;
+
+        logProg.innerHTML = '<option value="">-- Choisir un programme --</option>';
+        const ok = await loadInto(
+            `/api/souscripteur/programmes-by-wilaya/${this.value}`,
+            logProg, null,
+            (o, p) => { o.value = p.id; o.textContent = p.libelle; }
+        );
+        if (ok) { badge('mb1', 'done'); badge('mb2', 'active'); }
+    });
+
+    // Programme change → charger les projets de ce programme dans cette wilaya
+    logProg.addEventListener('change', async function () {
+        resetSel(logSite, "-- Choisir d'abord un programme --");
+        badge('mb2', 'active'); badge('mb3', 'pending');
+        if (!this.value) return;
+
+        logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
+        const ok = await loadInto(
+            `/api/souscripteur/sites/${logWilaya.value}/${this.value}`,
+            logSite, 'mwrap_site',
+            (o, s) => { o.value = s.id; o.textContent = s.libelle; }
+        );
+        if (ok) { badge('mb2', 'done'); badge('mb3', 'active'); }
+    });
+
+    logSite.addEventListener('change', function () {
+        if (this.value) badge('mb3', 'done');
+    });
+
+    if (setDefaultAlger(logWilaya)) {
+        logWilaya.dispatchEvent(new Event('change'));
     }
-
+}
     // ─── MODAL PROJET — Wilaya → Communes ──────────────────────────────
     const modalWilaya  = $("modal_wilaya");
     const modalCommune = $("modal_commune");

@@ -9,12 +9,14 @@ class Site extends Model
     protected $fillable = [
         'libelle',
         'wilaya_id',
+        'commune_id',
         'programme_id',
-         'commune_id',
-         'num_convention_bnh',  // ← NOUVEAU
-        'nom_agence',          // ← NOUVEAU
+        'num_convention_bnh',
+        'nom_agence',
         'num_agence',
-         'user_id'
+        'adresse_agence',      // ← NOUVEAU
+        'num_compte_agence',   // ← NOUVEAU
+        'user_id',
     ];
 
     public function wilaya()
@@ -26,7 +28,8 @@ class Site extends Model
     {
         return $this->belongsTo(Programme::class);
     }
-     public function commune()
+
+    public function commune()
     {
         return $this->belongsTo(Commune::class);
     }

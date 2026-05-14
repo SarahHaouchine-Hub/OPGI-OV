@@ -6,20 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Logement extends Model
 {
-protected $fillable = [
-    'num_batiment',   // string : A, B, C...
-    'num_etage',
-    'num_porte',
-    'num_lot',
-    'surface',
-    'typologie',      // F3, F4, F5
-    'code_loge_lpl',
-    'flag',
-    'prix',
-    'created_by',
-    'site_id',
-    'programme_id',
-];
+    protected $fillable = [
+        'num_batiment',
+        'num_etage',
+        'num_porte',
+        'num_lot',
+        'surface',
+        'typologie',
+        'code_loge_lpl',
+        'flag',
+        'prix',
+        'site_id',
+        'programme_id',
+        'user_id',        // ← manquait
+    ];
 
     public function souscripteur()
     {

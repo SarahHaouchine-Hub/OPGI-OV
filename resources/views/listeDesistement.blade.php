@@ -18,9 +18,7 @@
         font-size: 0.8rem;
         letter-spacing: 1px;
     }
-    .table-modern tbody tr {
-        vertical-align: middle;
-    }
+    .table-modern tbody tr { vertical-align: middle; }
     .table-modern tbody tr:hover {
         background-color: #f1f4f9;
         box-shadow: inset 4px 0 0 #2a5298;
@@ -54,7 +52,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -63,11 +60,11 @@
             </div>
         @endif
 
-        {{-- ── Tableau des désistements ── --}}
+        {{-- ── Tableau des désistements / remplacements ── --}}
         <div class="card custom-card mb-2">
             <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">
-                    <i class="bi bi-archive-fill me-2"></i> Liste des désistements
+                    <i class="bi bi-archive-fill me-2"></i> Liste des désistements &amp; remplacements
                 </h4>
                 <span class="badge bg-secondary fs-6">{{ $desistements->total() }} résultat(s)</span>
             </div>
@@ -78,13 +75,13 @@
                         <thead>
                             <tr class="text-center">
                                 <th>N°</th>
+                                <th>Type</th>
                                 <th>Code Logement</th>
-                                <th>Nom et Prénom du Souscripteur</th>
-                                <th>N° Bâtiment</th>
-                                <th>N° Étage</th>
-                                <th>N° Porte</th>
+                                <th>Ancien Souscripteur</th>
+                                <th>Nouveau Souscripteur</th>
+                                <th>Bât / Étage / Porte</th>
                                 <th>Site</th>
-                                <th>Date Désistement</th>
+                                <th>Date</th>
                                 <th>Prix du Logement</th>
                                 <th>Montant Payé</th>
                             </tr>
@@ -92,22 +89,62 @@
                         <tbody>
                             @forelse ($desistements as $desistement)
                                 <tr class="text-center">
-                                    <td class="text-muted">{{ $desistements->firstItem() + $loop->index }}</td>
-                                    <td class="fw-bold">{{ $desistement->code_loge_lpl }}</td>
+                                    <td class="text-muted">
+                                        {{ $desistements->firstItem() + $loop->index }}
+                                    </td>
+
+                                    {{-- Type --}}
                                     <td>
-                                        {{ strtoupper($desistement->souscripteur->nom   ?? '') }}
+                                        @if ($desistement->type === 'remplacement')
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Remplacement
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i> Désistement
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td class="fw-bold font-monospace">
+                                        {{ $desistement->code_loge_lpl }}
+                                    </td>
+
+                                    {{-- Ancien souscripteur --}}
+                                    <td>
+                                        {{ strtoupper($desistement->souscripteur->nom    ?? '') }}
                                         {{ strtoupper($desistement->souscripteur->prenom ?? '') }}
                                     </td>
-                                    <td>{{ $desistement->logement->num_batiment ?? '—' }}</td>
-                                    <td>{{ $desistement->logement->num_etage    ?? '—' }}</td>
-                                    <td>{{ $desistement->logement->num_porte    ?? '—' }}</td>
-                                    <td>Saïd Hamdine, Alger</td>
+
+                                    {{-- Nouveau souscripteur (remplacement uniquement) --}}
+                                    <td>
+                                        @if ($desistement->type === 'remplacement' && $desistement->nouveauSouscripteur)
+                                            <span class="text-success fw-bold">
+                                                {{ strtoupper($desistement->nouveauSouscripteur->nom) }}
+                                                {{ strtoupper($desistement->nouveauSouscripteur->prenom) }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        Bât.&nbsp;{{ $desistement->logement->num_batiment ?? '—' }} —
+                                        Ét.&nbsp;{{ $desistement->logement->num_etage    ?? '—' }} —
+                                        Porte&nbsp;{{ $desistement->logement->num_porte  ?? '—' }}
+                                    </td>
+
+                                    {{-- Site depuis la relation BDD --}}
+                                    <td>{{ $desistement->logement->site->libelle ?? '—' }}</td>
+
                                     <td class="text-danger fw-bold">
                                         {{ \Carbon\Carbon::parse($desistement->date_desistement)->format('d/m/Y') }}
                                     </td>
+
                                     <td class="price-tag">
                                         {{ number_format($desistement->logement->prix ?? 0, 2, ',', ' ') }} DA
                                     </td>
+
                                     <td>
                                         <span class="badge bg-info text-dark">
                                             {{ number_format($desistement->souscripteur->ovs->sum('montant_paye'), 2, ',', ' ') }} DA
@@ -119,8 +156,8 @@
                                     <td colspan="10" class="text-center py-5">
                                         <div class="text-muted">
                                             <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
-                                            <h5>Aucun désistement trouvé</h5>
-                                            <p class="small mb-0">Il n'y a pas encore de désistements enregistrés.</p>
+                                            <h5>Aucun enregistrement trouvé</h5>
+                                            <p class="small mb-0">Il n'y a pas encore de désistements ou remplacements enregistrés.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -131,7 +168,6 @@
             </div>
         </div>
 
-        {{-- ── Pagination ── --}}
         @if($desistements->hasPages())
             <div class="d-flex justify-content-start mt-2">
                 {{ $desistements->links('pagination::bootstrap-5') }}
@@ -144,9 +180,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const alertEl = document.getElementById('alert');
-    if (alertEl) {
-        setTimeout(() => new bootstrap.Alert(alertEl).close(), 3000);
-    }
+    if (alertEl) setTimeout(() => new bootstrap.Alert(alertEl).close(), 3000);
 });
 </script>
 

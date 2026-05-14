@@ -3,142 +3,200 @@
 namespace App\Imports;
 
 use App\Models\Aide;
-use App\Models\Logement;
 use App\Models\Ov;
+use App\Models\Paiement;
 use App\Models\Programme;
 use App\Models\Souscripteur;
 use App\Models\Wilaya;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Import LPA (Logement Promotionnel Aidé)
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * STRUCTURE DES COLONNES (données à partir de la ligne 9, index 0-based)
+ * STRUCTURE DES COLONNES — TEMPLATE_INIT_v2 (index 0-based, ligne 5+)
  * ══════════════════════════════════════════════════════════════════════════════
  *
- *  0  → 16   A→Q    Souscripteur + Logement
- *  17 → 25   R→Z    OV 1  (9 cols : tranche·%·payé·restant·vsp·reçu·agence·nagence·date)
- *  26 → 30   AA→AE  Aide BNH (5 cols : type·montant·convention·décision·date)
- *  31 → 39   AF→AN  OV 2
- *  40 → 42   AO→AQ  Aide FNPOS (3 cols : montant·décision·date)
- *  43         AR     colonne vide (spacer)
- *  44 → 52   AS→BA  OV 3
- *  53 → 61   BB→BJ  OV 4
- *  62 → 70   BK→BS  OV 5
+ *  0  → 3    A→D    Souscripteur — identité (nom, prénom, date_naiss, NIN)
+ *  4  → 9    E→J    Souscripteur — état civil (situation, lieu_naiss, nom_père,
+ *                                               prénom_père, nom_mère, prénom_mère)
+ *  10 → 18   K→S    Conjoint (nom, prénom, NIN, date_naiss, lieu_naiss,
+ *                             nom_père, prénom_père, nom_mère, prénom_mère)
+ *  19          T    VSP souscripteur (OUI / NON)
+ *  20 → 30   U→AE   Logement (wilaya, programme, site, commune, bât, étage,
+ *                             n°log, n°lot, surface, typologie, prix)
+ *  31 → 34   AF→AI  Aide BNH (montant, convention, décision, date)
+ *  35 → 37   AJ→AL  OV 1 (montant_payé, num_reçu, date_reçu)
+ *  38 → 40   AM→AO  OV 2
+ *  41 → 43   AP→AR  OV 3
+ *  44 → 46   AS→AU  OV 4
+ *  47 → 49   AV→AX  OV 5
+ *  50 → 53   AY→BB  Agence (nom=50, adresse=51, n°agence=52, n°compte=53)
+ *  54          BC   Aide FNPOS — Num. Décision
+ *  55          BD   Aide FNPOS — Date
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * LOGIQUE FNPOS — déduction pilotée par la date
+ * CHANGELOG
  * ══════════════════════════════════════════════════════════════════════════════
- *
- *  - BNH  : toujours déduite AVANT T1 (dès le calcul de la base de T1).
- *  - FNPOS: déduite EN UNE SEULE FOIS du montant restant global, juste avant
- *            la première tranche dont la DATE DE PAIEMENT est
- *            POSTÉRIEURE OU ÉGALE à la date FNPOS.
- *  - Le montant FNPOS utilisé est celui du fichier Excel (montant réel),
- *    pas une constante fixe. Cela peut différer du montant utilisé par
- *    OvController (500 000 DA fixe) pour les saisies manuelles.
- *
- * ══════════════════════════════════════════════════════════════════════════════
- * CHANGEMENTS v6
- * ══════════════════════════════════════════════════════════════════════════════
- *  - Aide type : 'cnl' remplacé par 'bnh' (alignement avec OvController)
- *  - N° convention BNH récupéré depuis la table sites (num_convention_bnh)
- *    si la colonne AC est vide ; la valeur du fichier prime si renseignée.
- *  - VSP : obligatoire OUI pour T2 uniquement. Pour les autres tranches,
- *    le champ est optionnel (false par défaut).
+ *  v13 — Lecture de adresse_agence (col 51) et num_compte_agence (col 53),
+ *        transmis à resolveOrCreateSite() et Paiement::create().
+ *  v12 — FIX FINAL : contournement du cast boolean par INSERT direct via DB::table()
+ *        pour garantir que vsp=1 est bien écrit en base (tinyint(1)).
+ *  v11 — VSP (OUI→1 / NON→0), num_convention_bnh, nom_agence, num_agence transmis.
+ *  v10 — Correction FNPOS_OFFSET : 53→54.
  */
 class LpaImport extends BaseImport
 {
-    private const LPA_TRANCHES = [1 => 20, 2 => 15, 3 => 35, 4 => 25, 5 => 5];
+    private const LPA_TRANCHES  = [1 => 20, 2 => 15, 3 => 35, 4 => 25, 5 => 5];
+    private const FNPOS_MONTANT = 500000;
 
     private const OV_OFFSETS = [
-        1 => 17,   // R  — OV1
-        2 => 31,   // AF — OV2
-        3 => 44,   // AS — OV3
-        4 => 53,   // BB — OV4
-        5 => 62,   // BK — OV5
+        1 => 35,
+        2 => 38,
+        3 => 41,
+        4 => 44,
+        5 => 47,
     ];
 
-    private const BNH_OFFSET   = 26;  // AA
-    private const FNPOS_OFFSET = 40;  // AO
+    private const AIDE_OFFSET   = 31;
+    private const AGENCE_OFFSET = 50;
+    private const FNPOS_OFFSET  = 54;
+    private const ROW_SIZE      = 56;
 
-    public function startRow(): int { return 9; }
+    private const SITUATION_MAP = [
+        'mariée'      => 'Marié',
+        'marié'       => 'Marié',
+        'celibataire' => 'Célibataire',
+        'célibataire' => 'Célibataire',
+        'divorcée'    => 'Divorcé',
+        'divorcé'     => 'Divorcé',
+        'veuve'       => 'Veuf',
+        'veuf'        => 'Veuf',
+    ];
+
+    // ─────────────────────────────────────────────────────────────────────────
+    public function startRow(): int { return 5; }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    protected function safeParse(mixed $value): string
+    {
+        if ($value === null || trim((string)$value) === '') {
+            return '';
+        }
+        $result = $this->parseDate($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$result)) {
+            return (string)$result;
+        }
+        return '';
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    private function normalizeSituation(string $raw): string
+    {
+        if ($raw === '') return '';
+        return self::SITUATION_MAP[strtolower(trim($raw))] ?? ucfirst(trim($raw));
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     public function collection(Collection $rows): void
-    // ─────────────────────────────────────────────────────────────────────────
     {
         foreach ($rows as $i => $row) {
-            $line = $i + 8;
-
-            $arr = array_pad(array_values($row->toArray()), 71, null);
+            $line = $i + $this->startRow();
+            $arr  = array_pad(array_values($row->toArray()), self::ROW_SIZE, null);
 
             $filled = array_filter($arr, fn($v) => $v !== null && trim((string)$v) !== '');
             if (count($filled) < 3) continue;
 
             DB::beginTransaction();
             try {
-                // ── 1. Souscripteur + Logement ────────────────────────────
+
+                // ── Souscripteur identité (A→D = 0→3) ─────────────────────
                 $nom            = $this->str($arr[0]);
                 $prenom         = $this->str($arr[1]);
-                $nom_ar         = $this->str($arr[2]);
-                $prenom_ar      = $this->str($arr[3]);
-                $date_naissance = $this->parseDate($arr[4] ?? '');
-                $nin            = $this->parseNin($arr[5] ?? '');
-                $wilayaVal      = $this->str($arr[6]);
-                $programmeVal   = $this->str($arr[7]);
-                $siteVal        = $this->str($arr[8]);
-                $communeVal     = $this->str($arr[9]);
-                $batiment       = $this->str($arr[10]);
-                $etage          = $this->str($arr[11]);
-                $porte          = $this->str($arr[12]);
-                $num_lot        = $this->str($arr[13]);
-                $surface        = $this->str($arr[14]);
-                $typologie      = $this->str($arr[15]);
-                $prix           = $this->str($arr[16] ?? '');
+                $date_naissance = $this->safeParse($arr[2] ?? '');
+                $nin            = $this->parseNin($arr[3] ?? '');
 
-                // ── 2. Aide BNH (AA→AE = index 26→30) ───────────────────
-                $o           = self::BNH_OFFSET;
-                $typeBnh     = strtolower($this->str($arr[$o]     ?? ''));
-                $montantBnh  = $this->num($arr[$o + 1] ?? null);
-                $numConvBnh  = $this->str($arr[$o + 2] ?? '');
-                $numDecBnh   = $this->str($arr[$o + 3] ?? '');
-                $dateBnh     = $this->parseDate($arr[$o + 4] ?? '');
+                // ── Souscripteur état civil (E→J = 4→9) ───────────────────
+                $situationFam  = $this->normalizeSituation($this->str($arr[4] ?? ''));
+                $lieuNaissance = $this->str($arr[5] ?? '');
+                $nomPere       = $this->str($arr[6] ?? '');
+                $prenomPere    = $this->str($arr[7] ?? '');
+                $nomMere       = $this->str($arr[8] ?? '');
+                $prenomMere    = $this->str($arr[9] ?? '');
 
-                // ── 3. Aide FNPOS (AO→AQ = index 40→42) ──────────────────
+                // ── Conjoint (K→S = 10→18) ────────────────────────────────
+                $conjointNom        = $this->str($arr[10] ?? '');
+                $conjointPrenom     = $this->str($arr[11] ?? '');
+                $conjointNin        = $this->str($arr[12] ?? '');
+                $conjointDateNaiss  = $this->safeParse($arr[13] ?? '');
+                $conjointLieuNaiss  = $this->str($arr[14] ?? '');
+                $conjointNomPere    = $this->str($arr[15] ?? '');
+                $conjointPrenomPere = $this->str($arr[16] ?? '');
+                $conjointNomMere    = $this->str($arr[17] ?? '');
+                $conjointPrenomMere = $this->str($arr[18] ?? '');
+
+                // ── VSP (T = 19) ───────────────────────────────────────────
+                $vspCell = $arr[19] ?? null;
+                $vspStr  = strtoupper(trim(preg_replace('/\s+/u', '', (string)$vspCell)));
+                $vsp     = in_array($vspStr, ['OUI', 'O', 'YES', 'Y', '1'], true) ? 1 : 0;
+
+                // ── Logement (U→AE = 20→30) ───────────────────────────────
+                $wilayaVal    = $this->str($arr[20]);
+                $programmeVal = $this->str($arr[21]);
+                $siteVal      = $this->str($arr[22]);
+                $communeVal   = $this->str($arr[23]);
+                $batiment     = $this->str($arr[24]);
+                $etage        = $this->str($arr[25]);
+                $porte        = $this->str($arr[26]);
+                $num_lot      = $this->str($arr[27]);
+                $surface      = $this->str($arr[28]);
+                $typologie    = $this->str($arr[29]);
+                $prix         = $this->str($arr[30] ?? '');
+
+                // ── Aide BNH (AF→AI = 31→34) ──────────────────────────────
+                $o          = self::AIDE_OFFSET;
+                $montantBnh = $this->num($arr[$o]     ?? null);
+                $numConvBnh = $this->str($arr[$o + 1] ?? '');
+                $numDecBnh  = $this->str($arr[$o + 2] ?? '');
+                $dateBnh    = $this->safeParse($arr[$o + 3] ?? '');
+
+                // ── Agence (AY→BB = 50→53) ────────────────────────────────
+                $a                = self::AGENCE_OFFSET;
+                $nomAgence        = $this->str($arr[$a]     ?? ''); // col 50 — nom
+                $adresseAgence    = $this->str($arr[$a + 1] ?? ''); // col 51 — adresse  ← NOUVEAU
+                $numAgence        = $this->str($arr[$a + 2] ?? ''); // col 52 — n°agence
+                $numCompteAgence  = $this->str($arr[$a + 3] ?? ''); // col 53 — n°compte ← NOUVEAU
+
+                // ── Aide FNPOS (BC→BD = 54→55) ────────────────────────────
                 $f            = self::FNPOS_OFFSET;
-                $montantFnpos = $this->num($arr[$f]     ?? null);
-                $numDecFnpos  = $this->str($arr[$f + 1] ?? '');
-                $dateFnposStr = $this->str($arr[$f + 2] ?? '');
-                $dateFnpos    = $this->parseDate($dateFnposStr);
-                $hasFnpos     = $montantFnpos > 0;
+                $numDecFnpos  = $this->str($arr[$f]     ?? '');
+                $dateFnposRaw = $this->str($arr[$f + 1] ?? '');
+                $dateFnpos    = $this->safeParse($dateFnposRaw);
+                $hasFnpos     = ($numDecFnpos !== '' || $dateFnposRaw !== '');
 
-                // ── 4. Blocs OV ───────────────────────────────────────────
-                // date paiement = offset + 8 (col Z, AN, BA, BJ, BS)
+                // ── Blocs OV ──────────────────────────────────────────────
                 $ovBlocs = [];
-                foreach (self::OV_OFFSETS as $slot => $offset) {
-                    $numTranche = (int)$this->num($arr[$offset] ?? null);
-                    if ($numTranche >= 1 && $numTranche <= 5) {
+                foreach (self::OV_OFFSETS as $numTranche => $offset) {
+                    $montantPaye = $this->num($arr[$offset] ?? null);
+                    if ($montantPaye > 0) {
                         $ovBlocs[$numTranche] = [
                             'numTranche'   => $numTranche,
-                            'pourcentage'  => $this->num($arr[$offset + 1] ?? null),
-                            'montantPaye'  => $this->num($arr[$offset + 2] ?? null),
-                            'montantReste' => $this->num($arr[$offset + 3] ?? null),
-                            'vspRaw'       => strtoupper($this->str($arr[$offset + 4] ?? '')),
-                            'datePaiement' => $this->parseDate($arr[$offset + 8] ?? ''),
-                            'paiOffset'    => $offset + 5, // reçu=+5, agence=+6, nagence=+7
+                            'montantPaye'  => $montantPaye,
+                            'numRecu'      => $this->str($arr[$offset + 1] ?? ''),
+                            'datePaiement' => $this->safeParse($arr[$offset + 2] ?? ''),
                         ];
                     }
                 }
 
-                // ── 5. Validations obligatoires ───────────────────────────
+                // ── Validations ───────────────────────────────────────────
                 $this->requireAll(compact(
-                    'nom','prenom','nom_ar','prenom_ar','date_naissance','nin',
-                    'wilayaVal','programmeVal','siteVal','communeVal',
-                    'batiment','etage','porte','num_lot','surface','typologie','prix'
+                    'nom', 'prenom', 'date_naissance', 'nin',
+                    'wilayaVal', 'programmeVal', 'siteVal', 'communeVal',
+                    'batiment', 'etage', 'porte', 'num_lot',
+                    'surface', 'typologie', 'prix'
                 ));
 
                 if (strtoupper(trim($programmeVal)) !== 'LPA') {
@@ -153,11 +211,10 @@ class LpaImport extends BaseImport
                     throw new \Exception("Prix invalide : «{$prix}»");
                 }
 
-                // ── 6. Wilaya ─────────────────────────────────────────────
+                // ── Résolution des entités ────────────────────────────────
                 $wilaya = Wilaya::whereRaw('LOWER(TRIM(nom)) = ?', [strtolower($wilayaVal)])->first();
                 if (!$wilaya) throw new \Exception("Wilaya introuvable : «{$wilayaVal}»");
 
-                // ── 7. Programme ──────────────────────────────────────────
                 $programme = Programme::where('is_active', 1)
                     ->whereRaw('LOWER(TRIM(libelle)) = ?', [strtolower(trim($programmeVal))])
                     ->first()
@@ -169,25 +226,27 @@ class LpaImport extends BaseImport
                     throw new \Exception("Programme «LPA» introuvable ou inactif en base.");
                 }
 
-                // ── 8. Site + Logement ────────────────────────────────────
-                $site     = $this->resolveOrCreateSite($wilaya, $programme, $siteVal, $communeVal);
+                $site = $this->resolveOrCreateSite(
+                    $wilaya, $programme, $siteVal, $communeVal,
+                    $numConvBnh, $nomAgence, $numAgence,
+                    $adresseAgence, $numCompteAgence  // ← NOUVEAU
+                );
+
                 $logement = $this->resolveOrCreateLogement(
                     $site, $programme, $batiment, $etage, $porte,
                     $num_lot, $surface, $typologie, $prix
                 );
 
-                // ── 9. NIN unique ─────────────────────────────────────────
                 if (Souscripteur::where('nin', $nin)->exists()) {
                     throw new \Exception("NIN déjà enregistré : «{$nin}»");
                 }
 
-                // ── 10. Code + QR souscripteur ────────────────────────────
+                // ── Création souscripteur ─────────────────────────────────
                 $codeLPL = $this->generateCodeLPL($logement);
                 [$qrPlain, $qrHashed, $qrCode] = $this->buildQrSous(
                     $nom, $prenom, $programme->libelle, $site->libelle, $codeLPL
                 );
 
-                // ── 11. MAJ logement ──────────────────────────────────────
                 $logement->update([
                     'code_loge_lpl' => $codeLPL,
                     'flag'          => 1,
@@ -199,51 +258,52 @@ class LpaImport extends BaseImport
                     'user_id'       => Auth::id(),
                 ]);
 
-                // ── 12. Souscripteur ──────────────────────────────────────
                 $souscripteur = Souscripteur::create([
-                    'nom'               => $nom,
-                    'prenom'            => $prenom,
-                    'nom_arabe'         => $nom_ar,
-                    'prenom_arabe'      => $prenom_ar,
-                    'date_naissance'    => $date_naissance,
-                    'nin'               => $nin,
-                    'code_loge_lpl'     => $codeLPL,
-                    'qr_content_plain'  => $qrPlain,
-                    'qr_content_hashed' => $qrHashed,
-                    'qrcode'            => $qrCode,
-                    'user_id'           => Auth::id(),
+                    'nom'                      => $nom,
+                    'prenom'                   => $prenom,
+                    'date_naissance'           => $date_naissance,
+                    'nin'                      => $nin,
+                    'situation_familiale'      => $situationFam   ?: null,
+                    'lieu_naissance'           => $lieuNaissance  ?: null,
+                    'nom_pere'                 => $nomPere        ?: null,
+                    'prenom_pere'              => $prenomPere     ?: null,
+                    'nom_mere'                 => $nomMere        ?: null,
+                    'prenom_mere'              => $prenomMere     ?: null,
+                    'conjoint_nom'             => $conjointNom        ?: null,
+                    'conjoint_prenom'          => $conjointPrenom     ?: null,
+                    'conjoint_nin'             => $conjointNin        ?: null,
+                    'conjoint_date_naissance'  => $conjointDateNaiss  ?: null,
+                    'conjoint_lieu_naissance'  => $conjointLieuNaiss  ?: null,
+                    'conjoint_nom_pere'        => $conjointNomPere    ?: null,
+                    'conjoint_prenom_pere'     => $conjointPrenomPere ?: null,
+                    'conjoint_nom_mere'        => $conjointNomMere    ?: null,
+                    'conjoint_prenom_mere'     => $conjointPrenomMere ?: null,
+                    'code_loge_lpl'            => $codeLPL,
+                    'qr_content_plain'         => $qrPlain,
+                    'qr_content_hashed'        => $qrHashed,
+                    'qrcode'                   => $qrCode,
+                    'user_id'                  => Auth::id(),
                 ]);
 
-                // ── 13. Aide BNH ──────────────────────────────────────────
-                // ✅ type 'bnh' en base (accepte aussi 'cnl' pour rétrocompatibilité)
+                // ── Aide BNH ──────────────────────────────────────────────
                 $hasBnhAide    = false;
                 $montantBnhVal = 0.0;
 
-                if ($typeBnh !== '') {
-                    if (!in_array($typeBnh, ['bnh', 'cnl'])) {
-                        throw new \Exception(
-                            "Colonne AA (Type Aide) : valeur «{$typeBnh}» invalide. "
-                            . "Valeurs acceptées : 'bnh' (ou 'cnl' pour rétrocompatibilité)."
-                        );
-                    }
-                    if ($montantBnh <= 0) {
-                        throw new \Exception("Montant BNH obligatoire si aide BNH renseignée.");
-                    }
+                if ($montantBnh > 0) {
                     if ($numDecBnh === '') {
-                        throw new \Exception("Num. décision obligatoire pour l'aide BNH.");
+                        throw new \Exception("Num. décision BNH (col AH) obligatoire.");
                     }
                     if ($dateBnh === '') {
-                        throw new \Exception("Date obligatoire pour l'aide BNH.");
+                        throw new \Exception("Date BNH (col AI) obligatoire.");
                     }
 
-                    // ✅ N° convention : priorité colonne AC, fallback table sites
                     $numConvFinal = $numConvBnh !== ''
                         ? $numConvBnh
                         : ($site->num_convention_bnh ?? null);
 
                     if (!$numConvFinal) {
                         throw new \Exception(
-                            "Num. convention BNH manquant : renseignez la colonne AC "
+                            "Num. convention BNH manquant : renseignez la colonne AG "
                             . "ou configurez num_convention_bnh dans les paramètres du site."
                         );
                     }
@@ -263,41 +323,37 @@ class LpaImport extends BaseImport
                     $montantBnhVal = (float)$montantBnh;
                 }
 
-                // ── 14. Validation FNPOS (insertion différée au §16) ──────
+                // ── Validation FNPOS ──────────────────────────────────────
                 if ($hasFnpos) {
                     if ($numDecFnpos === '') {
                         throw new \Exception(
-                            "Num. décision FNPOS obligatoire si montant FNPOS renseigné."
+                            "Num. décision FNPOS (col BC) obligatoire si FNPOS renseigné."
                         );
                     }
                     if ($dateFnpos === '') {
                         throw new \Exception(
-                            "Date FNPOS obligatoire si montant FNPOS renseigné. "
-                            . "La date détermine à partir de quelle tranche elle est déduite."
+                            "Date FNPOS (col BD) obligatoire si FNPOS renseigné."
                         );
                     }
                 }
 
-                // ── 15. BNH obligatoire si OVs présents ──────────────────
                 if (!empty($ovBlocs) && !$hasBnhAide) {
                     throw new \Exception(
                         "Aide BNH obligatoire avant de générer un OV LPA. "
-                        . "Renseignez les colonnes AA→AE (type=bnh) sur cette même ligne."
+                        . "Renseignez les colonnes AF→AI sur cette même ligne."
                     );
                 }
 
-                // ── 16. Boucle OV avec déduction FNPOS pilotée par date ───
+                // ── Boucle OV ─────────────────────────────────────────────
                 ksort($ovBlocs);
 
                 $prixLogement = (float)$logement->prix;
-
-                // Le reste global démarre à Prix - BNH
                 $resteGlobal  = $prixLogement - $montantBnhVal;
                 $fnposInseree = false;
 
                 foreach ($ovBlocs as $numTranche => $bloc) {
 
-                    // ── Décider si FNPOS s'applique AVANT cette tranche ────
+                    // Déduction FNPOS avant cette tranche si applicable
                     if ($hasFnpos && !$fnposInseree) {
                         $datePaiTranche = $bloc['datePaiement'];
 
@@ -309,7 +365,6 @@ class LpaImport extends BaseImport
                             ? \DateTime::createFromFormat('Y-m-d', $datePaiTranche)
                             : null;
 
-                        // Appliquer si : pas de date OV, pas de date FNPOS, ou dateFNPOS ≤ dateOV
                         $appliquer = ($paiDateObj === null)
                             || ($fnposDateObj === null)
                             || ($fnposDateObj <= $paiDateObj);
@@ -318,83 +373,78 @@ class LpaImport extends BaseImport
                             Aide::create([
                                 'souscripteur_id' => $souscripteur->id,
                                 'type'            => 'fnpos',
-                                'montant'         => $montantFnpos, // ✅ montant réel du fichier
+                                'montant'         => self::FNPOS_MONTANT,
                                 'num_convention'  => null,
                                 'num_decision'    => $numDecFnpos,
                                 'date'            => $dateFnpos,
                                 'pieces_jointes'  => null,
                                 'user_id'         => Auth::id(),
                             ]);
-
-                            // ✅ Déduire la FNPOS réelle du reste global
-                            $resteGlobal  -= (float)$montantFnpos;
+                            $resteGlobal  -= self::FNPOS_MONTANT;
                             $fnposInseree  = true;
                         }
                     }
 
-                    // ── VSP : obligatoire OUI uniquement pour T2 ──────────
-                    $vsp = ($bloc['vspRaw'] === 'OUI');
-                    if ($numTranche === 2 && !$vsp) {
-                        throw new \Exception(
-                            "VSP obligatoire (OUI) pour la tranche 2 LPA. "
-                            . "Colonne AJ doit contenir 'OUI'."
-                        );
-                    }
-
-                    // ── Doublon tranche ────────────────────────────────────
                     if (Ov::where('souscripteur_id', $souscripteur->id)
-                           ->where('numero_tranche', $numTranche)->exists()) {
+                            ->where('numero_tranche', $numTranche)->exists()) {
                         throw new \Exception(
                             "Tranche {$numTranche} déjà enregistrée pour ce souscripteur."
                         );
                     }
 
-                    // ── Calcul montant ─────────────────────────────────────
-                    $pctFixe     = self::LPA_TRANCHES[$numTranche];
-                    $pourcentage = $bloc['pourcentage'] > 0 ? $bloc['pourcentage'] : $pctFixe;
-
-                    // ✅ Priorité : valeur saisie dans le fichier Excel,
-                    //              sinon calcul automatique (% × prix total)
-                    $montantPaye = $bloc['montantPaye'] > 0
-                        ? (float)$bloc['montantPaye']
-                        : round($prixLogement * $pourcentage / 100, 2);
-
-                    // ✅ Montant restant = reste global après cette tranche
+                    $pctFixe      = self::LPA_TRANCHES[$numTranche];
+                    $montantPaye  = (float)$bloc['montantPaye'];
                     $montantReste = max(0.0, $resteGlobal - $montantPaye);
 
-                    // ── QR + OV ────────────────────────────────────────────
                     [$qrOvPlain, $qrOvHashed, $qrOvCode] = $this->buildQr(
                         'LPA', $souscripteur, $montantPaye, $numTranche
                     );
 
-                    $ov = Ov::create([
+                    $ovId = DB::table('ordres_versement')->insertGetId([
                         'souscripteur_id'   => $souscripteur->id,
                         'montant_total'     => $prixLogement,
-                        'pourcentage'       => $pourcentage,
+                        'pourcentage'       => $pctFixe,
                         'montant_paye'      => $montantPaye,
                         'montant_restant'   => $montantReste,
                         'numero_tranche'    => $numTranche,
-                        'vsp'               => $vsp,
+                        'vsp'               => ($vsp && !Ov::where('souscripteur_id', $souscripteur->id)->where('vsp', 1)->exists()) ? 1 : 0,
+                        'type_ov'           => null,
                         'qr_content_plain'  => $qrOvPlain,
                         'qr_content_hashed' => $qrOvHashed,
                         'qrcode'            => $qrOvCode,
                         'user_id'           => Auth::id(),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
                     ]);
 
-                    $this->createPaiementIfPresent($arr, $bloc['paiOffset'], $ov->id);
+                    $ov = Ov::find($ovId);
 
-                    // ✅ Déduire le montant payé du reste global
+                    $datePaiement = $bloc['datePaiement'];
+                    $numRecu      = $bloc['numRecu'];
+
+                    if ($datePaiement !== '' && $datePaiement !== null) {
+                        Paiement::create([
+                            'ov_id'              => $ov->id,
+                            'num_recu'           => $numRecu          ?: null,
+                            'nom_agence'         => $nomAgence        ?: null,
+                            'num_agence'         => $numAgence        ?: null,
+                            'adresse_agence'     => $adresseAgence    ?: null, // ← NOUVEAU
+                            'num_compte_agence'  => $numCompteAgence  ?: null, // ← NOUVEAU
+                            'date_paiement'      => $datePaiement,
+                            'recu_pdf'           => null,
+                            'user_id'            => Auth::id(),
+                        ]);
+                    }
+
                     $resteGlobal -= $montantPaye;
                 }
 
-                // ── 17. FNPOS non déclenchée pendant les OVs ──────────────
-                // Insérée quand même pour être disponible pour les prochaines
-                // tranches générées manuellement depuis l'interface.
+                // ── FNPOS non déclenchée (aucun OV ou dates ultérieures) ──
                 if ($hasFnpos && !$fnposInseree) {
                     Aide::create([
                         'souscripteur_id' => $souscripteur->id,
                         'type'            => 'fnpos',
-                        'montant'         => $montantFnpos, // ✅ montant réel du fichier
+                        'montant'         => self::FNPOS_MONTANT,
                         'num_convention'  => null,
                         'num_decision'    => $numDecFnpos,
                         'date'            => $dateFnpos,
@@ -403,7 +453,6 @@ class LpaImport extends BaseImport
                     ]);
                 }
 
-                // ── 18. Flag logement ──────────────────────────────────────
                 if (!empty($ovBlocs)) {
                     $logement->update(['flag' => 2]);
                 }

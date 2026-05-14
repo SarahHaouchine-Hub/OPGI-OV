@@ -267,11 +267,18 @@
                                                     <i class="bi bi-bank me-1"></i> Payer
                                                 </a>
                                             @endif
-                                            <a href="{{ route('ov.pdf', Hashids::encode($ov->id)) }}"
-                                               target="_blank"
-                                               class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-printer me-1"></i> Imprimer OV
-                                            </a>
+                                            @if($ov->paiement)
+    <button class="btn btn-sm btn-outline-secondary" disabled
+            title="OV déjà payé — impression désactivée">
+        <i class="bi bi-printer me-1"></i> Imprimer OV
+    </button>
+@else
+    <a href="{{ route('ov.pdf', Hashids::encode($ov->id)) }}"
+       target="_blank"
+       class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i> Imprimer OV
+    </a>
+@endif
                                         </div>
                                     </div>
                                     @empty

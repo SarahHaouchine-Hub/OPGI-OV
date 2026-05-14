@@ -185,11 +185,12 @@ if ($creditBancaire !== null) {
             $ovT2Normal === null  // ← NOUVEAU : bloqué si T2 normale existe
         );
 
-        $montantAttestationAuto = null;
-        if ($aideFnpos && $ovsDone->where('type_ov', null)->count() >= 1) {
-            $montantT1 = (float)($ovsDone->firstWhere('numero_tranche', 1)->montant_paye ?? 0);
-            $montantAttestationAuto = max(0.0, ($prix2 - $montantT1) - $fnposMontant);
-        }
+$montantAttestationAuto = null;
+if ($ovsDone->where('type_ov', null)->count() >= 1) {
+    $montantT1 = (float)($ovsDone->firstWhere('numero_tranche', 1)->montant_paye ?? 0);
+    $fnposDeduit = $aideFnpos ? $fnposMontant : 0.0;
+    $montantAttestationAuto = max(0.0, ($prix2 - $montantT1) - $fnposDeduit);
+}
 
         return view('createOvLpa', compact(
             'souscripteur', 'prixLogement', 'aideBnh', 'aideFnpos',
@@ -360,20 +361,24 @@ if ($creditBancaire !== null) {
                 'LPA', $souscripteur, $montantAPayer, $prochaineTranche
             );
 
-            $ov = Ov::create([
-                'souscripteur_id'   => $souscripteur->id,
-                'montant_total'     => $prixLogement,
-                'pourcentage'       => $pourcentage,
-                'montant_paye'      => $montantAPayer,
-                'montant_restant'   => $montantRestant,
-                'numero_tranche'    => $prochaineTranche,
-                'vsp'               => $vsp,
-                  'type_ov'           => null,            // ← EXPLICITE : tranche normale
-                'qr_content_plain'  => $qrDataPlain,
-                'qr_content_hashed' => $qrDataHashed,
-                'qrcode'            => $qrcodeData,
-                'user_id'           => Auth::id(),
-            ]);
+       // Remplacer Ov::create([...]) par :
+$ovId = DB::table('ordres_versement')->insertGetId([
+    'souscripteur_id'   => $souscripteur->id,
+    'montant_total'     => $prixLogement,
+    'pourcentage'       => $pourcentage,
+    'montant_paye'      => $montantAPayer,
+    'montant_restant'   => $montantRestant,
+    'numero_tranche'    => $prochaineTranche,
+    'vsp'               => $vsp ? 1 : 0,
+    'type_ov'           => null,
+    'qr_content_plain'  => $qrDataPlain,
+    'qr_content_hashed' => $qrDataHashed,
+    'qrcode'            => $qrcodeData,
+    'user_id'           => Auth::id(),
+    'created_at'        => now(),
+    'updated_at'        => now(),
+]);
+$ov = Ov::find($ovId);
 
             Logement::where('code_loge_lpl', $souscripteur->code_loge_lpl)->update(['flag' => 2]);
             DB::commit();
@@ -544,13 +549,8 @@ if ($creditBancaire !== null) {
             );
         }
 
-        // ── Aide FNPOS obligatoire ─────────────────────────────────────────────
-        $aideFnpos = $souscripteur->aides->firstWhere('type', 'fnpos');
-        if (!$aideFnpos) {
-            return back()->with('error',
-                "L'aide FNPOS doit être enregistrée avant d'enregistrer un crédit bancaire."
-            );
-        }
+    $aideFnpos    = $souscripteur->aides->firstWhere('type', 'fnpos');
+$montantFnpos = $aideFnpos ? self::FNPOS_MONTANT_FIXE : 0.0;
 
         // ── Un seul crédit bancaire autorisé ───────────────────────────────────
         if ($souscripteur->creditBancaire) {
@@ -594,22 +594,24 @@ if ($creditBancaire !== null) {
         
         $prixLogement = (float) $souscripteur->logement->prix;
         $montantBnh   = (float) $aideBnh->montant;
-        $montantFnpos = self::FNPOS_MONTANT_FIXE;
+     
         $montantT1    = (float) $ovT1->montant_paye;
 
         // Calcul du reste à payer par crédit bancaire
-        $montantAttendu = $prixLogement - $montantBnh - $montantT1 - $montantFnpos;
+       
 
-        if ($montantAttendu <= 0) {
-            return back()->with('error',
-                'Le montant restant à payer est nul ou négatif. Aucun crédit bancaire nécessaire. '
-                . 'Calcul : (' . number_format($prixLogement, 2, ',', ' ') 
-                . ' − ' . number_format($montantBnh, 2, ',', ' ') 
-                . ') − ' . number_format($montantT1, 2, ',', ' ') 
-                . ' − ' . number_format($montantFnpos, 2, ',', ' ') 
-                . ' = ' . number_format($montantAttendu, 2, ',', ' ') . ' DA.'
-            );
-        }
+       $montantAttendu = $prixLogement - $montantBnh - $montantT1 - $montantFnpos;
+
+if ($montantAttendu <= 0) {
+    return back()->with('error',
+        'Le montant restant à payer est nul ou négatif. Aucun crédit bancaire nécessaire. '
+        . 'Calcul : (' . number_format($prixLogement, 2, ',', ' ')
+        . ' − ' . number_format($montantBnh, 2, ',', ' ')
+        . ') − ' . number_format($montantT1, 2, ',', ' ')
+        . ($montantFnpos > 0 ? ' − ' . number_format($montantFnpos, 2, ',', ' ') : '')
+        . ' = ' . number_format($montantAttendu, 2, ',', ' ') . ' DA.'
+    );
+}
 
         // ══════════════════════════════════════════════════════════════════════
         // ÉTAPE 3 : VALIDATION DES MONTANTS SAISIS
@@ -621,19 +623,19 @@ if ($creditBancaire !== null) {
         // ── Vérification : montant_attestation = montant attendu ───────────────
         $tolerance = 0.01; // Tolérance d'arrondi (1 centime)
         
-        if (abs($montantAttestation - $montantAttendu) > $tolerance) {
-            return back()->with('error',
-                '❌ Le montant de l\'attestation (' . number_format($montantAttestation, 2, ',', ' ') . ' DA) '
-                . 'ne correspond pas au montant attendu (' . number_format($montantAttendu, 2, ',', ' ') . ' DA). '
-                . '<br><br><strong>Formule de calcul :</strong><br>'
-                . '(Prix − BNH) − T1 − FNPOS<br>'
-                . '= (' . number_format($prixLogement, 2, ',', ' ')
-                . ' − ' . number_format($montantBnh, 2, ',', ' ')
-                . ') − ' . number_format($montantT1, 2, ',', ' ')
-                . ' − ' . number_format($montantFnpos, 2, ',', ' ')
-                . '<br>= <strong>' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong>'
-            )->withInput();
-        }
+   if (abs($montantAttestation - $montantAttendu) > $tolerance) {
+    return back()->with('error',
+        '❌ Le montant de l\'attestation (' . number_format($montantAttestation, 2, ',', ' ') . ' DA) '
+        . 'ne correspond pas au montant attendu (' . number_format($montantAttendu, 2, ',', ' ') . ' DA). '
+        . '<br><br><strong>Formule de calcul :</strong><br>'
+        . '(Prix − BNH) − T1' . ($montantFnpos > 0 ? ' − FNPOS' : '') . '<br>'
+        . '= (' . number_format($prixLogement, 2, ',', ' ')
+        . ' − ' . number_format($montantBnh, 2, ',', ' ')
+        . ') − ' . number_format($montantT1, 2, ',', ' ')
+        . ($montantFnpos > 0 ? ' − ' . number_format($montantFnpos, 2, ',', ' ') : '')
+        . '<br>= <strong>' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong>'
+    )->withInput();
+}
 
         // ── Vérification : montant_reel ≤ montant_attestation ──────────────────
         if ($montantReel > $montantAttestation) {
@@ -738,7 +740,7 @@ if ($creditBancaire !== null) {
                 . '• Prix logement : ' . number_format($prixLogement, 2, ',', ' ') . ' DA<br>'
                 . '• Aide BNH : −' . number_format($montantBnh, 2, ',', ' ') . ' DA<br>'
                 . '• T1 payée : −' . number_format($montantT1, 2, ',', ' ') . ' DA<br>'
-                . '• Aide FNPOS : −' . number_format($montantFnpos, 2, ',', ' ') . ' DA<br>'
+            . ($montantFnpos > 0 ? '• Aide FNPOS : −' . number_format($montantFnpos, 2, ',', ' ') . ' DA<br>' : '')
                 . '• <strong>Reste (crédit) : ' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong><br>'
                 . '• T2 (crédit réel) : ' . number_format($montantReel, 2, ',', ' ') . ' DA ✅ PAYÉE';
 
@@ -786,11 +788,14 @@ if ($creditBancaire !== null) {
     public function generatePDF($id)
     {
         $ov = Ov::with('souscripteur.logement')->findOrFail($id);
-
+   if ($ov->paiement) {
+        return redirect()->route('ov.index')
+            ->with('error', 'Cet ordre de versement a déjà été payé. L\'impression est désactivée.');
+    }
         $Arabic      = new Arabic();
         $republique  = $Arabic->utf8Glyphs("الجمهورية الجزائرية الديمقراطية الشعبية");
         $ministere   = $Arabic->utf8Glyphs("وزارة السكن والعمران والمدينة و التهيئة العمرانية");
-        $agence      = $Arabic->utf8Glyphs("الوكالة الوطنية لتحسين السكن وتطويره");
+        $agence      = $Arabic->utf8Glyphs("ديوان الترقية و التسبير العقاري للدار البيضاء");
         $logoAADL    = base64_encode(file_get_contents(public_path('images/AADL_logo.svg')));
         $algeria     = base64_encode(file_get_contents(public_path('images/algeria(1).svg')));
         $ordre       = $Arabic->utf8Glyphs("أمر بالدفع");

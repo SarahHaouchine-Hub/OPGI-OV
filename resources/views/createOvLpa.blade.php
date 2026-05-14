@@ -58,19 +58,15 @@
         // Vérifier si T2 normale existe déjà (pour masquer le bouton crédit)
         $ovT2NormaleExiste = $ovsDoneNormaux->where('numero_tranche', 2)->first() !== null;
 
-        // ── Calcul "dossier soldé" mode crédit ──────────────────────────────
-        // Complet = dernier OV complémentaire payé :
-        //   • diff = 0 → T2 est le dernier OV → payé automatiquement = toujours vrai si T2 existe
-        //   • diff > 0 → T3 est le dernier OV → complet seulement quand T3 payée
         $diffCreditCalc = $creditBancaire
             ? ($creditBancaire->montant_attestation - $creditBancaire->montant_reel)
             : 0;
 
         $dossierSoldeResume = $creditBancaire
-            && $ovCreditReel                             // T2 existe (payée auto)
+            && $ovCreditReel
             && (
-                $diffCreditCalc <= 0                     // diff=0 → T2 est le dernier → complet
-                || ($ovCreditDiff && $ovCreditDiff->paiement !== null)  // diff>0 → T3 payée
+                $diffCreditCalc <= 0
+                || ($ovCreditDiff && $ovCreditDiff->paiement !== null)
             );
     @endphp
 
@@ -165,6 +161,8 @@
                  SECTION 1 : Aides BNH / FNPOS
             ══════════════════════════════════════════════════════ --}}
             <div class="row mb-4">
+
+                {{-- ── BNH (gauche) ── --}}
                 <div class="col-md-6 mb-3">
                     @if($aideBnh)
                         <div class="card aide-card shadow-sm h-100">
@@ -210,6 +208,7 @@
                     @endif
                 </div>
 
+                {{-- ── FNPOS (droite) ── --}}
                 <div class="col-md-6 mb-3">
                     @if($aideFnpos)
                         <div class="card aide-card shadow-sm h-100">
@@ -255,6 +254,7 @@
                         </div>
                     @endif
                 </div>
+
             </div>
 
             {{-- ══════════════════════════════════════════════════════
@@ -322,7 +322,6 @@
                                             <i class="bi bi-bank me-1"></i>T2 Crédit Réel
                                         </span>
                                     </td>
-                                    {{-- Pas de % pour les OVs crédit --}}
                                     <td class="text-center text-muted">—</td>
                                     <td class="text-center fw-bold text-success">
                                         {{ number_format($ovCreditReel->montant_paye, 2, ',', ' ') }} DA
@@ -346,7 +345,6 @@
                                             <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence
                                         </span>
                                     </td>
-                                    {{-- Pas de % pour les OVs crédit --}}
                                     <td class="text-center text-muted">—</td>
                                     <td class="text-center fw-bold" style="color:#e65100;">
                                         {{ number_format($ovCreditDiff->montant_paye, 2, ',', ' ') }} DA
@@ -397,7 +395,7 @@
             @endif
 
             {{-- ══════════════════════════════════════════════════════
-                 SECTION 3 : Progression des 5 tranches (mode normal)
+                 SECTION 3 : Progression des tranches
             ══════════════════════════════════════════════════════ --}}
             @if(!$creditBancaire)
             <div class="card shadow-sm mb-4 border-0">
@@ -453,10 +451,7 @@
                 </div>
             </div>
             @else
-            {{-- ══════════════════════════════════════════════════════
-                 SECTION 3 (mode crédit) : Progression crédit bancaire
-                 Complet = T2 payée ET (diff=0 OU T3 payée)
-            ══════════════════════════════════════════════════════ --}}
+            {{-- SECTION 3 (mode crédit) --}}
             <div class="card shadow-sm mb-4 border-0">
                 <div class="card-header text-white" style="background-color: rgb(60 88 130);">
                     <h6 class="mb-0">
@@ -467,7 +462,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
 
-                        {{-- ── T1 ── --}}
+                        {{-- T1 --}}
                         <div class="text-center">
                             <span class="badge bg-success px-3 py-2" style="font-size:0.85rem;">
                                 <i class="bi bi-check-circle me-1"></i>
@@ -476,7 +471,7 @@
                         </div>
                         <div class="text-muted">→</div>
 
-                        {{-- ── T2 Crédit Réel ── --}}
+                        {{-- T2 Crédit Réel --}}
                         <div class="text-center">
                             @if($ovCreditReel)
                                 <span class="badge bg-success px-3 py-2" style="font-size:0.85rem;">
@@ -490,7 +485,7 @@
                             @endif
                         </div>
 
-                        {{-- ── T3 Différence (si diff > 0) ── --}}
+                        {{-- T3 Différence (si diff > 0) --}}
                         @if($diffCreditCalc > 0)
                             <div class="text-muted">→</div>
                             <div class="text-center">
@@ -514,10 +509,9 @@
                             </div>
                         @endif
 
-                        {{-- ── Statut global : Complet ou non ── --}}
+                        {{-- Statut global --}}
                         <div class="ms-auto">
                             @if($dossierSoldeResume)
-                                {{-- Complet uniquement si T2 payée + (diff=0 OU T3 payée) --}}
                                 <span class="badge bg-success px-3 py-2" style="font-size:0.9rem;">
                                     <i class="bi bi-check-all me-1"></i>
                                     <i class="bi bi-bank me-1"></i> Dossier Complet
@@ -528,7 +522,6 @@
                         </div>
                     </div>
 
-                    {{-- Résumé textuel sous la barre --}}
                     <div class="mt-3">
                         @if($dossierSoldeResume)
                             <div class="alert alert-success py-2 mb-0">
@@ -561,7 +554,6 @@
 
             {{-- ══════════════════════════════════════════════════════
                  SECTION 4 : Formulaire nouvelle tranche
-                 — MASQUÉ si crédit bancaire enregistré
             ══════════════════════════════════════════════════════ --}}
             @if(!$creditBancaire)
             <form action="{{ route('ov.store.lpa') }}" method="POST">
@@ -683,7 +675,6 @@
                 </div>
             </form>
             @else
-            {{-- Crédit enregistré : pas de formulaire tranche, juste bouton retour --}}
             <div class="text-center mt-2 mb-4">
                 <a href="{{ route('ov.index') }}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Retour à la liste
@@ -706,6 +697,7 @@
                     </div>
                     <div class="card-body">
                         @if($creditBancaire)
+                            {{-- Crédit déjà enregistré : affichage des infos --}}
                             <div class="row g-3">
                                 <div class="col-md-3 text-center">
                                     <div class="text-muted small fw-semibold mb-1">Montant Attestation</div>
@@ -777,30 +769,26 @@
                                     </div>
                                 @endif
                             </div>
+
                         @else
-                            @if($aideFnpos)
-                                <div class="text-center py-3">
-                                    <p class="text-muted mb-3">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        Aucun crédit bancaire enregistré. Si le souscripteur bénéficie d'un prêt bancaire, enregistrez-le ici.
-                                    </p>
-                                    <button type="button" class="btn btn-outline-secondary"
-                                            data-bs-toggle="modal" data-bs-target="#modalCredit">
-                                        <i class="bi bi-bank me-2"></i>
-                                        Enregistrer un Crédit Bancaire
-                                    </button>
-                                </div>
-                            @else
-                                <div class="text-center py-3">
-                                    <div class="alert alert-warning py-2 mb-0 d-inline-flex align-items-center gap-2">
-                                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                                        <span>
-                                            <strong>Aide FNPOS requise</strong> avant d'enregistrer un crédit bancaire.
-                                            Veuillez d'abord ajouter l'aide FNPOS ci-dessus.
-                                        </span>
+                            {{-- ✅ CORRIGÉ : bouton toujours visible, FNPOS optionnelle --}}
+                            <div class="text-center py-3">
+                                <p class="text-muted mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Aucun crédit bancaire enregistré. Si le souscripteur bénéficie d'un prêt bancaire, enregistrez-le ici.
+                                </p>
+                                @if(!$aideFnpos)
+                                    <div class="alert alert-info py-2 mb-3 d-inline-flex align-items-center gap-2">
+                                        <i class="bi bi-info-circle fs-5"></i>
+                                        <span>Aide FNPOS non enregistrée — elle ne sera pas déduite du montant crédit.</span>
                                     </div>
-                                </div>
-                            @endif
+                                @endif
+                                <button type="button" class="btn btn-outline-secondary"
+                                        data-bs-toggle="modal" data-bs-target="#modalCredit">
+                                    <i class="bi bi-bank me-2"></i>
+                                    Enregistrer un Crédit Bancaire
+                                </button>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -927,7 +915,7 @@
 </div>
 
 {{-- MODAL CRÉDIT BANCAIRE --}}
-@if($peutAfficherCredit && !$creditBancaire && $aideFnpos)
+@if($peutAfficherCredit && !$creditBancaire)
 <div class="modal fade" id="modalCredit" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -961,7 +949,7 @@
                             </div>
                             @if($montantAttestationAuto)
                                 <small class="text-muted">
-                                    = (Prix − BNH) − T1 − FNPOS
+                                    = (Prix − BNH) − T1{{ $aideFnpos ? ' − FNPOS' : '' }}
                                     = {{ number_format($montantAttestationAuto, 2, ',', ' ') }} DA
                                 </small>
                             @endif
