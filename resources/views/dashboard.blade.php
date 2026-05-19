@@ -340,12 +340,12 @@
         <div class="sc-sub">Avec décision BNH</div>
     </div>
     <div class="stat-card sc-sky" id="cardstat_ov_paye">
-        <div class="sc-label"><i class="bi bi-check2-circle me-1"></i>OV Payées</div>
+        <div class="sc-label"><i class="bi bi-check2-circle me-1"></i>OV Payés</div>
         <div class="sc-value">{{ $ovPayees }}</div>
         <div class="sc-sub">Ordres de virement réglés</div>
     </div>
     <div class="stat-card sc-amber" id="cardstat_ov_npaye">
-        <div class="sc-label"><i class="bi bi-hourglass-split me-1"></i>OV Non payées</div>
+        <div class="sc-label"><i class="bi bi-hourglass-split me-1"></i>OV Non payés</div>
         <div class="sc-value">{{ $ovNonPayees }}</div>
         <div class="sc-sub">En attente</div>
     </div>
@@ -716,7 +716,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><i class="bi bi-building me-1"></i>Nom de l'agence</label>
-                            <input type="text" name="nom_agence" class="form-control" placeholder="Ex : Agence El Djazair">
+                            <input type="text" name="nom_agence" class="form-control" placeholder="Ex : BNH">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><i class="bi bi-hash me-1"></i>N° Agence</label>

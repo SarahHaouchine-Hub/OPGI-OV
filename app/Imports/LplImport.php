@@ -75,7 +75,7 @@ class LplImport extends BaseImport
                 ));
 
                 // Vérification programme
-                if (strtoupper(trim($programmeVal)) !== 'LPL PROMOTIONNEL') {
+                if (strtoupper(trim($programmeVal)) !== 'PROMOTIONNEL') {
                     throw new \Exception(
                         "Programme invalide : «{$programmeVal}». Ce fichier accepte uniquement «LPL Promotionnel»."
                     );

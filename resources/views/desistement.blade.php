@@ -97,7 +97,7 @@
                     <i class="bi bi-funnel-fill me-2"></i> Filtres de recherche
                 </h4>
                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalDesistement">
-                    <i class="bi bi-archive-fill me-1"></i> Liste des désistements
+                    <i class="bi bi-archive-fill me-1"></i> Liste des remplacements
                 </button>
             </div>
 

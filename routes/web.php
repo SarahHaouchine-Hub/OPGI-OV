@@ -88,7 +88,7 @@ Route::middleware(['auth', 'decode.hashids'])->group(function () {
         Route::get('/sites/{wilayaId}',            [SiteController::class, 'sitesByWilaya']);
         Route::get('/logements-site/{siteId}',     [DashboardController::class, 'logementsBySite'])->name('api.logements.site');
     });
-
+Route::get('/ov/{id}/cheque', [OvController::class, 'generateCheque'])->name('ov.cheque');
     // ── API Cascade souscripteur ──────────────────────────────────────
     Route::prefix('api/souscripteur')->group(function () {
         Route::get('/programmes-by-wilaya/{wilayaId}',             [SouscripteurController::class, 'programmesByWilaya']);

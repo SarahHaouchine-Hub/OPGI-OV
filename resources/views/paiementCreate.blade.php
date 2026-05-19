@@ -61,21 +61,30 @@
                         </div>
 
                         <div class="row g-3">
-                            <div class="col-md-8">
-                                <label class="form-label-custom">Nom de l'agence</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-bank"></i></span>
-                                    <input type="text" name="nom_agence" class="form-control" required placeholder="Agence de versement">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label-custom">N° de l'agence</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-pin-map"></i></span>
-                                    <input type="text" name="num_agence" class="form-control" required placeholder="Code agence">
-                                </div>
-                            </div>
-                        </div>
+    <div class="col-md-8">
+        <label class="form-label-custom">Nom de l'agence</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-bank"></i></span>
+            <input type="text"
+                   class="form-control bg-light text-muted fst-italic"
+                   value="{{ $nomAgence ?: '—' }}"
+                   disabled>
+        </div>
+        <small class="text-muted mt-1 d-block">
+            <i class="bi bi-lock-fill me-1"></i>Rempli automatiquement depuis le site
+        </small>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label-custom">N° de l'agence</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-pin-map"></i></span>
+            <input type="text"
+                   class="form-control bg-light text-muted fst-italic"
+                   value="{{ $numAgence ?: '—' }}"
+                   disabled>
+        </div>
+    </div>
+</div>
                     </div>
                 </div>
 

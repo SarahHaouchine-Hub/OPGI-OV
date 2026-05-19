@@ -38,7 +38,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('desistement') ? 'active' : '' }}" 
                        href="{{ route('desistement') }}">
-                        <i class="bi bi-person-x-fill"></i> Désistement
+<i class="bi bi-arrow-left-right"></i> Remplacement
                     </a>
                 </li>
             </ul>

@@ -523,7 +523,7 @@
                                     <div class="mb-3">
                                         <span class="badge px-3 py-2 fs-6 fw-bold"
                                               style="background-color:#1E3C72;color:#fff;border-radius:8px;">
-                                            LPL Promotionnel
+                                             Promotionnel
                                         </span>
                                     </div>
                                     <p class="text-muted small flex-grow-1">
@@ -531,9 +531,9 @@
                                         Pourcentage saisi manuellement dans l'OV.<br>
                                         Pas d'aide BNH/FNPOS dans ce flux.
                                     </p>
-                                    <a href="{{ asset('downloads/Import_LPL_Promotionnel.xlsx') }}"
+                                    <a href="{{ asset('downloads/Import_Promotionnel.xlsx') }}"
                                        class="btn btn-outline-primary btn-sm mb-3">
-                                        <i class="bi bi-download me-1"></i> Télécharger le modèle LPL
+                                        <i class="bi bi-download me-1"></i> Télécharger le modèle Promotionnel
                                     </a>
                                     <form action="{{ route('souscripteur.import.lpl') }}" method="POST"
                                           enctype="multipart/form-data">
@@ -545,7 +545,7 @@
                                         </div>
                                         <button type="submit" class="btn w-100 text-white fw-bold"
                                                 style="background:linear-gradient(45deg,#1E3C72,#2A5298);border-radius:8px;">
-                                            <i class="bi bi-upload me-1"></i> Importer LPL
+                                            <i class="bi bi-upload me-1"></i> Importer Promotionnel
                                         </button>
                                     </form>
                                 </div>
@@ -627,19 +627,31 @@
                         </div>
 
                     </div>{{-- /row --}}
-
-                    <div class="mt-4 p-3 rounded" style="background:#f8f9fa;border-left:4px solid #dee2e6;">
-                        <p class="mb-1 small text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            <strong>Structure commune aux 3 fichiers (17 colonnes, données à partir de la ligne 9) :</strong><br>
-                            <code>Nom FR | Prénom FR | Nom AR | Prénom AR | Date naissance | NIN | Wilaya | Programme |
-                                  Projet | Commune | N° Bâtiment | N° Étage | N° Porte | N° Lot | Surface | Typologie | Prix</code>
-                        </p>
-                        <p class="mb-0 small text-danger">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Formater la colonne NIN en <strong>TEXTE</strong> avant la saisie pour éviter la notation scientifique.
-                        </p>
-                    </div>
+<div class="mt-4">
+    <div class="d-flex gap-3 align-items-start p-3 rounded mb-2" style="background:#eef4ff;border:0.5px solid #b5d4f4;">
+        <i class="bi bi-table text-primary fs-5 flex-shrink-0 mt-1"></i>
+        <div>
+            <p class="mb-1 small fw-bold text-primary">Structure du fichier </p>
+            <p class="mb-0 small text-muted">
+                <code>Nom FR | Prénom FR  Date naissance | NIN | Wilaya | Programme | Projet | Commune | N° Bâtiment | N° Étage | N° Porte | N° Lot | Surface | Typologie | Prix...</code>
+            </p>
+        </div>
+    </div>
+    <div class="d-flex gap-3 align-items-start p-3 rounded mb-2" style="background:#eaf3de;border:0.5px solid #c0dd97;">
+        <i class="bi bi-fonts text-success fs-5 flex-shrink-0 mt-1"></i>
+        <div>
+            <p class="mb-1 small fw-bold text-success">Formater la colonne NIN en <code>TEXTE</code> avant la saisie</p>
+            <p class="mb-0 small text-muted">Évite la notation scientifique (ex : <code>1.23E+17</code>) qui tronque le numéro d'identification.</p>
+        </div>
+    </div>
+    <div class="d-flex gap-3 align-items-start p-3 rounded" style="background:#fff8e1;border:0.5px solid #fac775;">
+        <i class="bi bi-download text-warning fs-5 flex-shrink-0 mt-1"></i>
+        <div>
+            <p class="mb-1 small fw-bold" style="color:#b7791f;">Utiliser impérativement le modèle fourni pour chaque type</p>
+            <p class="mb-0 small text-muted">Télécharger le fichier modèle correspondant (<code>Promotionnel</code>, <code>LSP</code> ou <code>LPA</code>) — ne pas créer un nouveau fichier depuis zéro.</p>
+        </div>
+    </div>
+</div>
 
                 </div>{{-- /tab-pane import --}}
 
