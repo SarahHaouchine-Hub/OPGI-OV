@@ -244,17 +244,20 @@ class OvController extends Controller
                 'LPL', $souscripteur, $montantAPayer
             );
 
-            $ov = Ov::create([
-                'souscripteur_id' => $souscripteur->id,
-                'montant_total' => $total,
-                'pourcentage' => $pourcentage,
-                'montant_paye' => $montantAPayer,
-                'montant_restant' => $nouveauReste,
-                'qr_content_plain' => $qrDataPlain,
-                'qr_content_hashed' => $qrDataHashed,
-                'qrcode' => $qrcodeData,
-                'user_id' => Auth::id(),
-            ]);
+         // APRÈS :
+$ov = Ov::create([
+    'souscripteur_id' => $souscripteur->id,
+    'montant_total'   => $total,
+    'pourcentage'     => $pourcentage,
+    'montant_paye'    => $montantAPayer,
+    'montant_restant' => $nouveauReste,
+    'numero_tranche'  => $souscripteur->ovs()->count() + 1, // ← AJOUT
+    'qr_content_plain'   => $qrDataPlain,
+    'qr_content_hashed'  => $qrDataHashed,
+    'qrcode'          => $qrcodeData,
+    'user_id'         => Auth::id(),
+]);
+ 
 
             Logement::where('code_loge_lpl', $request->code_loge)->update(['flag' => 2]);
             DB::commit();
@@ -927,8 +930,9 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
     // ── Logos en base64 ──────────────────────────────────────────────────
     // images/OPGI.jpg       = logo OPGI (affiché à droite dans l'en-tête)
     // images/1203.webp      = emblème République (affiché à gauche)
-    $logoOpgiPath = public_path('images/OPGI.jpg');
     $logoRepPath  = public_path('images/1203.webp');
+        $logoOpgiPath = public_path('images/last.png');
+
 
     $logoOpgiB64 = file_exists($logoOpgiPath)
         ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoOpgiPath))
@@ -985,11 +989,11 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
         'dar_beida_ar'      => $Arabic->utf8Glyphs('الدار البيضاء'),
     ];
 
-    return Pdf::loadView('ordre_versement_lpl_pdf', $data)
-        // Format compact identique au gabarit LPA : 419 × 630 pt
-        // [x_origin, y_origin, width_pt, height_pt]
-        ->setPaper([0, 0, 419.53, 630], 'portrait')
-        ->stream('OV_LPL_' . $ov->id . '.pdf');
+  return Pdf::loadView('ordre_versement_lpl_pdf', $data)
+            // On réduit la hauteur de la page (ici 230 au lieu de 297.64 pour correspondre au nouveau design compact)
+            // Format : [X, Y, Largeur, Hauteur]
+            ->setPaper([0, 0, 419.53, 230], 'portrait')
+            ->stream('OV_LPL_' . $ov->id . '.pdf');
 }
     // =========================================================================
     // HELPER — Libellés de tranche (FR)
@@ -1107,34 +1111,36 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
         }
         return "مبلغ كبير جدا";
     }
-    private function pdfLsp(Ov $ov): \Illuminate\Http\Response
+  private function pdfLsp(Ov $ov): \Illuminate\Http\Response
 {
     $Arabic   = new Arabic();
     $tranche  = $this->trancheInfo($ov->numero_tranche);
     $site     = $ov->souscripteur->logement->site;
     $logement = $ov->souscripteur->logement;
  
-    // ── Logos ────────────────────────────────────────────────────────────
-    $logoOpgiPath = public_path('images/OPGI.jpg');
+    // ── Logos — alignés sur pdfLpl() ─────────────────────────────────────
     $logoRepPath  = public_path('images/1203.webp');
+    $logoOpgiPath = public_path('images/last.png');   // ← unifié (était OPGI.jpg)
+ 
+    $logoRepB64  = file_exists($logoRepPath)
+        ? 'data:image/webp;base64,' . base64_encode(file_get_contents($logoRepPath))
+        : '';
  
     $logoOpgiB64 = file_exists($logoOpgiPath)
-        ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoOpgiPath))
-        : '';
-    $logoRepB64  = file_exists($logoRepPath)
-        ? 'data:image/webp;base64,'  . base64_encode(file_get_contents($logoRepPath))
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoOpgiPath))  // ← png
         : '';
  
-    // ── Label tranche ────────────────────────────────────────────────────
+    // ── Label tranche ─────────────────────────────────────────────────────
     $ordinals = [1=>'1ÈRE',2=>'2ÈME',3=>'3ÈME',4=>'4ÈME',5=>'5ÈME'];
     $num      = $ov->numero_tranche ?? 1;
     $ordinal  = $ordinals[$num] ?? ($num . 'ÈME');
     $tLabel   = $ordinal . ' TRANCHE';
  
-    // ── Totaux aides ─────────────────────────────────────────────────────
-    $aideBnh   = $ov->souscripteur->aides->firstWhere('type', 'bnh');
-    $aideFnpos = $ov->souscripteur->aides->firstWhere('type', 'fnpos');
-    $totalAides = (float)($aideBnh->montant ?? 0) + (float)($aideFnpos ? self::FNPOS_MONTANT_FIXE : 0);
+    // ── Totaux aides ──────────────────────────────────────────────────────
+    $aideBnh    = $ov->souscripteur->aides->firstWhere('type', 'bnh');
+    $aideFnpos  = $ov->souscripteur->aides->firstWhere('type', 'fnpos');
+    $totalAides = (float)($aideBnh->montant ?? 0)
+                + (float)($aideFnpos ? self::FNPOS_MONTANT_FIXE : 0);
  
     $data = [
         'ov'                 => $ov,
@@ -1165,12 +1171,12 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
         'montantEnLettresAr' => $this->montantEnLettresArabe($ov->montant_paye),
  
         // Logos
-        'logoOpgiB64'        => $logoOpgiB64,
         'logoRepB64'         => $logoRepB64,
+        'logoOpgiB64'        => $logoOpgiB64,
  
         // Infos banque / site
         'siteLibelle'        => $site->libelle ?? ($logement->programme->libelle ?? '—'),
-        'ribLpl'             => $site->rib        ?? '—',
+        'ribLsp'             => $site->rib        ?? '—',
         'banqueNom'          => $site->banque_nom ?? ($site->nom_agence ?? '—'),
  
         // Textes arabes (ArPHP)
@@ -1182,7 +1188,7 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
     ];
  
     return Pdf::loadView('ordre_versement_lsp_pdf', $data)
-        ->setPaper([0, 0, 419.53, 630], 'portrait')
+        ->setPaper([0, 0, 419.53, 230], 'portrait')  // ← même format que LPA/LPL
         ->stream('OV_LSP_' . $ov->id . '.pdf');
-}
+}  
 }

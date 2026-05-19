@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 {{--
     ═══════════════════════════════════════════════════
-    ORDRE DE VERSEMENT — LPL | OPGI Dar El Beida
-    Style  : Minimaliste & Épuré (Thème Bleu LPL)
-    Format : setPaper([0, 0, 419.53, 630], 'portrait')
+    ORDRE DE VERSEMENT — LSP | OPGI Dar El Beida
+    Style  : Minimaliste & Épuré (Thème Vert LSP)
+    Format : setPaper([0, 0, 419.53, 230], 'portrait')
     ═══════════════════════════════════════════════════
 --}}
 <style>
@@ -26,17 +26,17 @@ html, body {
     overflow: hidden;
     font-family: 'DejaVu Sans', Arial, sans-serif;
     font-size: 5pt;
-    color: #0b1a30;
-    background: #f0f6fa;
+    color: #0d1f0f;
+    background: #f1f8f2;
 }
 
 /* ── CADRE PRINCIPAL ─────────────────────────────── */
 .page {
     width: 100%;
-    border: 1pt solid #5b9bd5;
+    border: 1pt solid #4caf50;
     position: relative;
     overflow: hidden;
-    background: #f0f6fa;
+    background: #f1f8f2;
     box-sizing: border-box;
     padding-bottom: 2mm;
 }
@@ -47,7 +47,7 @@ html, body {
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     font-size: 90pt; font-weight: bold;
-    color: #2b5797; opacity: 0.04;
+    color: #1b5e20; opacity: 0.04;
     white-space: nowrap; pointer-events: none;
     z-index: 1000;
 }
@@ -62,7 +62,7 @@ html, body {
 /* ══ EN-TÊTE ════════════════════════════════════════ */
 .hdr {
     display: table; width: 100%; border-collapse: collapse;
-    border-bottom: 0.5pt solid #8faadc;
+    border-bottom: 0.5pt solid #81c784;
     padding-bottom: 2pt; margin-bottom: 2pt;
     height: 9mm;
 }
@@ -76,22 +76,22 @@ html, body {
     display: table-cell; width: 41%;
     vertical-align: middle; padding-left: 3pt;
     font-size: 4pt; font-weight: bold;
-    line-height: 1.5; color: #1d2a44;
+    line-height: 1.5; color: #1a3a1c;
 }
-.hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #16365c; margin-top: 0.5pt; }
+.hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #145216; margin-top: 0.5pt; }
 
 .hdr-ar {
     display: table-cell; width: 41%;
     vertical-align: middle; padding-right: 3pt;
     font-size: 4pt; font-weight: bold;
-    line-height: 1.5; text-align: right; direction: rtl; color: #1d2a44;
+    line-height: 1.5; text-align: right; direction: rtl; color: #1a3a1c;
 }
-.hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #16365c; margin-top: 0.5pt; }
+.hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #145216; margin-top: 0.5pt; }
 
 /* ══ BANDEAU ════════════════════════════════════════ */
 .banner {
     display: table; width: 100%; border-collapse: collapse;
-    background: linear-gradient(180deg, #8faadc 0%, #41719c 100%);
+    background: linear-gradient(180deg, #81c784 0%, #388e3c 100%);
     height: 7mm; margin-bottom: 2pt;
     border-radius: 2pt;
 }
@@ -100,8 +100,8 @@ html, body {
     vertical-align: middle; text-align: center;
     padding: 0.5pt 3pt;
 }
-.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #0b1a30; line-height: 1; }
-.ban-left .t-suf { font-size: 4.5pt; font-weight: bold; color: #1d2a44; }
+.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #0d1f0f; line-height: 1; }
+.ban-left .t-suf { font-size: 4.5pt; font-weight: bold; color: #1a3a1c; }
 
 .ban-center {
     display: table-cell; width: 60%;
@@ -111,22 +111,22 @@ html, body {
 .ban-center .prog-lbl {
     font-size: 5.5pt;
     font-weight: bold;
-    color: #0b1a30;
+    color: #0d1f0f;
     text-transform: uppercase;
     letter-spacing: 0.5pt;
     margin-bottom: 1pt;
 }
 .ban-center .ov-title {
     font-size: 7.5pt; font-weight: bold;
-    color: #8faadc; text-transform: uppercase; letter-spacing: 1.5pt;
+    color: #81c784; text-transform: uppercase; letter-spacing: 1.5pt;
 }
 
 .ban-right {
     display: table-cell; width: 20%;
     vertical-align: middle; text-align: center; padding: 0.5pt 3pt;
 }
-.ban-right .ref-lbl { font-size: 3.5pt; color: #1d2a44; text-transform: uppercase; }
-.ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #0b1a30; font-family: 'DejaVu Sans Mono', monospace; }
+.ban-right .ref-lbl { font-size: 3.5pt; color: #1a3a1c; text-transform: uppercase; }
+.ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #0d1f0f; font-family: 'DejaVu Sans Mono', monospace; }
 
 /* ══ IDENTITÉ ═══════════════════════════════════════ */
 .id-row {
@@ -135,19 +135,19 @@ html, body {
 }
 .id-left  { display: table-cell; vertical-align: bottom; }
 .id-right { display: table-cell; vertical-align: bottom; text-align: right; white-space: nowrap; }
-.id-lbl { font-size: 3.8pt; color: #2f5597; text-transform: uppercase; letter-spacing: 0.3pt; }
+.id-lbl { font-size: 3.8pt; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.3pt; }
 .id-val {
-    font-size: 7pt; font-weight: bold; color: #0b1a30;
+    font-size: 7pt; font-weight: bold; color: #0d1f0f;
     text-transform: uppercase;
-    border-bottom: 0.5pt solid #5b9bd5;
+    border-bottom: 0.5pt solid #4caf50;
     padding-bottom: 0.5pt; display: inline-block; min-width: 65mm;
 }
-.nin-lbl { font-size: 3.5pt; color: #2f5597; text-transform: uppercase; }
-.nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0b1a30; letter-spacing: 0.5pt; }
+.nin-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; }
+.nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0d1f0f; letter-spacing: 0.5pt; }
 
 /* ══ LOGEMENT ═══════════════════════════════════════ */
 .log-row {
-    font-size: 4.5pt; color: #1d2a44;
+    font-size: 4.5pt; color: #1a3a1c;
     padding-bottom: 2pt; margin-bottom: 2pt;
 }
 
@@ -164,51 +164,62 @@ html, body {
     vertical-align: top; padding-left: 2pt;
 }
 
-.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #0b1a30; }
-.payez-invite strong { color: #16365c; }
+.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #0d1f0f; }
+.payez-invite strong { color: #145216; }
 
-.prix-cession-row { font-size: 4.3pt; color: #1d2a44; margin: 2pt 0 1pt; }
-.prix-cession-row strong { color: #0b1a30; }
+.prix-cession-row { font-size: 4.3pt; color: #1a3a1c; margin: 2pt 0 1pt; }
+.prix-cession-row strong { color: #0d1f0f; }
 
-.pay-info-lbl { font-size: 3.5pt; color: #2f5597; text-transform: uppercase; margin-bottom: 0.2pt; }
-.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #0b1a30; margin-bottom: 1.5pt; }
+.pay-info-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; margin-bottom: 0.2pt; }
+.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #0d1f0f; margin-bottom: 1.5pt; }
+
+/* Aides */
+.aide-row {
+    font-size: 4pt; color: #1a3a1c;
+    margin-top: 1.5pt;
+    padding: 1.5pt 2pt;
+    background: #e8f5e9;
+    border-radius: 2pt;
+    border-left: 1.5pt solid #4caf50;
+}
+.aide-row strong { color: #145216; }
 
 /* Cadre montant */
 .montant-frame {
-    background: #e9f0f8;
+    background: #e8f5e9;
     padding: 2pt 3pt;
     text-align: right;
     margin-bottom: 1pt;
     border-radius: 2pt;
-    border: 0.5pt solid #8faadc;
+    border: 0.5pt solid #81c784;
 }
-.montant-lbl { font-size: 3.5pt; color: #2f5597; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
-.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #0b1a30; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
-.montant-devise { font-size: 4.5pt; font-weight: bold; color: #2b5797; margin-top: 0.5pt; }
+.montant-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
+.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #0d1f0f; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
+.montant-devise { font-size: 4.5pt; font-weight: bold; color: #1b5e20; margin-top: 0.5pt; }
 
 /* Lettres */
 .letters-row {
     padding: 2pt;
     margin-top: 1pt;
     font-size: 4pt; font-weight: bold; font-style: italic;
-    color: #1d2a44; background: #e2eef9;
+    color: #1a3a1c; background: #dcedc8;
     border-radius: 2pt;
     text-align: right;
 }
 
 .pct-row {
     font-size: 4pt;
-    color: #1d2a44;
+    color: #1a3a1c;
     text-align: right;
     margin-top: 3pt;
 }
-.pct-row strong { color: #16365c; }
+.pct-row strong { color: #145216; }
 
 /* ══ PIED ════════════════════════════════════════════ */
 .footer-bar {
     position: relative;
     margin-top: 2mm;
-    background: linear-gradient(180deg, #8faadc 0%, #41719c 100%);
+    background: linear-gradient(180deg, #81c784 0%, #388e3c 100%);
     border-radius: 2pt;
 }
 .footer-inner {
@@ -218,7 +229,7 @@ html, body {
 .ft-delai {
     display: table-cell; width: 100%;
     vertical-align: middle; padding: 1.5pt 5pt;
-    font-size: 4.8pt; color: #8faadc; text-align: center;
+    font-size: 4.8pt; color: #81c784; text-align: center;
 }
 .ft-qr {
     display: table-cell; width: 15%;
@@ -235,14 +246,14 @@ html, body {
     text-align: center;
 }
 .note {
-    display: block; font-size: 3pt; line-height: 1.3; color: #16365c; margin-bottom: 2pt;
+    display: block; font-size: 3pt; line-height: 1.3; color: #145216; margin-bottom: 2pt;
 }
 .note::before { content: "✦ "; }
 .contact-info {
     font-size: 2.8pt;
-    color: #1d2a44;
+    color: #1a3a1c;
     line-height: 1.4;
-    border-top: 0.5pt solid #8faadc;
+    border-top: 0.5pt solid #81c784;
     padding-top: 1.5pt;
 }
 </style>
@@ -261,10 +272,10 @@ html, body {
                     <img src="{{ $logoRepB64 }}" alt="Rep">
                 @else
                     <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="27" stroke="#2b5797" stroke-width="2" fill="none"/>
-                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2b5797" stroke-width="1.5" fill="none"/>
-                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2b5797" stroke-width="1.5"/>
-                        <polygon points="30,6 33,14 27,14" fill="#5b9bd5"/>
+                        <circle cx="30" cy="30" r="27" stroke="#2e7d32" stroke-width="2" fill="none"/>
+                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2e7d32" stroke-width="1.5" fill="none"/>
+                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2e7d32" stroke-width="1.5"/>
+                        <polygon points="30,6 33,14 27,14" fill="#4caf50"/>
                     </svg>
                 @endif
             </div>
@@ -280,12 +291,12 @@ html, body {
             </div>
             <div class="hdr-logo-opgi">
                 @if(!empty($logoOpgiB64))
-                    <img src="{{  $logoOpgiB64}}" alt="OPGI">
+                    <img src="{{ $logoOpgiB64 }}" alt="OPGI">
                 @else
                     <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2b5797" stroke-width="2" fill="#e9f0f8"/>
-                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#5b9bd5"/>
-                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2b5797" font-weight="bold">OPGI</text>
+                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2e7d32" stroke-width="2" fill="#e8f5e9"/>
+                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#4caf50"/>
+                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2e7d32" font-weight="bold">OPGI</text>
                     </svg>
                 @endif
             </div>
@@ -303,7 +314,7 @@ html, body {
                 <div class="t-suf">{{ $suffixes[$num] ?? 'ème Tranche' }}</div>
             </div>
             <div class="ban-center">
-                <div class="prog-lbl">Programme :PROMOTIONNEL</div>
+                <div class="prog-lbl">Programme : {{ $typeProgramme }}</div>
                 <div class="ov-title">Ordre de Versement</div>
             </div>
             <div class="ban-right">
@@ -335,9 +346,14 @@ html, body {
             $mChiffres   = number_format((float)$ov->montant_paye, 2, ',', $nbsp);
             $prixCession = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
             $nomBanque   = $banqueNom ?? $site->banque_nom ?? $site->nom_agence ?? '—';
-            $numRib      = $ribLpl ?? $site->rib ?? '—';
+            $numRib      = $ribLsp ?? $site->rib ?? '—';
             $titulaire   = $site->titulaire ?? 'O.P.G.I. Dar El Beida';
-            $boxNumAff   = $boxNum ?? $logement->box_num ?? null;
+            $nbsp        = "\xc2\xa0";
+
+            // Aides LSP
+            $montantBnh   = (float)($aideBnh->montant ?? 0);
+            $montantFnpos = $aideFnpos ? 500000.00 : 0.0;
+            $prixNet      = number_format(max(0, ($logement->prix ?? 0) - $totalAides), 2, ',', $nbsp);
         @endphp
         <div class="log-row">
             Bât.&nbsp;<strong>{{ $logement->num_batiment ?? '—' }}</strong>
@@ -346,9 +362,6 @@ html, body {
             &nbsp;—&nbsp;Lot EDD&nbsp;<strong>{{ $logement->num_lot ?? '—' }}</strong>
             &nbsp;—&nbsp;<strong>{{ $logement->type_logement ?? $logement->typologie ?? '—' }}</strong>
             &nbsp;({{ $logement->superficie ?? $logement->surface ?? '—' }}&nbsp;m²)
-            @if($boxNumAff)
-                &nbsp;—&nbsp;Box N°&nbsp;<strong>{{ $boxNumAff }}</strong>
-            @endif
             &nbsp;—&nbsp;Site :&nbsp;<strong>{{ $siteLibelle ?? $site->libelle ?? $prog->libelle ?? '—' }}</strong>
         </div>
 
@@ -360,12 +373,29 @@ html, body {
                     Vous êtes invité(e) à effectuer le versement de la
                     <strong>{{ $trancheLabelFr }} tranche</strong>
                     du prix de cession du logement
-                    <strong>(PROMOTIONNEL)</strong>
+                    <strong>({{ $typeProgramme }})</strong>
                     dans un délai de <strong>30 jours</strong>.
                 </div>
                 <div class="prix-cession-row">
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
+
+                {{-- Aides déduites --}}
+                @if($aideBnh)
+                    <div class="aide-row">
+                        Aide BNH :&nbsp;<strong>−&nbsp;{{ number_format($montantBnh, 2, ',', "\xc2\xa0") }}&nbsp;DA</strong>
+                    </div>
+                @endif
+                @if($aideFnpos)
+                    <div class="aide-row">
+                        Aide FNPOS :&nbsp;<strong>−&nbsp;500&nbsp;000,00&nbsp;DA</strong>
+                    </div>
+                @endif
+                @if($aideBnh || $aideFnpos)
+                    <div class="aide-row" style="margin-top: 1pt; background: #c8e6c9;">
+                        Prix net à payer :&nbsp;<strong>{!! $prixNet !!}&nbsp;DA</strong>
+                    </div>
+                @endif
 
                 <div class="pay-info-lbl" style="margin-top: 4pt;">Banque / Agence destinataire</div>
                 <div class="pay-info-val">
