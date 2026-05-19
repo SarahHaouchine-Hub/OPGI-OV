@@ -883,7 +883,7 @@ public function storePaiement(Request $request)
             )),
 
             // Dates
-            'datePdf'           => now()->format('d/m/Y H:i'),
+          'datePdf' => now()->format('d/m/Y'),
 
             // Utilisateur
             'userPrinted'       => Auth::user()->name ?? 'USER',
