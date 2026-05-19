@@ -973,8 +973,8 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
 
         // Infos banque / site (récupérées ici pour éviter tout accès nul dans la vue)
         'siteLibelle'       => $site->libelle ?? ($logement->programme->libelle ?? '—'),
-        'ribLpl'            => $site->rib        ?? '—',
-        'banqueNom'         => $site->banque_nom ?? ($site->nom_agence ?? '—'),
+ 'ribLpl'    => $site->num_compte_agence ?? '—',
+'banqueNom' => $site->nom_agence        ?? '—',
 
         // Box stationnement (null si absent)
         'boxNum'            => $logement->box_num        ?? null,
@@ -1176,8 +1176,9 @@ private function pdfLpl(Ov $ov): \Illuminate\Http\Response
  
         // Infos banque / site
         'siteLibelle'        => $site->libelle ?? ($logement->programme->libelle ?? '—'),
-        'ribLsp'             => $site->rib        ?? '—',
-        'banqueNom'          => $site->banque_nom ?? ($site->nom_agence ?? '—'),
+        // ✅ APRÈS
+'ribLsp'    => $site->num_compte_agence ?? '—',
+'banqueNom' => $site->nom_agence        ?? '—',
  
         // Textes arabes (ArPHP)
         'republique'         => $Arabic->utf8Glyphs('الجمهورية الجزائرية الديمقراطية الشعبية'),
