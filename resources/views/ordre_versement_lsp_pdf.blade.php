@@ -2,250 +2,158 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-{{--
-    ═══════════════════════════════════════════════════
-    ORDRE DE VERSEMENT — LSP | OPGI Dar El Beida
-    Style  : Minimaliste & Épuré (Thème Vert LSP)
-    Format : A6 paysage (148mm × 105mm)
-    ═══════════════════════════════════════════════════
---}}
 <style>
-@page { 
-    margin: 0px; 
-}
-
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-}
-
+@page { margin: 0px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+    width: 100%; height: 100%; overflow: hidden;
     font-family: 'DejaVu Sans', Arial, sans-serif;
-    font-size: 5pt;
-    color: #0b3017;         /* Vert très foncé */
-    background: #f0faf3;    /* Vert pâle (bg) */
+    font-size: 5pt; color: #0b3017; background: #f0faf3;
 }
-
 .page {
-    width: 100%;
-    border: 1pt solid #5bd582; /* Vert vif (bordure) */
-    position: relative;
-    overflow: hidden;
-    background: #f0faf3;
-    box-sizing: border-box;
-    padding-bottom: 2mm;
+    width: 100%; border: 1pt solid #5bd582; position: relative;
+    overflow: hidden; background: #f0faf3; box-sizing: border-box;
+    padding-bottom: 1mm;
 }
-
 .watermark {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 90pt; font-weight: bold;
-    color: #2b9745; opacity: 0.06; /* Vert moyen (filigrane) */
-    white-space: nowrap; pointer-events: none; 
-    z-index: 1000;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 80pt; font-weight: bold; color: #2b9745; opacity: 0.06;
+    white-space: nowrap; pointer-events: none; z-index: 1000;
 }
+.content { position: relative; margin: 2pt 5mm 0 5mm; z-index: 3; }
 
-.content {
-    position: relative;
-    margin: 4pt 5mm 0 5mm;
-    z-index: 3;
-}
-
-/* ══ EN-TÊTE ════════════════════════════════════════ */
-.hdr {
-    display: table; width: 100%; border-collapse: collapse;
-    border-bottom: 0.5pt solid #8fdc9f; 
-    padding-bottom: 2pt; margin-bottom: 2pt;
-    height: 9mm;
-}
-.hdr-logo, .hdr-logo-opgi {
-    display: table-cell; width: 9%;
-    vertical-align: middle; text-align: center;
-}
-.hdr-logo img, .hdr-logo-opgi img { width: 15mm; height: 15mm; }
-
-.hdr-fr {
-    display: table-cell; width: 41%;
-    vertical-align: middle; padding-left: 3pt;
-    font-size: 4pt; font-weight: bold;
-    line-height: 1.5; color: #1d4426;
-     white-space: nowrap;
-}
+.hdr { display: table; width: 100%; border-collapse: collapse; border-bottom: 0.5pt solid #8fdc9f; padding-bottom: 1pt; margin-bottom: 1pt; height: 7mm; }
+.hdr-logo, .hdr-logo-opgi { display: table-cell; width: 9%; vertical-align: middle; text-align: center; }
+.hdr-logo img, .hdr-logo-opgi img { width: 12mm; height: 12mm; }
+.hdr-fr { display: table-cell; width: 41%; vertical-align: middle; padding-left: 2pt; font-size: 4pt; font-weight: bold; line-height: 1.3; color: #1d4426; white-space: nowrap; }
 .hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #165c24; margin-top: 0.5pt; }
-
-.hdr-ar {
-    display: table-cell; width: 41%;
-    vertical-align: middle; padding-right: 3pt;
-    font-size: 4pt; font-weight: bold;
-    line-height: 1.5; text-align: right; direction: rtl; color: #1d4426;
-}
+.hdr-ar { display: table-cell; width: 41%; vertical-align: middle; padding-right: 2pt; font-size: 4pt; font-weight: bold; line-height: 1.3; text-align: right; direction: rtl; color: #1d4426; }
 .hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #165c24; margin-top: 0.5pt; }
 
-/* ══ BANDEAU ════════════════════════════════════════ */
-.banner {
-    display: table; width: 100%; border-collapse: collapse;
-    background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%); /* Gradient Vert */
-    height: 7mm; margin-bottom: 2pt;
-    border-radius: 2pt;
-}
-.ban-left {
-    display: table-cell; width: 20%;
-    vertical-align: middle; text-align: center;
-    padding: 0.5pt 3pt;
-}
+.banner { display: table; width: 100%; border-collapse: collapse; background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%); height: 6mm; margin-bottom: 1pt; border-radius: 2pt; }
+.ban-left { display: table-cell; width: 20%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
 .ban-left .t-num-line { line-height: 1; }
-.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #0b3017; }
+.ban-left .t-num { font-size: 10pt; font-weight: bold; color: #0b3017; }
 .ban-left .t-suf-inline { font-size: 4.5pt; font-weight: bold; color: #1d4426; vertical-align: baseline; }
 .ban-left .t-tranche { font-size: 4.5pt; font-weight: bold; color: #1d4426; }
+.ban-center { display: table-cell; width: 60%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
+.ban-center .prog-lbl { font-size: 5pt; font-weight: bold; color: #8fdc9f; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
+.ban-center .ov-title { font-size: 7pt; font-weight: bold; color: #0b3017; text-transform: uppercase; letter-spacing: 1.5pt; }
+.ban-right { display: table-cell; width: 20%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
 
-.ban-center {
-    display: table-cell; width: 60%;
-    vertical-align: middle; text-align: center;
-    padding: 0.5pt 4pt;
-}
-.ban-center .prog-lbl { 
-    font-size: 5.5pt; font-weight: bold; color: #ffffff; 
-    text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 1pt;
-}
-.ban-center .ov-title { font-size: 7.5pt; font-weight: bold; color: #0b3017; text-transform: uppercase; letter-spacing: 1.5pt; }
-
-.ban-right {
-    display: table-cell; width: 20%;
-    vertical-align: middle; text-align: center; padding: 0.5pt 3pt;
-}
-.ban-right .ref-lbl { font-size: 3.5pt; color: #1d4426; text-transform: uppercase; }
-.ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #0b3017; font-family: 'DejaVu Sans Mono', monospace; }
-
-/* ══ IDENTITÉ ═══════════════════════════════════════ */
-.id-row {
-    display: table; width: 100%; border-collapse: collapse;
-    padding-bottom: 1pt; margin-bottom: 1pt;
-}
-.id-left  { display: table-cell; vertical-align: bottom; }
+.id-row { display: table; width: 100%; border-collapse: collapse; padding-bottom: 0.5pt; margin-bottom: 0.5pt; }
+.id-left { display: table-cell; vertical-align: bottom; }
 .id-right { display: table-cell; vertical-align: bottom; text-align: right; white-space: nowrap; }
-.id-lbl { font-size: 3.8pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.3pt; }
-.id-val {
-    font-size: 7pt; font-weight: bold; color: #0b3017;
-    text-transform: uppercase;
-    border-bottom: 0.5pt solid #5bd582;
-    padding-bottom: 0.5pt; display: inline-block; min-width: 65mm;
-}
+.id-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.3pt; }
+.id-val { font-size: 6.5pt; font-weight: bold; color: #0b3017; text-transform: uppercase; border-bottom: 0.5pt solid #5bd582; padding-bottom: 0.5pt; display: inline-block; min-width: 65mm; }
 .nin-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; }
-.nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0b3017; letter-spacing: 0.5pt; }
+.nin-val { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0b3017; letter-spacing: 0.5pt; }
 
-/* ══ LOGEMENT ═══════════════════════════════════════ */
-.log-row { font-size: 4.5pt; color: #1d4426; padding-bottom: 2pt; margin-bottom: 2pt; }
+.log-row { font-size: 4.5pt; color: #1d4426; padding-bottom: 1pt; margin-bottom: 1pt; }
 
-/* ══ PAYEZ / MONTANT ════════════════════════════════ */
 .pay-row { display: table; width: 100%; border-collapse: collapse; }
-.pay-left { display: table-cell; width: 60%; vertical-align: top; padding-right: 6pt; }
+.pay-left { display: table-cell; width: 60%; vertical-align: top; padding-right: 4pt; }
 .pay-right { display: table-cell; width: 40%; vertical-align: top; padding-left: 2pt; }
 
-.payez-label { font-size: 4pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
-.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #0b3017; }
+.payez-invite { font-size: 4.5pt; line-height: 1.3; color: #0b3017; }
 .payez-invite strong { color: #165c24; }
-
-.prix-cession-row { font-size: 4.3pt; color: #1d4426; margin: 2pt 0 1pt; }
+.prix-cession-row { font-size: 4.3pt; color: #1d4426; margin: 1pt 0 1pt; }
 .prix-cession-row strong { color: #0b3017; }
 
-.letters-row {
-    padding: 2pt; margin-top: 1pt;
-    font-size: 4pt; font-weight: bold; font-style: italic;
-    color: #1d4426; background: #e2f9e8; 
-    border-radius: 2pt; text-align: right;
-}
-
-.montant-frame {
-    background: #e9f8ed; 
-    padding: 2pt 3pt; text-align: right; margin-bottom: 1pt;
-    border-radius: 2pt; border: 0.5pt solid #8fdc9f;
-}
+.montant-frame { background: #e9f8ed; padding: 2pt; text-align: right; margin-bottom: 1pt; border-radius: 2pt; border: 0.5pt solid #8fdc9f; }
 .montant-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
-.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #0b3017; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
+.montant-chiffres { font-size: 8pt; font-weight: bold; color: #0b3017; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
 .montant-devise { font-size: 4.5pt; font-weight: bold; color: #2b9745; margin-top: 0.5pt; }
+.letters-row { padding: 1.5pt; margin-top: 1pt; font-size: 4pt; font-weight: bold; font-style: italic; color: #1d4426; background: #e2f9e8; border-radius: 2pt; text-align: right; }
 
 .pay-info-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; margin-bottom: 0.2pt; }
-.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #0b3017; margin-bottom: 1.5pt; }
-
-/* ══ PIED ════════════════════════════════════════════ */
-.footer-bar {
-    position: relative; margin-top: 0.5mm;
-    background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%);
-    border-radius: 2pt;
+.pay-info-val { 
+    font-size: 4.5pt; 
+    font-weight: bold; 
+    color: #0b3017; 
+    margin-bottom: 0.5pt; /* Réduit de 1pt à 0.5pt */
+    line-height: 1.1;     /* Ajouté pour serrer si l'adresse passe sur 2 lignes */
 }
-.footer-inner { display: table; width: 100%; border-collapse: collapse; height: 14mm; }
-.ft-delai {
-    display: table-cell; width: 85%; vertical-align: middle;
-    padding: 1pt 5pt; font-size: 4.5pt; color: #0b3017; text-align: center;
-}
-.ft-delai-lbl  { font-size: 5pt; font-weight: bold; color: #0b3017; }
-.ft-delai-date { font-size: 4pt; color: #1d4426; margin-top: 0.5pt; }
 
+.footer-bar { position: relative; margin-top: 0.5mm; background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%); border-radius: 2pt; }
+.footer-inner { display: table; width: 100%; border-collapse: collapse; height: 11mm; }
+.ft-delai { display: table-cell; width: 85%; vertical-align: middle; padding: 1pt 5pt; font-size: 4.5pt; color: #0b3017; text-align: center; }
 .ft-qr { display: table-cell; width: 15%; vertical-align: middle; text-align: center; padding: 1pt; }
-.ft-qr img { width: 15mm; height: 15mm; }
-.ft-qr-lbl { font-size: 3pt; color: #1d4426; display: block; margin-top: 0.3pt; text-transform: uppercase; }
+.ft-qr img { width: 12mm; height: 12mm; }
 
-/* ══ NOTES ════════════════════════════════════════ */
-.notes-bar {
-    position: relative; margin-top: 0.5mm;
-    padding-left: 5mm; padding-right: 5mm; text-align: center;
+/* Cherchez .notes-bar et réduisez le margin-top */
+.notes-bar { 
+    position: relative; 
+    margin-top: 0.2mm; /* Réduit de 0.5mm à 0.2mm */
+    padding-left: 5mm; 
+    padding-right: 5mm; 
+    text-align: center; 
 }
-.note { display: block; font-size: 3pt; line-height: 1.2; color: #165c24; margin-bottom: 0.5pt; }
+.note { 
+    display: block; 
+    font-size: 2.8pt; /* Réduit de 3pt à 2.8pt */
+    line-height: 1;   /* Réduit de 1.1 à 1 */
+    color: #165c24; 
+    margin-bottom: 0.2pt; 
+}
 .note::before { content: "✦ "; }
-.contact-info {
-    font-size: 2.8pt; color: #1d4426; line-height: 1.3;
-    border-top: 0.5pt solid #8fdc9f; padding-top: 0.5pt;
-}
+.contact-info { font-size: 2.8pt; color: #1d4426; line-height: 1.2; border-top: 0.5pt solid #8fdc9f; padding-top: 0.5pt; }
 </style>
 </head>
 <body>
 <div class="page">
-
     <div class="watermark">OPGI</div>
-
     <div class="content">
 
         {{-- ══ EN-TÊTE ══ --}}
         <div class="hdr">
-            <div class="hdr-logo">
-                @if($logoRepB64)
-                    <img src="{{ $logoRepB64 }}" alt="Rep">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="27" stroke="#2b9745" stroke-width="2" fill="none"/>
-                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2b9745" stroke-width="1.5" fill="none"/>
-                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2b9745" stroke-width="1.5"/>
-                        <polygon points="30,6 33,14 27,14" fill="#5bd582"/>
-                    </svg>
-                @endif
-            </div>
-            <div class="hdr-fr">
-                <div>République Algérienne Démocratique et Populaire</div>
-                <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
-                <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
-            </div>
-            <div class="hdr-ar">
-                <div>{{ $republique }}</div>
-                <div>{{ $ministere_ar }}</div>
-                <div class="ar-org"> {{ $dar_beida_ar }} {{ $opgi_nom_ar }} </div>
-            </div>
-            <div class="hdr-logo-opgi">
-                @if($logoOpgiB64)
-                    <img src="{{ $logoOpgiB64 }}" alt="OPGI">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2b9745" stroke-width="2" fill="#e9f8ed"/>
-                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#5bd582"/>
-                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2b9745" font-weight="bold">OPGI</text>
-                    </svg>
-                @endif
-            </div>
-        </div>
+
+    {{-- Logo OPGI à gauche --}}
+    <div class="hdr-logo-opgi">
+        @if($logoOpgiB64)
+            <img src="{{ $logoOpgiB64 }}" alt="OPGI">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="10" width="52" height="42" rx="3"
+                      stroke="#8b6914" stroke-width="2" fill="#faf0d0"/>
+                <rect x="12" y="17" width="36" height="7" rx="2" fill="#c9a84c"/>
+                <text x="18" y="40" font-size="8"
+                      font-family="sans-serif" fill="#8b6914"
+                      font-weight="bold">OPGI</text>
+            </svg>
+        @endif
+    </div>
+
+    <div class="hdr-fr">
+        <div>République Algérienne Démocratique et Populaire</div>
+        <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
+        <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
+    </div>
+
+    <div class="hdr-ar">
+        <div>{{ $republique }}</div>
+        <div>{{ $ministere_ar }}</div>
+        <div class="ar-org">{{ $dar_beida_ar }} {{ $opgi_nom_ar }}</div>
+    </div>
+
+    {{-- Logo République à droite --}}
+    <div class="hdr-logo">
+        @if($logoRepB64)
+            <img src="{{ $logoRepB64 }}" alt="Rep">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="30" r="27"
+                        stroke="#8b6914" stroke-width="2" fill="none"/>
+                <ellipse cx="30" cy="30" rx="10" ry="27"
+                         stroke="#8b6914" stroke-width="1.5" fill="none"/>
+                <line x1="3" y1="30" x2="57" y2="30"
+                      stroke="#8b6914" stroke-width="1.5"/>
+                <polygon points="30,6 33,14 27,14" fill="#c9a84c"/>
+            </svg>
+        @endif
+    </div>
+
+</div>
 
         {{-- ══ BANDEAU ══ --}}
         @php
@@ -264,10 +172,7 @@ html, body {
                 <div class="prog-lbl">Programme : LSP</div>
                 <div class="ov-title">Ordre de Versement</div>
             </div>
-            <div class="ban-right">
-                {{-- <div class="ref-lbl">Code logement</div>
-                <div class="ref-val">{{ $ov->souscripteur->code_loge_lpl ?? '—' }}</div> --}}
-            </div>
+            <div class="ban-right"></div>
         </div>
 
         {{-- ══ IDENTITÉ ══ --}}
@@ -322,15 +227,33 @@ html, body {
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
 
-                <div class="pay-info-lbl" style="margin-top: 4pt;">Agence destinataire</div>
-                <div class="pay-info-val">
-                    {{ $nomAgence }}@if($numAgence !== '—') &nbsp;— N°&nbsp;{{ $numAgence }}@endif
-                    @if($adresseAgence)<br><span style="font-weight:normal; font-size: 4pt;">{{ $adresseAgence }}</span>@endif
-                </div>
-                <div class="pay-info-lbl">Numéro de compte</div>
-                <div class="pay-info-val">{{ $numCompte }}</div>
-                <div class="pay-info-lbl">Titulaire du compte</div>
-                <div class="pay-info-val">{{ $titulaire }}</div>
+                <div class="pay-info-lbl" style="margin-top: 2pt;">
+    Titulaire du compte
+</div>
+<div class="pay-info-val">
+    {{ $titulaire }}
+</div>
+
+<div class="pay-info-lbl">
+    Agence et numéro
+</div>
+<div class="pay-info-val">
+    <strong>{{ $nomAgence }}</strong>
+
+    @if($numAgence !== '—')
+        &nbsp;— N° {{ $numAgence }}
+    @endif
+
+    @if($adresseAgence)
+        <br>
+        <span style="font-weight:normal; font-size:4pt;">
+            {{ $adresseAgence }}
+        </span>
+    @endif
+
+    <br>
+    Compte : {{ $numCompte }}
+</div>
             </div>
 
             <div class="pay-right">
@@ -343,7 +266,7 @@ html, body {
             </div>
         </div>
 
-    </div>{{-- /.content --}}
+    </div>
 
     {{-- ══ PIED ══ --}}
     @php
@@ -372,7 +295,6 @@ html, body {
             Site Web: https://opgi-darelbeida.dz/ &nbsp;&nbsp;•&nbsp;&nbsp; Facebook : Opgi Dar El Beida &nbsp;&nbsp;•&nbsp;&nbsp; Email: contact@opgi-darelbeida.dz
         </div>
     </div>
-
-</div>{{-- /.page --}}
+</div>
 </body>
 </html>

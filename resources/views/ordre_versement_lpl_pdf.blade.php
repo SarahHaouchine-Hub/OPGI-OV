@@ -37,7 +37,7 @@ html, body {
 .ban-left .t-suf-inline { font-size: 4.5pt; font-weight: bold; color: #1d2a44; vertical-align: baseline; }
 .ban-left .t-tranche { font-size: 4.5pt; font-weight: bold; color: #1d2a44; }
 .ban-center { display: table-cell; width: 60%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
-.ban-center .prog-lbl { font-size: 5pt; font-weight: bold; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
+.ban-center .prog-lbl { font-size: 5pt; font-weight: bold; color: #8faadc; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
 .ban-center .ov-title { font-size: 7pt; font-weight: bold; color: #0b1a30; text-transform: uppercase; letter-spacing: 1.5pt; }
 .ban-right { display: table-cell; width: 20%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
 .ban-right .ref-lbl { font-size: 3.5pt; color: #1d2a44; text-transform: uppercase; }
@@ -90,40 +90,53 @@ html, body {
 
         {{-- ══ EN-TÊTE ══ --}}
         <div class="hdr">
-            <div class="hdr-logo">
-                @if(!empty($logoRepB64))
-                    <img src="{{ $logoRepB64 }}" alt="Rep">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="27" stroke="#2b5797" stroke-width="2" fill="none"/>
-                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2b5797" stroke-width="1.5" fill="none"/>
-                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2b5797" stroke-width="1.5"/>
-                        <polygon points="30,6 33,14 27,14" fill="#5b9bd5"/>
-                    </svg>
-                @endif
-            </div>
-            <div class="hdr-fr">
-                <div>République Algérienne Démocratique et Populaire</div>
-                <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
-                <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
-            </div>
-            <div class="hdr-ar">
-                <div>{{ $republique }}</div>
-                <div>{{ $ministere_ar }}</div>
-                <div class="ar-org">{{ $dar_beida_ar }} {{ $opgi_nom_ar }}</div>
-            </div>
-            <div class="hdr-logo-opgi">
-                @if(!empty($logoOpgiB64))
-                    <img src="{{ $logoOpgiB64 }}" alt="OPGI">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2b5797" stroke-width="2" fill="#e9f0f8"/>
-                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#5b9bd5"/>
-                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2b5797" font-weight="bold">OPGI</text>
-                    </svg>
-                @endif
-            </div>
-        </div>
+
+    {{-- Logo OPGI à gauche --}}
+    <div class="hdr-logo-opgi">
+        @if($logoOpgiB64)
+            <img src="{{ $logoOpgiB64 }}" alt="OPGI">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="10" width="52" height="42" rx="3"
+                      stroke="#8b6914" stroke-width="2" fill="#faf0d0"/>
+                <rect x="12" y="17" width="36" height="7" rx="2" fill="#c9a84c"/>
+                <text x="18" y="40" font-size="8"
+                      font-family="sans-serif" fill="#8b6914"
+                      font-weight="bold">OPGI</text>
+            </svg>
+        @endif
+    </div>
+
+    <div class="hdr-fr">
+        <div>République Algérienne Démocratique et Populaire</div>
+        <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
+        <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
+    </div>
+
+    <div class="hdr-ar">
+        <div>{{ $republique }}</div>
+        <div>{{ $ministere_ar }}</div>
+        <div class="ar-org">{{ $dar_beida_ar }} {{ $opgi_nom_ar }}</div>
+    </div>
+
+    {{-- Logo République à droite --}}
+    <div class="hdr-logo">
+        @if($logoRepB64)
+            <img src="{{ $logoRepB64 }}" alt="Rep">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="30" r="27"
+                        stroke="#8b6914" stroke-width="2" fill="none"/>
+                <ellipse cx="30" cy="30" rx="10" ry="27"
+                         stroke="#8b6914" stroke-width="1.5" fill="none"/>
+                <line x1="3" y1="30" x2="57" y2="30"
+                      stroke="#8b6914" stroke-width="1.5"/>
+                <polygon points="30,6 33,14 27,14" fill="#c9a84c"/>
+            </svg>
+        @endif
+    </div>
+
+</div>
 
         {{-- ══ BANDEAU ══ --}}
         @php
@@ -139,7 +152,7 @@ html, body {
                 <div class="t-tranche">Tranche</div>
             </div>
             <div class="ban-center">
-                <div class="prog-lbl">Programme : PROMOTIONNEL / LPL</div>
+                <div class="prog-lbl">Programme : PROMOTIONNEL</div>
                 <div class="ov-title">Ordre de Versement</div>
             </div>
             <div class="ban-right">
@@ -164,15 +177,17 @@ html, body {
 
         {{-- ══ LOGEMENT ══ --}}
         @php
-            $logement    = $ov->souscripteur->logement;
-            $site        = $logement->site ?? null;
-            $prog        = $logement->programme ?? null;
-            $nbsp        = "\xc2\xa0";
-            $mChiffres   = number_format((float)$ov->montant_paye, 2, ',', $nbsp);
-            $prixCession = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
-            $nomBanque   = $banqueNom ?? $site->banque_nom ?? $site->nom_agence ?? '—';
-            $numRib      = $ribLpl ?? $site->rib ?? '—';
-            $titulaire   = $site->titulaire ?? 'O.P.G.I. Dar El Beida';
+            $logement      = $ov->souscripteur->logement;
+            $site          = $logement->site ?? null;
+            $prog          = $logement->programme ?? null;
+            $nbsp          = "\xc2\xa0";
+            $mChiffres     = number_format((float)$ov->montant_paye, 2, ',', $nbsp);
+            $prixCession   = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
+            $nomAgence     = $site->nom_agence        ?? '—';
+            $numAgence     = $site->num_agence        ?? '—';
+            $adresseAgence = $site->adresse_agence    ?? '';
+            $numCompte     = $site->num_compte_agence ?? '—';
+            $titulaire     = $site->titulaire         ?? 'O.P.G.I. Dar El Beida';
         @endphp
         <div class="log-row">
             &nbsp;—&nbsp;Projet :&nbsp;<strong>{{ $site->libelle ?? $prog->libelle ?? '—' }}</strong><br>
@@ -198,20 +213,33 @@ html, body {
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
 
-                <div class="pay-info-lbl" style="margin-top: 2pt;">Banque / Agence destinataire</div>
-                <div class="pay-info-val">
-                    {{ $nomBanque }}
-                    @if(!empty($site->num_agence) && $site->num_agence !== '—')
-                        &nbsp;— N°&nbsp;{{ $site->num_agence }}
-                    @endif
-                    @if(!empty($site->adresse_agence))
-                        <br><span style="font-weight:normal; font-size:4pt;">{{ $site->adresse_agence }}</span>
-                    @endif
-                </div>
-                <div class="pay-info-lbl">Numéro de compte (RIB)</div>
-                <div class="pay-info-val">{{ $numRib }}</div>
-                <div class="pay-info-lbl">Titulaire du compte</div>
-                <div class="pay-info-val">{{ $titulaire }}</div>
+                <div class="pay-info-lbl" style="margin-top: 2pt;">
+    Titulaire du compte
+</div>
+<div class="pay-info-val">
+    {{ $titulaire }}
+</div>
+
+<div class="pay-info-lbl">
+    Agence et numéro
+</div>
+<div class="pay-info-val">
+    <strong>{{ $nomAgence }}</strong>
+
+    @if($numAgence !== '—')
+        &nbsp;— N° {{ $numAgence }}
+    @endif
+
+    @if($adresseAgence)
+        <br>
+        <span style="font-weight:normal; font-size:4pt;">
+            {{ $adresseAgence }}
+        </span>
+    @endif
+
+    <br>
+    Compte : {{ $numCompte }}
+</div>
             </div>
 
             <div class="pay-right">

@@ -105,42 +105,55 @@ html, body {
     <div class="content">
 
         {{-- ══ EN-TÊTE ══ --}}
-        <div class="hdr">
-            <div class="hdr-logo">
-                @if($logoRepB64)
-                    <img src="{{ $logoRepB64 }}" alt="Rep">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="27" stroke="#8b6914" stroke-width="2" fill="none"/>
-                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#8b6914" stroke-width="1.5" fill="none"/>
-                        <line x1="3" y1="30" x2="57" y2="30" stroke="#8b6914" stroke-width="1.5"/>
-                        <polygon points="30,6 33,14 27,14" fill="#c9a84c"/>
-                    </svg>
-                @endif
-            </div>
-            <div class="hdr-fr">
-                <div>République Algérienne Démocratique et Populaire</div>
-                <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
-                <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
-            </div>
-            <div class="hdr-ar">
-                <div>{{ $republique }}</div>
-                <div>{{ $ministere_ar }}</div>
-                <div class="ar-org"> {{ $dar_beida_ar }} {{ $opgi_nom_ar }} </div>
-            </div>
-            <div class="hdr-logo-opgi">
-                @if($logoOpgiB64)
-                    <img src="{{ $logoOpgiB64 }}" alt="OPGI">
-                @else
-                    <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#8b6914" stroke-width="2" fill="#faf0d0"/>
-                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#c9a84c"/>
-                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#8b6914" font-weight="bold">OPGI</text>
-                    </svg>
-                @endif
-            </div>
-        </div>
+       
+<div class="hdr">
 
+    {{-- Logo OPGI à gauche --}}
+    <div class="hdr-logo-opgi">
+        @if($logoOpgiB64)
+            <img src="{{ $logoOpgiB64 }}" alt="OPGI">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="10" width="52" height="42" rx="3"
+                      stroke="#8b6914" stroke-width="2" fill="#faf0d0"/>
+                <rect x="12" y="17" width="36" height="7" rx="2" fill="#c9a84c"/>
+                <text x="18" y="40" font-size="8"
+                      font-family="sans-serif" fill="#8b6914"
+                      font-weight="bold">OPGI</text>
+            </svg>
+        @endif
+    </div>
+
+    <div class="hdr-fr">
+        <div>République Algérienne Démocratique et Populaire</div>
+        <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
+        <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
+    </div>
+
+    <div class="hdr-ar">
+        <div>{{ $republique }}</div>
+        <div>{{ $ministere_ar }}</div>
+        <div class="ar-org">{{ $dar_beida_ar }} {{ $opgi_nom_ar }}</div>
+    </div>
+
+    {{-- Logo République à droite --}}
+    <div class="hdr-logo">
+        @if($logoRepB64)
+            <img src="{{ $logoRepB64 }}" alt="Rep">
+        @else
+            <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="30" r="27"
+                        stroke="#8b6914" stroke-width="2" fill="none"/>
+                <ellipse cx="30" cy="30" rx="10" ry="27"
+                         stroke="#8b6914" stroke-width="1.5" fill="none"/>
+                <line x1="3" y1="30" x2="57" y2="30"
+                      stroke="#8b6914" stroke-width="1.5"/>
+                <polygon points="30,6 33,14 27,14" fill="#c9a84c"/>
+            </svg>
+        @endif
+    </div>
+
+</div>
         {{-- ══ BANDEAU ══ --}}
         @php
             $ordinals = [1=>'1', 2=>'2', 3=>'3', 4=>'4', 5=>'5'];
@@ -212,16 +225,33 @@ html, body {
                 <div class="prix-cession-row">
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
+<div class="pay-info-lbl" style="margin-top: 2pt;">
+    Titulaire du compte
+</div>
+<div class="pay-info-val">
+    {{ $titulaire }}
+</div>
 
-                <div class="pay-info-lbl" style="margin-top: 2pt;">Agence destinataire</div>
-                <div class="pay-info-val">
-                    {{ $nomAgence }}@if($numAgence !== '—') &nbsp;— N°&nbsp;{{ $numAgence }}@endif
-                    @if($adresseAgence)<br><span style="font-weight:normal; font-size: 4pt;">{{ $adresseAgence }}</span>@endif
-                </div>
-                <div class="pay-info-lbl">Numéro de compte</div>
-                <div class="pay-info-val">{{ $numCompte }}</div>
-                <div class="pay-info-lbl">Titulaire du compte</div>
-                <div class="pay-info-val">{{ $titulaire }}</div>
+<div class="pay-info-lbl">
+    Agence et numéro
+</div>
+<div class="pay-info-val">
+    <strong>{{ $nomAgence }}</strong>
+
+    @if($numAgence !== '—')
+        &nbsp;— N° {{ $numAgence }}
+    @endif
+
+    @if($adresseAgence)
+        <br>
+        <span style="font-weight:normal; font-size:4pt;">
+            {{ $adresseAgence }}
+        </span>
+    @endif
+
+    <br>
+    Compte : {{ $numCompte }}
+</div>
             </div>
 
             <div class="pay-right">
