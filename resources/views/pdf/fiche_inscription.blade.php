@@ -3,94 +3,112 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <style>
-        @page { margin: 2.5cm; }
+        /* Marges réduites pour garantir le format une page */
+        @page { margin: 1.2cm 1.5cm; }
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            line-height: 1.8;
-            color: #222;
-            font-size: 13px;
+            line-height: 1.4;
+            color: #2c3e50;
+            font-size: 12px;
         }
 
         /* ── En-tête ─────────────────────────────────── */
-        .header { width: 100%; margin-bottom: 40px; }
-        .header table { width: 100%; border: none; }
+        .header { width: 100%; margin-bottom: 15px; }
+        .header table { width: 100%; border-collapse: collapse; }
         .official-text {
             direction: rtl;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
-            line-height: 1.8;
+            line-height: 1.6;
+            color: #1a237e;
         }
 
         /* ── Titre principal ─────────────────────────── */
         .main-title {
             text-align: center;
-            margin: 30px auto;
-            font-size: 22px;
+            margin: 15px auto;
+            font-size: 18px;
             font-weight: bold;
-            text-decoration: underline;
             text-transform: uppercase;
             color: #1a237e;
+            border-bottom: 2px solid #1a237e;
+            padding-bottom: 5px;
+            width: 40%;
         }
 
         /* ── Sections ────────────────────────────────── */
         .section-title {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: bold;
-            color: #6c7d8f;
-            margin-top: 28px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 4px;
+            color: #1a237e;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            background-color: #f8fafc;
+            padding: 4px 8px;
+            border-left: 3px solid #1a237e;
         }
 
-        /* ── Tableau infos ───────────────────────────── */
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .info-table td { width: 50%; padding: 8px 0; vertical-align: top; border: none; }
-
+        /* ── Structure Tableau Propre (Fixe DomPDF) ─── */
+        .info-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 5px; 
+            table-layout: fixed;
+        }
+        .info-table td { 
+            padding: 5px 4px; 
+            vertical-align: middle;
+        }
+        
+        /* Alignement strict des colonnes */
         .label {
             font-weight: bold;
-            color: #000;
-            display: inline-block;
-            width: 35%;
-            vertical-align: top;
+            color: #475569;
+            width: 18%;
         }
         .value {
-            display: inline-block;
-            width: 60%;
-            vertical-align: top;
+            color: #0f172a;
+            width: 32%;
+            word-wrap: break-word;
+        }
+        .full-width-value {
+            color: #0f172a;
             word-wrap: break-word;
         }
 
-        /* ── Message félicitations ───────────────────── */
+        /* ── Message de félicitations épuré ────────── */
         .congrats-message {
             text-align: center;
-            margin: 35px 0;
-            padding: 18px;
+            margin: 15px 0;
+            padding: 8px;
             font-style: italic;
-            font-size: 15px;
-            color: #2e7d32;
-            border-top: 1px solid #f1f8e9;
-            border-bottom: 1px solid #f1f8e9;
+            font-size: 13px;
+            color: #15803d;
+            background-color: #f0fdf4;
+            border: 1px dashed #bbf7d0;
+            border-radius: 4px;
         }
 
-        /* ── Pied de page ────────────────────────────── */
+        /* ── Pied de page compact ────────────────────── */
         .footer {
             position: absolute;
-            bottom: 0;
+            bottom: -10px;
             width: 100%;
             text-align: center;
-            font-size: 11px;
-            color: #999;
-            padding-bottom: 20px;
+            font-size: 10px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
         }
 
         .code-lgt {
             font-weight: bold;
-            font-size: 15px;
-            color: #1a237e;
-            letter-spacing: 1px;
+            font-size: 14px;
+            color: #b91c1c;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -100,16 +118,18 @@
     <div class="header">
         <table>
             <tr>
-                <td style="width:20%; text-align:left;">
-                    <img src="data:image/png;base64,{{ $algeria }}" style="width:80%; height:auto;">
+                <td style="width:20%; text-align:left; vertical-align: middle;">
+                    <img src="data:image/png;base64,{{ $algeria }}" style="width:75px; height:auto;">
                 </td>
                 <td style="width:60%;" class="official-text">
                     {{ $republique }}<br>
                     {{ $ministere }}<br>
+                      {{ $comm }}
                     {{ $agence }}
+                  
                 </td>
-                <td style="width:20%; text-align:right;">
-                    <img src="data:image/png;base64,{{ $logoOPGI }}" style="width:80%; height:auto;">
+                <td style="width:20%; text-align:right; vertical-align: middle;">
+                    <img src="data:image/png;base64,{{ $logoOPGI }}" style="width:75px; height:auto;">
                 </td>
             </tr>
         </table>
@@ -121,114 +141,133 @@
     <div class="section-title">Informations du Souscripteur</div>
     <table class="info-table">
         <tr>
-            <td>
-                <span class="label">Nom :</span>
-                <span class="value">{{ strtoupper($souscripteur->nom) }}</span>
-            </td>
-            <td>
-                <span class="label">Prénom :</span>
-                <span class="value">{{ ucfirst($souscripteur->prenom) }}</span>
-            </td>
+            <td class="label">Nom :</td>
+            <td class="value">{{ strtoupper($souscripteur->nom) }}</td>
+            <td class="label">Prénom :</td>
+            <td class="value">{{ ucfirst($souscripteur->prenom) }}</td>
         </tr>
         <tr>
-            {{-- Nom arabe --}}
-            <td style="direction:rtl; text-align:right;">
-                <span class="label" style="width:35%;">اللقب :</span>
-                <span class="value" style="width:60%;">{{ $souscripteur->nom_arabe }}</span>
-            </td>
-            {{-- Prénom arabe --}}
-            <td style="direction:rtl; text-align:right;">
-                <span class="label" style="width:35%;">الاسم :</span>
-                <span class="value" style="width:60%;">{{ $souscripteur->prenom_arabe }}</span>
-            </td>
+            <td class="label">Né(e) le :</td>
+            <td class="value">{{ \Carbon\Carbon::parse($souscripteur->date_naissance)->format('d/m/Y') }}</td>
+            <td class="label">Lieu de naiss. :</td>
+            <td class="value">{{ $souscripteur->lieu_naissance ?? '/' }}</td>
         </tr>
         <tr>
-            <td>
-                <span class="label">Né(e) le :</span>
-                <span class="value">{{ \Carbon\Carbon::parse($souscripteur->date_naissance)->format('d/m/Y') }}</span>
+            <td class="label">NIN :</td>
+            <td class="value">{{ $souscripteur->nin }}</td>
+            <td class="label">Situation fam. :</td>
+            <td class="value">{{ ucfirst($souscripteur->situation_familiale) }}</td>
+        </tr>
+        @if($souscripteur->nom_pere || $souscripteur->prenom_pere || $souscripteur->nom_mere || $souscripteur->prenom_mere)
+        <tr>
+            <td class="label">Nom du père :</td>
+            <td class="value">
+                @if($souscripteur->nom_pere || $souscripteur->prenom_pere)
+                    {{ strtoupper($souscripteur->nom_pere) }} {{ ucfirst($souscripteur->prenom_pere) }}
+                @else
+                    /
+                @endif
             </td>
-            <td>
-                <span class="label">Code Lgt :</span>
-                <span class="value code-lgt">{{ $souscripteur->code_loge_lpl }}</span>
+            <td class="label">Nom de la mère :</td>
+            <td class="value">
+                @if($souscripteur->nom_mere || $souscripteur->prenom_mere)
+                    {{ strtoupper($souscripteur->nom_mere) }} {{ ucfirst($souscripteur->prenom_mere) }}
+                @else
+                    /
+                @endif
             </td>
+        </tr>
+        @endif
+        <tr>
+            <td class="label">Code Lgt :</td>
+            <td colspan="3" class="full-width-value code-lgt">{{ $souscripteur->code_loge_lpl }}</td>
         </tr>
     </table>
 
+    {{-- ── INFORMATIONS DU CONJOINT (si marié) ──────────────────────────── --}}
+    @if($souscripteur->situation_familiale === 'marie' && $souscripteur->conjoint_nom)
+    <div class="section-title">Informations du Conjoint</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Nom :</td>
+            <td class="value">{{ strtoupper($souscripteur->conjoint_nom) }}</td>
+            <td class="label">Prénom :</td>
+            <td class="value">{{ ucfirst($souscripteur->conjoint_prenom) }}</td>
+        </tr>
+        <tr>
+            <td class="label">NIN :</td>
+            <td class="value">{{ $souscripteur->conjoint_nin }}</td>
+            <td class="label">Né(e) le :</td>
+            <td class="value">
+                {{ $souscripteur->conjoint_date_naissance ? \Carbon\Carbon::parse($souscripteur->conjoint_date_naissance)->format('d/m/Y') : '/' }}
+            </td>
+        </tr>
+        @if($souscripteur->conjoint_lieu_naissance)
+        <tr>
+            <td class="label">Lieu de naiss. :</td>
+            <td colspan="3" class="full-width-value">{{ $souscripteur->conjoint_lieu_naissance }}</td>
+        </tr>
+        @endif
+        @if($souscripteur->conjoint_nom_pere || $souscripteur->conjoint_prenom_pere || $souscripteur->conjoint_nom_mere || $souscripteur->conjoint_prenom_mere)
+        <tr>
+            <td class="label">Nom du père :</td>
+            <td class="value">
+                {{ strtoupper($souscripteur->conjoint_nom_pere) }} {{ ucfirst($souscripteur->conjoint_prenom_pere) }}
+            </td>
+            <td class="label">Nom de la mère :</td>
+            <td class="value">
+                {{ strtoupper($souscripteur->conjoint_nom_mere) }} {{ ucfirst($souscripteur->conjoint_prenom_mere) }}
+            </td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
     <div class="congrats-message">
-        « Félicitations d'avoir inscrit avec succès au logement promotionnel. »
+        « Félicitations pour votre inscription réussie au Programme {{ $logement->site->programme->libelle ?? 'N/A' }} »
     </div>
 
     {{-- ── AFFECTATION DU LOGEMENT ─────────────────────────────────────── --}}
     <div class="section-title">Affectation du Logement</div>
     <table class="info-table">
-        {{-- Programme --}}
         <tr>
-            <td colspan="2">
-                <span class="label" style="width:17.5%;">Programme :</span>
-                <span class="value" style="width:80%; font-weight:bold;">
-                    {{ $logement->site->programme->libelle ?? 'N/A' }}
-                </span>
+            <td class="label">Programme :</td>
+            <td colspan="3" class="full-width-value" style="font-weight:bold;">
+                {{ $logement->site->programme->libelle ?? 'N/A' }}
             </td>
         </tr>
-        {{-- Site --}}
         <tr>
-            <td colspan="2">
-                <span class="label" style="width:17.5%;">Site :</span>
-                <span class="value" style="width:80%;">
-                    {{ $logement->site->libelle ?? 'N/A' }}
-                    @if($logement->site && $logement->site->wilaya)
-                        — {{ $logement->site->wilaya->nom }}
-                    @endif
-                </span>
-            </td>
-        </tr>
-        {{-- Bâtiment / Étage --}}
-        <tr>
-            <td>
-                <span class="label">Bâtiment :</span>
-                <span class="value">{{ $logement->num_batiment }}</span>
-            </td>
-            <td>
-                <span class="label">Étage :</span>
-                <span class="value">{{ $logement->num_etage }}</span>
-            </td>
-        </tr>
-        {{-- Porte / Lot --}}
-        <tr>
-            <td>
-                <span class="label">Porte N° :</span>
-                <span class="value">{{ $logement->num_porte }}</span>
-            </td>
-            <td>
-                @if($logement->num_lot)
-                    <span class="label">N° Lot :</span>
-                    <span class="value">{{ $logement->num_lot }}</span>
+            <td class="label">Site :</td>
+            <td colspan="3" class="full-width-value">
+                {{ $logement->site->libelle ?? 'N/A' }}
+                @if($logement->site && $logement->site->wilaya)
+                    — {{ $logement->site->wilaya->nom }}
                 @endif
             </td>
         </tr>
-        {{-- Surface / Typologie --}}
         <tr>
-            <td>
-                @if($logement->surface)
-                    <span class="label">Surface :</span>
-                    <span class="value">{{ $logement->surface }} m²</span>
-                @endif
-            </td>
-            <td>
-                @if($logement->typologie)
-                    <span class="label">Typologie :</span>
-                    <span class="value">{{ $logement->typologie }}</span>
-                @endif
-            </td>
+            <td class="label">Bâtiment :</td>
+            <td class="value">{{ $logement->num_batiment }}</td>
+            <td class="label">Étage :</td>
+            <td class="value">{{ $logement->num_etage }}</td>
         </tr>
-        {{-- Prix --}}
+        <tr>
+            <td class="label">Porte N° :</td>
+            <td class="value">{{ $logement->num_porte }}</td>
+            <td class="label">N° Lot :</td>
+            <td class="value">{{ $logement->num_lot ?? '/' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Surface :</td>
+            <td class="value">{{ $logement->surface ? $logement->surface.' m²' : '/' }}</td>
+            <td class="label">Typologie :</td>
+            <td class="value">{{ $logement->typologie ?? '/' }}</td>
+        </tr>
         @if($logement->prix)
         <tr>
-            <td colspan="2">
-                <span class="label" style="width:17.5%;">Prix :</span>
-                <span class="value" style="width:80%; font-weight:bold;">
-                    {{ number_format($logement->prix, 0, ',', ' ') }} DA
-                </span>
+            <td class="label">Prix :</td>
+            <td colspan="3" class="full-width-value" style="font-weight:bold; color: #1a237e; font-size: 13px;">
+                {{ number_format($logement->prix, 0, ',', ' ') }} DA
             </td>
         </tr>
         @endif
@@ -236,22 +275,19 @@
 
     {{-- ── QR CODE + PIED DE PAGE ──────────────────────────────────────── --}}
     <div class="footer">
-        <div style="text-align:center; margin-bottom: 10px;">
-            @if($souscripteur->qrcode)
-                {{--
-                    Le QR est stocké en base64 d'un SVG.
-                    On le réinsère directement comme image SVG base64.
-                --}}
-                <img src="data:image/svg+xml;base64,{{ $souscripteur->qrcode }}"
-                     style="width:100px; height:100px;">
-                <br>
-                <span style="font-size:10px; color:#aaa;">Signature numérique de vérification</span>
-            @else
-                <p style="color:red;">QR Code non disponible</p>
-            @endif
-        </div>
-
-        Document officiel généré le {{ now()->format('d/m/Y à H:i') }} — Services OPGI
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 75%; text-align: left; vertical-align: bottom; padding-bottom: 5px;">
+                    Document officiel généré le {{ now()->format('d/m/Y à H:i') }} — Services OPGI
+                </td>
+                <td style="width: 25%; text-align: right; vertical-align: middle;">
+                    @if($souscripteur->qrcode)
+                        <img src="data:image/svg+xml;base64,{{ $souscripteur->qrcode }}" style="width:75px; height:75px;"><br>
+                        <span style="font-size:8px; color:#94a3b8; display:block; text-align:right; margin-top:2px;">Signature numérique</span>
+                    @endif
+                </td>
+            </tr>
+        </table>
     </div>
 
 </body>

@@ -57,7 +57,7 @@
                                            class="form-control"
                                            value="{{ number_format($prixLogement, 2, ',', ' ') }} DA"
                                            readonly>
-                                    <input type="hidden" name="montant_total" value="{{ $prixLogement }}">
+                                    <input type="hidden" name="montant_total"   value="{{ $prixLogement }}">
                                 </div>
                             </div>
 
@@ -75,19 +75,18 @@
                                 </div>
                             </div>
 
-                            {{-- Pourcentage --}}
+                            {{-- Pourcentage — select par pas de 5 --}}
                             <div class="col-md-4">
                                 <label class="form-label-custom">Pourcentage (%)</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-percent"></i></span>
-                                    <input type="number"
-                                           class="form-control"
-                                           name="pourcentage"
-                                           id="pourcentage"
-                                           min="5" max="50" step="5"
-                                           placeholder="ex: 20"
-                                           required
-                                           oninput="calculerMontant()">
+                                    <select class="form-select" name="pourcentage" id="pourcentage"
+                                            required onchange="calculerMontant()">
+                                        <option value="" disabled selected>— Choisir —</option>
+                                        @foreach([5,10,15,20,25,30,35,40,45,50] as $pct)
+                                            <option value="{{ $pct }}">{{ $pct }} %</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 

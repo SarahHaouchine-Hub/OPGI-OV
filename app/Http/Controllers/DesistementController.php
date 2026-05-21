@@ -6,92 +6,335 @@ use App\Models\Desistement;
 use App\Models\Logement;
 use App\Models\Souscripteur;
 use App\Models\Site;
+use App\Traits\RoleAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Vinkla\Hashids\Facades\Hashids;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DesistementController extends Controller
 {
-    /**
-     * Affiche la liste des logements (flag 1 ou 2) avec les filtres,
-     * ainsi que la liste des désistements existants.
-     */
+    use RoleAccess;
+
+    // =========================================================================
+    //  Liste des logements + désistements
+    // =========================================================================
     public function listLogements(Request $request)
     {
         $logementsQuery = Logement::query()
-            ->with('souscripteur')
+            ->with(['souscripteur', 'site.programme', 'site.wilaya'])
             ->whereIn('flag', [1, 2]);
 
-        if ($request->filled('num_batiment')) {
-            $logementsQuery->where('num_batiment', $request->num_batiment);
+        $allowed = $this->getAllowedProgrammes();
+        if ($allowed) {
+            $logementsQuery->whereHas('site.programme', function ($q) use ($allowed) {
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            });
         }
-        if ($request->filled('num_etage')) {
-            $logementsQuery->where('num_etage', $request->num_etage);
-        }
-        if ($request->filled('num_porte')) {
-            $logementsQuery->where('num_porte', $request->num_porte);
-        }
+
+        if ($request->filled('site_id'))     $logementsQuery->where('site_id',      $request->site_id);
+        if ($request->filled('num_batiment')) $logementsQuery->where('num_batiment', $request->num_batiment);
+        if ($request->filled('num_etage'))   $logementsQuery->where('num_etage',     $request->num_etage);
+        if ($request->filled('num_porte'))   $logementsQuery->where('num_porte',     $request->num_porte);
+
         if ($request->filled('status') && $request->status !== 'all') {
             $logementsQuery->where('flag', $request->status);
         }
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $logementsQuery->where('code_loge_lpl', 'like', "%{$search}%");
+            $logementsQuery->where(function ($q) use ($search) {
+                $q->where('code_loge_lpl', 'like', "%{$search}%")
+                  ->orWhereHas('souscripteur', function ($sq) use ($search) {
+                      $sq->where('nom',    'like', "%{$search}%")
+                         ->orWhere('prenom', 'like', "%{$search}%")
+                         ->orWhere('nin',    'like', "%{$search}%");
+                  });
+            });
         }
 
-        $logements = $logementsQuery->orderBy('created_at')->paginate(10);
+        $logements = $logementsQuery->orderBy('created_at')->paginate(10)->withQueryString();
 
-        $listSites = Site::orderBy('libelle')->get(['id', 'libelle']);
+        $sitesQuery = Site::orderBy('libelle');
+        if ($allowed) {
+            $sitesQuery->whereHas('programme', function ($q) use ($allowed) {
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            });
+        }
+        $listSites = $sitesQuery->get(['id', 'libelle']);
 
         $filterQuery = Logement::query();
         if ($request->filled('site_id')) {
             $filterQuery->where('site_id', $request->site_id);
         }
 
-        $listBatiments = (clone $filterQuery)->distinct()->pluck('num_batiment');
+        $listBatiments = (clone $filterQuery)->distinct()->orderBy('num_batiment')->pluck('num_batiment');
 
         $listEtages = [];
         if ($request->filled('num_batiment')) {
             $listEtages = (clone $filterQuery)
                 ->where('num_batiment', $request->num_batiment)
-                ->distinct()
-                ->pluck('num_etage');
+                ->distinct()->orderBy('num_etage')->pluck('num_etage');
         }
 
         $listPortes = [];
         if ($request->filled('num_batiment') && $request->filled('num_etage')) {
             $listPortes = (clone $filterQuery)
                 ->where('num_batiment', $request->num_batiment)
-                ->where('num_etage', $request->num_etage)
-                ->distinct()
-                ->pluck('num_porte');
+                ->where('num_etage',    $request->num_etage)
+                ->distinct()->orderBy('num_porte')->pluck('num_porte');
         }
 
-        $desistements = Desistement::with('logement', 'souscripteur', 'nouveauSouscripteur')
-            ->orderBy('date_desistement', 'desc')
-            ->paginate(10);
+        $desistementsQuery = Desistement::with(['logement.site.programme', 'souscripteur', 'nouveauSouscripteur'])
+            ->orderBy('date_desistement', 'desc');
+
+        if ($allowed) {
+            $desistementsQuery->whereHas('logement.site.programme', function ($q) use ($allowed) {
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            });
+        }
+
+        $desistements = $desistementsQuery->paginate(10)->withQueryString();
 
         return view('desistement', compact(
-            'logements',
-            'desistements',
-            'listSites',
-            'listBatiments',
-            'listEtages',
-            'listPortes'
+            'logements', 'desistements', 'listSites', 'listBatiments', 'listEtages', 'listPortes'
         ));
     }
 
-    /**
-     * Enregistre le désistement simple.
-     */
-   
+    // =========================================================================
+    //  Désistement simple — libère le logement sans remplaçant
+    // =========================================================================
+    public function store(Request $request)
+    {
+        $request->validate([
+            'logement_id'      => 'required|exists:logements,id',
+            'motif'            => 'nullable|string|max:500',
+            'date_desistement' => 'nullable|date',
+        ]);
 
-    /**
-     * API — Recherche un souscripteur par NIN.
-     * GET /api/souscripteur/search-nin/{nin}
-     */
+        $logement = Logement::with(['site.programme'])->findOrFail($request->logement_id);
+
+        if (!$this->canAccessProgramme($logement->site->programme->libelle ?? '')) {
+            return redirect()->route('desistement')->with('error', $this->accessDeniedMessage());
+        }
+
+        if (!in_array($logement->flag, [1, 2])) {
+            return redirect()->route('desistement')
+                ->with('error', 'Ce logement n\'est pas dans un état permettant un désistement.');
+        }
+
+        $souscripteur = Souscripteur::where('code_loge_lpl', $logement->code_loge_lpl)->first();
+
+        if (!$souscripteur) {
+            return redirect()->route('desistement')
+                ->with('error', 'Aucun souscripteur associé à ce logement.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Tracer le désistement (on garde le code_loge_lpl avant de le vider)
+            Desistement::create([
+                'souscripteur_id'  => $souscripteur->id,
+                'logement_id'      => $logement->id,
+                'code_loge_lpl'    => $logement->code_loge_lpl,
+                'date_desistement' => $request->date_desistement ?? now(),
+                'motif'            => $request->motif,
+                'user_id'          => Auth::id(),
+                'type'             => 'simple',
+            ]);
+
+            // 2. Libérer le souscripteur
+            $souscripteur->update(['desiste' => 1, 'code_loge_lpl' => null]);
+
+            // 3. Libérer le logement
+            $logement->update(['flag' => 3, 'code_loge_lpl' => null]);
+
+            DB::commit();
+            return redirect()->route('desistement')
+                ->with('success', 'Désistement enregistré avec succès. Le logement est à nouveau disponible.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('desistement')->with('error', 'Erreur : ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    //  Remplacement — remplace l'ancien souscripteur par un nouveau
+    // =========================================================================
+    public function remplacer(Request $request, $idLogement)
+    {
+        $request->validate([
+            'nin'                     => 'required|string|max:18',
+            'nom'                     => 'required|string|max:255',
+            'prenom'                  => 'required|string|max:255',
+            'date_naissance'          => 'required|date',
+            'situation_familiale'     => 'required|in:celibataire,marie,divorce,veuf',
+            'lieu_naissance'          => 'nullable|string|max:255',
+            'nom_pere'                => 'nullable|string|max:255',
+            'prenom_pere'             => 'nullable|string|max:255',
+            'nom_mere'                => 'nullable|string|max:255',
+            'prenom_mere'             => 'nullable|string|max:255',
+            'conjoint_nom'            => 'required_if:situation_familiale,marie|nullable|string|max:255',
+            'conjoint_prenom'         => 'required_if:situation_familiale,marie|nullable|string|max:255',
+            'conjoint_nin'            => 'required_if:situation_familiale,marie|nullable|string|max:18',
+            'conjoint_date_naissance' => 'required_if:situation_familiale,marie|nullable|date',
+            'conjoint_lieu_naissance' => 'nullable|string|max:255',
+            'conjoint_nom_pere'       => 'nullable|string|max:255',
+            'conjoint_prenom_pere'    => 'nullable|string|max:255',
+            'conjoint_nom_mere'       => 'nullable|string|max:255',
+            'conjoint_prenom_mere'    => 'nullable|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $logement = Logement::with(['site.programme'])->findOrFail($idLogement);
+
+            if (!$this->canAccessProgramme($logement->site->programme->libelle ?? '')) {
+                DB::rollBack();
+                return redirect()->route('desistement')->with('error', $this->accessDeniedMessage());
+            }
+
+            $ancienSouscripteur = Souscripteur::where('code_loge_lpl', $logement->code_loge_lpl)->first();
+
+            if (!$ancienSouscripteur) {
+                DB::rollBack();
+                return redirect()->route('desistement')
+                    ->with('error', 'Aucun souscripteur associé à ce logement.');
+            }
+
+            if ($ancienSouscripteur->nin === $request->nin) {
+                DB::rollBack();
+                return redirect()->route('desistement')
+                    ->with('error', 'Le nouveau souscripteur est identique à l\'ancien.');
+            }
+
+            // ── Vérifier que le nouveau n'est pas déjà sur un logement actif ─
+            $nouveauSouscripteurCheck = Souscripteur::where('nin', $request->nin)->first();
+            if ($nouveauSouscripteurCheck && $nouveauSouscripteurCheck->code_loge_lpl && !$nouveauSouscripteurCheck->desiste) {
+                $autreLogement = Logement::where('code_loge_lpl', $nouveauSouscripteurCheck->code_loge_lpl)
+                    ->whereIn('flag', [1, 2])->exists();
+                if ($autreLogement) {
+                    DB::rollBack();
+                    return redirect()->route('desistement')
+                        ->with('error', 'Ce souscripteur est déjà affecté à un logement actif.');
+                }
+            }
+
+            // ── Génération du nouveau code logement ───────────────────────────
+            do {
+                $random  = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $bat     = str_pad((string) $logement->num_batiment, 2, '0', STR_PAD_LEFT);
+                $porte   = str_pad((string) $logement->num_porte,    2, '0', STR_PAD_LEFT);
+                $codeLPL = "B{$bat}N{$porte}{$random}";
+            } while (Logement::where('code_loge_lpl', $codeLPL)->exists());
+
+            $programmeLibelle = $logement->site->programme->libelle ?? $logement->site->libelle ?? '';
+            $siteLibelle      = $logement->site->libelle ?? '';
+
+            $qrDataPlain = implode(' | ', [
+                'OPGI',
+                'Nom: '       . strtoupper($request->nom),
+                'Prénom: '    . $request->prenom,
+                'Programme: ' . $programmeLibelle,
+                'Site: '      . $siteLibelle,
+                'Code: '      . $codeLPL,
+            ]);
+            $qrDataHashed = hash('sha256', $qrDataPlain);
+            $qrcodeData   = base64_encode(QrCode::size(200)->margin(1)->generate($qrDataHashed));
+
+            // ── ÉTAPE 1 : Mettre à jour le logement EN PREMIER ────────────────
+            // (la FK souscripteurs.code_loge_lpl → logements.code_loge_lpl exige
+            //  que le code existe dans logements avant d'être utilisé dans souscripteurs)
+            $ancienCodeLPL = $logement->code_loge_lpl; // on le sauvegarde pour le désistement
+            $logement->update([
+                'flag'          => 1,
+                'code_loge_lpl' => $codeLPL,
+            ]);
+
+            // ── ÉTAPE 2 : Créer ou mettre à jour le nouveau souscripteur ──────
+            $nouveauSouscripteur = Souscripteur::where('nin', $request->nin)->first();
+
+            if ($nouveauSouscripteur) {
+                $nouveauSouscripteur->update([
+                    'code_loge_lpl'     => $codeLPL,
+                    'qr_content_plain'  => $qrDataPlain,
+                    'qr_content_hashed' => $qrDataHashed,
+                    'qrcode'            => $qrcodeData,
+                    'desiste'           => 0,
+                ]);
+            } else {
+                $nouveauSouscripteur = Souscripteur::create([
+                    'nom'                     => $request->nom,
+                    'prenom'                  => $request->prenom,
+                    'date_naissance'          => $request->date_naissance,
+                    'nin'                     => $request->nin,
+                    'situation_familiale'     => $request->situation_familiale,
+                    'lieu_naissance'          => $request->lieu_naissance,
+                    'nom_pere'                => $request->nom_pere,
+                    'prenom_pere'             => $request->prenom_pere,
+                    'nom_mere'                => $request->nom_mere,
+                    'prenom_mere'             => $request->prenom_mere,
+                    'conjoint_nom'            => $request->conjoint_nom,
+                    'conjoint_prenom'         => $request->conjoint_prenom,
+                    'conjoint_nin'            => $request->conjoint_nin,
+                    'conjoint_date_naissance' => $request->conjoint_date_naissance,
+                    'conjoint_lieu_naissance' => $request->conjoint_lieu_naissance,
+                    'conjoint_nom_pere'       => $request->conjoint_nom_pere,
+                    'conjoint_prenom_pere'    => $request->conjoint_prenom_pere,
+                    'conjoint_nom_mere'       => $request->conjoint_nom_mere,
+                    'conjoint_prenom_mere'    => $request->conjoint_prenom_mere,
+                    'code_loge_lpl'           => $codeLPL,
+                    'qr_content_plain'        => $qrDataPlain,
+                    'qr_content_hashed'       => $qrDataHashed,
+                    'qrcode'                  => $qrcodeData,
+                    'user_id'                 => Auth::id(),
+                    'desiste'                 => 0,
+                ]);
+            }
+
+            // ── ÉTAPE 3 : Tracer dans desistements ────────────────────────────
+            Desistement::create([
+                'souscripteur_id'         => $ancienSouscripteur->id,
+                'logement_id'             => $logement->id,
+                'code_loge_lpl'           => $ancienCodeLPL, // l'ancien code, pas le nouveau
+                'date_desistement'        => now(),
+                'user_id'                 => Auth::id(),
+                'type'                    => 'remplacement',
+                'nouveau_souscripteur_id' => $nouveauSouscripteur->id,
+            ]);
+
+            // ── ÉTAPE 4 : Marquer l'ancien souscripteur comme désisté ─────────
+            $ancienSouscripteur->update([
+                'desiste'       => 1,
+                'code_loge_lpl' => null,
+            ]);
+
+            DB::commit();
+            return redirect()->route('desistement')
+                ->with('success', 'Remplacement effectué avec succès.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('desistement')->with('error', 'Erreur : ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    //  API — Recherche un souscripteur par NIN
+    // =========================================================================
     public function searchByNin($nin)
     {
         $souscripteur = Souscripteur::where('nin', $nin)->first();
@@ -121,163 +364,8 @@ class DesistementController extends Controller
             'conjoint_prenom_pere'    => $souscripteur->conjoint_prenom_pere,
             'conjoint_nom_mere'       => $souscripteur->conjoint_nom_mere,
             'conjoint_prenom_mere'    => $souscripteur->conjoint_prenom_mere,
+            'desiste'                 => $souscripteur->desiste,
+            'code_loge_lpl'           => $souscripteur->code_loge_lpl,
         ]);
     }
-
-    /**
-     * Remplace l'ancien souscripteur par un nouveau sur un logement donné.
-     * POST /desistement/{idLogement}/remplacer
-     */
-    public function remplacer(Request $request, $idLogement)
-{
-    $request->validate([
-        'nin'                     => 'required|string|max:18',
-        'nom'                     => 'required|string|max:255',
-        'prenom'                  => 'required|string|max:255',
-        'date_naissance'          => 'required|date',
-        'situation_familiale'     => 'required|in:celibataire,marie,divorce,veuf',
-        'lieu_naissance'          => 'nullable|string|max:255',
-        'nom_pere'                => 'nullable|string|max:255',
-        'prenom_pere'             => 'nullable|string|max:255',
-        'nom_mere'                => 'nullable|string|max:255',
-        'prenom_mere'             => 'nullable|string|max:255',
-        'conjoint_nom'            => 'required_if:situation_familiale,marie|nullable|string|max:255',
-        'conjoint_prenom'         => 'required_if:situation_familiale,marie|nullable|string|max:255',
-        'conjoint_nin'            => 'required_if:situation_familiale,marie|nullable|string|max:18',
-        'conjoint_date_naissance' => 'required_if:situation_familiale,marie|nullable|date',
-        'conjoint_lieu_naissance' => 'nullable|string|max:255',
-        'conjoint_nom_pere'       => 'nullable|string|max:255',
-        'conjoint_prenom_pere'    => 'nullable|string|max:255',
-        'conjoint_nom_mere'       => 'nullable|string|max:255',
-        'conjoint_prenom_mere'    => 'nullable|string|max:255',
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        // ── Charger le logement avec site uniquement ──────────────────
-       // ✅ Après — charge aussi programme via site
-$logement = Logement::with(['site.programme'])
-    ->findOrFail($idLogement);
-
-        // ── Ancien souscripteur via code_loge_lpl ─────────────────────
-        $ancienSouscripteur = Souscripteur::where('code_loge_lpl', $logement->code_loge_lpl)
-            ->first();
-
-        if (!$ancienSouscripteur) {
-            DB::rollBack();
-            return redirect()->route('desistement')
-                ->withErrors(['error' => 'Aucun souscripteur associé à ce logement.']);
-        }
-
-        // ── Vérifier que le nouveau NIN ≠ ancien NIN ──────────────────
-        if ($ancienSouscripteur->nin === $request->nin) {
-            DB::rollBack();
-            return redirect()->route('desistement')
-                ->withErrors(['error' => 'Le nouveau souscripteur est identique à l\'ancien.']);
-        }
-
-        // ── Génération du nouveau code logement ───────────────────────
-        do {
-            $random  = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $bat     = str_pad((string) $logement->num_batiment, 2, '0', STR_PAD_LEFT);
-            $porte   = str_pad((string) $logement->num_porte,    2, '0', STR_PAD_LEFT);
-            $codeLPL = "B{$bat}N{$porte}{$random}";
-        } while (Logement::where('code_loge_lpl', $codeLPL)->exists());
-
-        // ── Programme via site ────────────────────────────────────────
-        $programmeLibelle = $logement->site->programme->libelle
-                            ?? $logement->site->libelle
-                            ?? '';
-        $siteLibelle      = $logement->site->libelle ?? '';
-
-        // ── QR Code ───────────────────────────────────────────────────
-        $qrDataPlain = implode(' | ', [
-            'OPGI',
-            'Nom: '       . strtoupper($request->nom),
-            'Prénom: '    . $request->prenom,
-            'Programme: ' . $programmeLibelle,
-            'Site: '      . $siteLibelle,
-            'Code: '      . $codeLPL,
-        ]);
-        $qrDataHashed = hash('sha256', $qrDataPlain);
-        $qrcodeData   = base64_encode(
-            QrCode::size(200)->margin(1)->generate($qrDataHashed)
-        );
-
-        // ── Nouveau souscripteur : existant ou création ───────────────
-        $nouveauSouscripteur = Souscripteur::where('nin', $request->nin)->first();
-
-        if ($nouveauSouscripteur) {
-            $nouveauSouscripteur->update([
-                'code_loge_lpl'     => $codeLPL,
-                'qr_content_plain'  => $qrDataPlain,
-                'qr_content_hashed' => $qrDataHashed,
-                'qrcode'            => $qrcodeData,
-                'desiste'           => 0,
-            ]);
-        } else {
-            $nouveauSouscripteur = Souscripteur::create([
-                'nom'                     => $request->nom,
-                'prenom'                  => $request->prenom,
-                'date_naissance'          => $request->date_naissance,
-                'nin'                     => $request->nin,
-                'situation_familiale'     => $request->situation_familiale,
-                'lieu_naissance'          => $request->lieu_naissance,
-                'nom_pere'                => $request->nom_pere,
-                'prenom_pere'             => $request->prenom_pere,
-                'nom_mere'                => $request->nom_mere,
-                'prenom_mere'             => $request->prenom_mere,
-                'conjoint_nom'            => $request->conjoint_nom,
-                'conjoint_prenom'         => $request->conjoint_prenom,
-                'conjoint_nin'            => $request->conjoint_nin,
-                'conjoint_date_naissance' => $request->conjoint_date_naissance,
-                'conjoint_lieu_naissance' => $request->conjoint_lieu_naissance,
-                'conjoint_nom_pere'       => $request->conjoint_nom_pere,
-                'conjoint_prenom_pere'    => $request->conjoint_prenom_pere,
-                'conjoint_nom_mere'       => $request->conjoint_nom_mere,
-                'conjoint_prenom_mere'    => $request->conjoint_prenom_mere,
-                'code_loge_lpl'           => $codeLPL,
-                'qr_content_plain'        => $qrDataPlain,
-                'qr_content_hashed'       => $qrDataHashed,
-                'qrcode'                  => $qrcodeData,
-                'user_id'                 => Auth::id(),
-                'desiste'                 => 0,
-            ]);
-        }
-
-        // ── Tracer dans desistements ──────────────────────────────────
-        Desistement::create([
-            'souscripteur_id'         => $ancienSouscripteur->id,
-            'logement_id'             => $logement->id,
-            'code_loge_lpl'           => $logement->code_loge_lpl,
-            'date_desistement'        => now(),
-            'user_id'                 => Auth::id(),
-            'type'                    => 'remplacement',
-            'nouveau_souscripteur_id' => $nouveauSouscripteur->id,
-        ]);
-
-        // ── Marquer l'ancien comme désisté ────────────────────────────
-        $ancienSouscripteur->update([
-            'desiste'       => 1,
-            'code_loge_lpl' => null,
-        ]);
-
-        // ── Mettre à jour le logement ─────────────────────────────────
-        $logement->update([
-            'flag'          => 1,
-            'code_loge_lpl' => $codeLPL,
-        ]);
-
-        DB::commit();
-
-        return redirect()->route('desistement')
-            ->with('success', 'Remplacement effectué avec succès.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->route('desistement')
-            ->withErrors(['error' => 'Erreur : ' . $e->getMessage()]);
-    }
-}
 }

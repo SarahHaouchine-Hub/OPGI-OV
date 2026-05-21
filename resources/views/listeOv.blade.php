@@ -208,7 +208,6 @@
 
                                 $prochaineTrancheLabel = $nbTranchesNormales + 1;
 
-                                // Nom du site — essaie site->nom, puis site->libelle, puis programme->site
                                 $nomSite = $s->logement->site->nom
                                         ?? $s->logement->site->libelle
                                         ?? $s->logement->programme->site
@@ -235,16 +234,14 @@
 
                                 {{-- ══ LOCALISATION + SITE ══ --}}
                                 <td>
-                                    {{-- Badge nom du site en haut --}}
                                     @if($nomSite)
                                         <div>
                                             <span class="site-badge">
-                                             <i class="bi bi-buildings"></i>
+                                                <i class="bi bi-buildings"></i>
                                                 {{ $nomSite }}
                                             </span>
                                         </div>
                                     @endif
-                                    {{-- Bâtiment / Étage / Porte --}}
                                     <div class="localisation-bloc">
                                         <div>
                                             <i class="bi bi-building text-muted me-1"></i>
@@ -272,30 +269,30 @@
                                 <td class="p-3">
                                     @forelse($s->ovs as $ov)
                                     <div class="ov-item mb-3 p-3 border rounded-3 shadow-sm">
+
+                                        {{-- En-tête OV : badges + statut paiement --}}
                                         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
                                             <div class="d-flex align-items-center gap-2">
 
-                                                @if($ov->type_ov === 'credit_reel')
-                                                    @if($creditEnregistre)
-                                                        @if($ov->numero_tranche === 1)
-                                                            <span class="badge bg-secondary" style="font-size:0.7rem;">1/{{ $totalOvsCredit }}</span>
-                                                            <span class="badge bg-warning text-dark">T1</span>
-                                                        @elseif($ov->numero_tranche === 2)
-                                                            <span class="badge bg-secondary" style="font-size:0.7rem;">2/{{ $totalOvsCredit }}</span>
-                                                            <span class="badge bg-info text-dark">
-                                                                <i class="bi bi-bank me-1"></i>T2 Crédit Réel
-                                                            </span>
-                                                        @elseif($ov->numero_tranche === 3)
-                                                            <span class="badge bg-secondary" style="font-size:0.7rem;">3/{{ $totalOvsCredit }}</span>
-                                                            <span class="badge" style="background:#6f42c1;">
-                                                                <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence
-                                                            </span>
-                                                        @endif
-                                                    @else
-                                                        <span class="badge bg-primary">{{ $ov->pourcentage }}%</span>
-                                                        @if($programme === 'LPA' && $ov->numero_tranche)
-                                                            <span class="badge bg-warning text-dark">T{{ $ov->numero_tranche }}/5</span>
-                                                        @endif
+                                                @if($creditEnregistre)
+                                                    @if($ov->numero_tranche === 1)
+                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">1/{{ $totalOvsCredit }}</span>
+                                                        <span class="badge bg-warning text-dark">T1</span>
+                                                    @elseif($ov->numero_tranche === 2)
+                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">2/{{ $totalOvsCredit }}</span>
+                                                        <span class="badge bg-info text-dark">
+                                                            <i class="bi bi-bank me-1"></i>T2 Crédit Réel
+                                                        </span>
+                                                    @elseif($ov->numero_tranche === 3)
+                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">3/{{ $totalOvsCredit }}</span>
+                                                        <span class="badge" style="background:#6f42c1;">
+                                                            <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-primary">{{ $ov->pourcentage }}%</span>
+                                                    @if($programme === 'LPA' && $ov->numero_tranche)
+                                                        <span class="badge bg-warning text-dark">T{{ $ov->numero_tranche }}/5</span>
                                                     @endif
                                                 @endif
 
@@ -318,11 +315,15 @@
                                             @endif
                                         </div>
 
+                                        {{-- Montant --}}
                                         <div class="text-muted small mb-2">
                                             Montant : <strong class="text-dark">{{ number_format($ov->montant_paye, 2, ',', ' ') }} DA</strong>
                                         </div>
 
+                                        {{-- Boutons --}}
                                         <div class="d-flex gap-2 flex-wrap justify-content-center">
+
+                                            {{-- Payer / Reçu --}}
                                             @if($ov->paiement)
                                                 @if($ov->type_ov === 'credit_reel')
                                                     <span class="badge bg-secondary px-2 py-2">
@@ -346,6 +347,7 @@
                                                 </a>
                                             @endif
 
+                                            {{-- Imprimer OV --}}
                                             @if($ov->paiement)
                                                 <button class="btn btn-sm btn-outline-secondary" disabled
                                                         title="OV déjà payé — impression désactivée">
@@ -358,6 +360,15 @@
                                                     <i class="bi bi-printer me-1"></i> Imprimer OV
                                                 </a>
                                             @endif
+
+                                            {{-- ══ BOUTON MODIFIER — chef_service_com + OV non payé ══ --}}
+                                            @if(Auth::user()->role === 'chef_service_com' && !$ov->paiement)
+                                                <a href="{{ route('ov.edit', Hashids::encode($ov->id)) }}"
+                                                   class="btn btn-sm btn-outline-warning">
+                                                    <i class="bi bi-pencil-square me-1"></i> Modifier
+                                                </a>
+                                            @endif
+
                                         </div>
                                     </div>
                                     @empty
@@ -423,18 +434,23 @@
                                                 <i class="bi bi-eye me-1"></i> Voir Dossier
                                             </a>
                                         @endif
+
                                     @elseif($peutGenerer)
-                                        <a href="{{ route('ov.create', Hashids::encode($s->id)) }}"
-                                           class="btn btn-primary btn-action btn-sm shadow-sm">
-                                            <i class="fas fa-plus-circle"></i>
-                                            @if($programme === 'LPA')
-                                                Tranche {{ $prochaineTrancheLabel }}
-                                            @elseif($programme === 'LSP')
-                                                Nouvelle tranche
-                                            @else
-                                                Nouveau OV
-                                            @endif
-                                        </a>
+                                        @if($s->ovs->isEmpty() && Auth::user()->role !== 'dg')
+                                            <span class="badge bg-secondary px-3 py-2" title="Réservé au DG">
+                                                <i class="bi bi-lock-fill me-1"></i> DG uniquement
+                                            </span>
+                                        @else
+                                            <a href="{{ route('ov.create', Hashids::encode($s->id)) }}"
+                                               class="btn btn-primary btn-action btn-sm shadow-sm">
+                                                <i class="fas fa-plus-circle"></i>
+                                                @if($programme === 'LPA') Tranche {{ $prochaineTrancheLabel }}
+                                                @elseif($programme === 'LSP') Nouvelle tranche
+                                                @else Nouveau OV
+                                                @endif
+                                            </a>
+                                        @endif
+
                                     @else
                                         <span class="badge bg-success px-3 py-2">
                                             <i class="bi bi-check-all me-1"></i> Complet

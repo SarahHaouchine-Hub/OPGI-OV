@@ -322,11 +322,16 @@
         <div class="sc-value">{{ $soldes }}</div>
         <div class="sc-sub">Transactions clôturées</div>
     </div>
-    <div class="stat-card sc-danger" id="cardstat5">
-        <div class="sc-label">Remplacés</div>
-        <div class="sc-value">{{ $remplaces }}</div>
-        <div class="sc-sub">Désistements</div>
-    </div>
+    {{-- <div class="stat-card sc-danger" id="cardstat5">
+    <div class="sc-label">Désistés</div>
+    <div class="sc-value">{{ $desistes }}</div>
+    <div class="sc-sub">Logements libérés</div>
+</div> --}}
+<div class="stat-card sc-danger" id="cardstat6">
+    <div class="sc-label"><i class="bi bi-arrow-repeat me-1"></i>Remplacés</div>
+    <div class="sc-value">{{ $totalRemplacements }}</div>
+    <div class="sc-sub">Souscripteurs remplacés</div>
+</div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════

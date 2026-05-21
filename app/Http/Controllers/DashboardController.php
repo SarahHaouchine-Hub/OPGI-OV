@@ -7,110 +7,274 @@ use App\Models\Logement;
 use App\Models\Programme;
 use App\Models\Site;
 use App\Models\Wilaya;
+use App\Traits\RoleAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    use RoleAccess;
+
     public function index(Request $request)
     {
         $wilayas    = Wilaya::orderBy('nom')->get();
-        $programmes = Programme::where('is_active', 1)->get();
-        $sites      = Site::with('wilaya', 'programme')->orderBy('libelle')->get();
+        $programmes = $this->getProgrammesForUser();
+        $sites      = $this->getSitesQueryForUser()->with('wilaya', 'programme')->orderBy('libelle')->get();
 
         // ── Statistiques globales logements ────────────────────────────────
-        $totalLogements = Logement::count();
-        $soldes         = Logement::where('flag', 2)->count();
-        $inscrits       = Logement::where('flag', 1)->count();
-        $libres         = Logement::where('flag', 0)->count();
-        $remplaces      = Logement::where('flag', 3)->count();
+        // Pour les rôles restreints : on filtre les logements par programme
+        $logementsQuery = $this->getLogementsQueryForUser();
+
+        $totalLogements = (clone $logementsQuery)->count();
+        $soldes         = (clone $logementsQuery)->where('flag', 2)->count();
+        $inscrits       = (clone $logementsQuery)->where('flag', 1)->count();
+        $libres         = (clone $logementsQuery)->where('flag', 0)->count();
+// APRÈS
+$desistes = (clone $logementsQuery)->where('flag', 3)->count();
 
         // ── Nouvelles statistiques BNH/OV/VSP ──────────────────────────────
 
         // 1. Souscripteurs ayant une décision BNH (type = 'bnh' dans table aides)
         $decisionBnh = \DB::table('souscripteurs')
             ->join('aides', 'souscripteurs.id', '=', 'aides.souscripteur_id')
+            ->join('logements', 'logements.code_loge_lpl', '=', 'souscripteurs.code_loge_lpl')
+            ->join('sites', 'sites.id', '=', 'logements.site_id')
+            ->join('programmes', 'programmes.id', '=', 'sites.programme_id')
             ->where('aides.type', 'bnh')
+            ->when($this->getAllowedProgrammes(), function ($q) {
+                $allowed = $this->getAllowedProgrammes();
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            })
             ->distinct('souscripteurs.id')
             ->count('souscripteurs.id');
 
         // 2. OV Payées : ordres_versement ayant au moins 1 paiement
         $ovPayees = \DB::table('ordres_versement')
+            ->join('souscripteurs', 'souscripteurs.id', '=', 'ordres_versement.souscripteur_id')
+            ->join('logements', 'logements.code_loge_lpl', '=', 'souscripteurs.code_loge_lpl')
+            ->join('sites', 'sites.id', '=', 'logements.site_id')
+            ->join('programmes', 'programmes.id', '=', 'sites.programme_id')
             ->whereExists(function ($query) {
                 $query->select(\DB::raw(1))
                     ->from('paiements')
                     ->whereColumn('paiements.ov_id', 'ordres_versement.id');
             })
+            ->when($this->getAllowedProgrammes(), function ($q) {
+                $allowed = $this->getAllowedProgrammes();
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            })
             ->count();
 
         // 3. OV Non Payées : ordres_versement sans paiement
         $ovNonPayees = \DB::table('ordres_versement')
+            ->join('souscripteurs', 'souscripteurs.id', '=', 'ordres_versement.souscripteur_id')
+            ->join('logements', 'logements.code_loge_lpl', '=', 'souscripteurs.code_loge_lpl')
+            ->join('sites', 'sites.id', '=', 'logements.site_id')
+            ->join('programmes', 'programmes.id', '=', 'sites.programme_id')
             ->whereNotExists(function ($query) {
                 $query->select(\DB::raw(1))
                     ->from('paiements')
                     ->whereColumn('paiements.ov_id', 'ordres_versement.id');
             })
+            ->when($this->getAllowedProgrammes(), function ($q) {
+                $allowed = $this->getAllowedProgrammes();
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            })
             ->count();
 
-        // 4. VSP par projet (en supposant qu'il existe une colonne is_vsp dans logements)
-       // 4. VSP par projet — via ordres_versement.vsp → souscripteurs → logements → sites
-$vspParProjet = \DB::table('sites')
-    ->join('logements', 'logements.site_id', '=', 'sites.id')
-    ->join('souscripteurs', 'souscripteurs.code_loge_lpl', '=', 'logements.code_loge_lpl')
-    ->join('ordres_versement', function ($join) {
-        $join->on('ordres_versement.souscripteur_id', '=', 'souscripteurs.id')
-             ->whereNotNull('ordres_versement.vsp')
-             ->where('ordres_versement.vsp', '!=', '');
-    })
-    ->groupBy('sites.id', 'sites.libelle')
-    ->orderByDesc('vsp_count')
-    ->get(\DB::raw('sites.id, sites.libelle, COUNT(DISTINCT ordres_versement.id) as vsp_count'))
-    ->filter(fn($s) => $s->vsp_count > 0);
+        // 4. VSP par projet
+        $vspQuery = \DB::table('sites')
+            ->join('logements', 'logements.site_id', '=', 'sites.id')
+            ->join('souscripteurs', 'souscripteurs.code_loge_lpl', '=', 'logements.code_loge_lpl')
+            ->join('ordres_versement', function ($join) {
+                $join->on('ordres_versement.souscripteur_id', '=', 'souscripteurs.id')
+                     ->whereNotNull('ordres_versement.vsp')
+                     ->where('ordres_versement.vsp', '!=', '');
+            })
+            ->join('programmes', 'programmes.id', '=', 'sites.programme_id');
 
-$totalVsp = \DB::table('ordres_versement')
-    ->whereNotNull('vsp')
-    ->where('vsp', '!=', '')
-    ->count();
+        if ($allowed = $this->getAllowedProgrammes()) {
+            $vspQuery->where(function ($q) use ($allowed) {
+                foreach ($allowed as $key) {
+                    $q->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                }
+            });
+        }
+
+        $vspParProjet = $vspQuery
+            ->groupBy('sites.id', 'sites.libelle')
+            ->orderByDesc('vsp_count')
+            ->get(\DB::raw('sites.id, sites.libelle, COUNT(DISTINCT ordres_versement.id) as vsp_count'))
+            ->filter(fn($s) => $s->vsp_count > 0);
+
+        $totalVspQuery = \DB::table('ordres_versement')
+            ->join('souscripteurs', 'souscripteurs.id', '=', 'ordres_versement.souscripteur_id')
+            ->join('logements', 'logements.code_loge_lpl', '=', 'souscripteurs.code_loge_lpl')
+            ->join('sites', 'sites.id', '=', 'logements.site_id')
+            ->join('programmes', 'programmes.id', '=', 'sites.programme_id')
+            ->whereNotNull('ordres_versement.vsp')
+            ->where('ordres_versement.vsp', '!=', '');
+
+        if ($allowed = $this->getAllowedProgrammes()) {
+            $totalVspQuery->where(function ($q) use ($allowed) {
+                foreach ($allowed as $key) {
+                    $q->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                }
+            });
+        }
+
+        $totalVsp = $totalVspQuery->count();
 
         // ── Filtres et pagination des sites ────────────────────────────────
-        $sitesQuery = Site::with('wilaya', 'programme', 'logements')
+        $sitesQuery = $this->getSitesQueryForUser()
+            ->with('wilaya', 'programme', 'logements')
             ->orderBy('libelle');
 
         if ($request->filled('wilaya_id')) {
             $sitesQuery->where('wilaya_id', $request->wilaya_id);
         }
-
         if ($request->filled('programme_id')) {
             $sitesQuery->where('programme_id', $request->programme_id);
         }
-
         if ($request->filled('search')) {
             $sitesQuery->where('libelle', 'like', '%' . $request->search . '%');
         }
+// Nombre de remplacements effectués
+$totalRemplacements = \DB::table('desistements')
+    ->where('type', 'remplacement')
+    ->when($this->getAllowedProgrammes(), function ($q) {
+        $allowed = $this->getAllowedProgrammes();
+        $q->whereExists(function ($inner) use ($allowed) {
+            $inner->select(\DB::raw(1))
+                ->from('logements')
+                ->join('sites', 'sites.id', '=', 'logements.site_id')
+                ->join('programmes', 'programmes.id', '=', 'sites.programme_id')
+                ->whereColumn('logements.id', 'desistements.logement_id')
+                ->where(function ($p) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $p->orWhereRaw('UPPER(programmes.libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+        });
+    })
+    ->count();
 
         $sitesPaginated = $sitesQuery->paginate(15)->withQueryString();
 
-        return view('dashboard', compact(
-            'sitesPaginated',
-            'totalLogements', 'soldes', 'inscrits', 'libres', 'remplaces',
-            'decisionBnh', 'ovPayees', 'ovNonPayees', 'totalVsp', 'vspParProjet',
-            'programmes', 'wilayas', 'sites'
-        ));
+      return view('dashboard', compact(
+    'sitesPaginated',
+    'totalLogements', 'soldes', 'inscrits', 'libres', 'desistes', 'totalRemplacements',
+    'decisionBnh', 'ovPayees', 'ovNonPayees', 'totalVsp', 'vspParProjet',
+    'programmes', 'wilayas', 'sites'
+));
     }
 
-    // ── Endpoints API (inchangés) ───────────────────────────────────────
+    // =========================================================================
+    //  HELPERS PRIVÉS — Filtrage par rôle
+    // =========================================================================
+
+    /**
+     * Retourne les programmes visibles par l'utilisateur connecté.
+     */
+    private function getProgrammesForUser()
+    {
+        $query = Programme::where('is_active', 1);
+        $allowed = $this->getAllowedProgrammes();
+
+        if ($allowed) {
+            $query->where(function ($q) use ($allowed) {
+                foreach ($allowed as $key) {
+                    $q->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                }
+            });
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Retourne un builder Site filtré selon le rôle de l'utilisateur.
+     */
+    private function getSitesQueryForUser()
+    {
+        $query = Site::query();
+        $allowed = $this->getAllowedProgrammes();
+
+        if ($allowed) {
+            $query->whereHas('programme', function ($q) use ($allowed) {
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Retourne un builder Logement filtré selon le rôle de l'utilisateur.
+     */
+    private function getLogementsQueryForUser()
+    {
+        $query = Logement::query();
+        $allowed = $this->getAllowedProgrammes();
+
+        if ($allowed) {
+            $query->whereHas('site.programme', function ($q) use ($allowed) {
+                $q->where(function ($inner) use ($allowed) {
+                    foreach ($allowed as $key) {
+                        $inner->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                    }
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    // =========================================================================
+    //  Endpoints API
+    // =========================================================================
 
     public function programmesByWilaya($wilayaId)
     {
-        $programmes = Programme::whereHas('sites', fn($q) => $q->where('wilaya_id', $wilayaId))
-            ->distinct()->orderBy('libelle')->get(['id', 'libelle']);
-        return response()->json($programmes);
+        $query = Programme::whereHas('sites', fn($q) => $q->where('wilaya_id', $wilayaId))
+            ->distinct()
+            ->orderBy('libelle');
+
+        $allowed = $this->getAllowedProgrammes();
+        if ($allowed) {
+            $query->where(function ($q) use ($allowed) {
+                foreach ($allowed as $key) {
+                    $q->orWhereRaw('UPPER(libelle) LIKE ?', ['%' . $key . '%']);
+                }
+            });
+        }
+
+        return response()->json($query->get(['id', 'libelle']));
     }
 
     public function sitesByWilayaProgramme($wilayaId, $programmeId)
     {
         $sites = Site::where('wilaya_id', $wilayaId)
             ->where('programme_id', $programmeId)
-            ->orderBy('libelle')->get(['id', 'libelle']);
+            ->orderBy('libelle')
+            ->get(['id', 'libelle']);
+
         return response()->json($sites);
     }
 
@@ -145,7 +309,11 @@ $totalVsp = \DB::table('ordres_versement')
 
     public function logementsBySite($siteId)
     {
+        // Vérifier si le rôle a accès à ce site
         $site = Site::with('wilaya', 'programme')->findOrFail($siteId);
+        if (!$this->canAccessProgramme($site->programme->libelle ?? '')) {
+            return response()->json(['error' => $this->accessDeniedMessage()], 403);
+        }
 
         $logements = Logement::with('souscripteur')
             ->where('site_id', $siteId)

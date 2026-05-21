@@ -9,7 +9,7 @@
     }
     .input-group-text { background-color: #f8f9fa; color: #1e3c72; border-right: none; }
     .input-group .form-control { border-left: none; }
-    .aide-card  { border-left: 4px solid #28a745; background: #f8fff9; }
+    .aide-card { border-left: 4px solid #28a745; background: #f8fff9; }
 </style>
 
 <div class="container py-4">
@@ -39,31 +39,31 @@
         <div class="card-body p-4">
 
             {{-- ══════════════════════════════════════════════════════ --}}
-            {{-- SECTION 1 : Aides CNL / FNPOS --}}
+            {{-- SECTION 1 : Aides BNH / FNPOS --}}
             {{-- ══════════════════════════════════════════════════════ --}}
             <div class="row mb-4">
-                {{-- CNL --}}
+                {{-- BNH --}}
                 <div class="col-md-6">
-                    @if($aideCnl)
+                    @if($aideBnh)
                         <div class="card aide-card shadow-sm">
                             <div class="card-body">
                                 <h6 class="text-success fw-bold mb-3">
-                                    <i class="bi bi-check-circle-fill me-2"></i>Aide CNL enregistrée
+                                    <i class="bi bi-check-circle-fill me-2"></i>Aide BNH enregistrée
                                 </h6>
-                                <div class="mb-2"><strong>Montant :</strong> {{ number_format($aideCnl->montant, 2, ',', ' ') }} DA</div>
-                                <div class="mb-2"><strong>N° Convention :</strong> {{ $aideCnl->num_convention }}</div>
-                                <div class="mb-2"><strong>N° Décision :</strong> {{ $aideCnl->num_decision }}</div>
-                                <div><strong>Date :</strong> {{ $aideCnl->date->format('d/m/Y') }}</div>
+                                <div class="mb-2"><strong>Montant :</strong> {{ number_format($aideBnh->montant, 2, ',', ' ') }} DA</div>
+                                <div class="mb-2"><strong>N° Convention :</strong> {{ $aideBnh->num_convention }}</div>
+                                <div class="mb-2"><strong>N° Décision :</strong> {{ $aideBnh->num_decision }}</div>
+                                <div><strong>Date :</strong> {{ \Carbon\Carbon::parse($aideBnh->date)->format('d/m/Y') }}</div>
                             </div>
                         </div>
                     @else
                         <div class="card border shadow-sm">
                             <div class="card-body text-center">
                                 <i class="bi bi-info-circle text-info" style="font-size:2rem;"></i>
-                                <p class="text-muted mb-2">Aide CNL optionnelle</p>
-                                <button type="button" class="btn btn-outline-danger btn-sm"
-                                        data-bs-toggle="modal" data-bs-target="#modalCnl">
-                                    <i class="bi bi-plus-circle me-1"></i> Ajouter CNL
+                                <p class="text-muted mb-2">Aide BNH optionnelle</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#modalBnh">
+                                    <i class="bi bi-plus-circle me-1"></i> Ajouter BNH
                                 </button>
                             </div>
                         </div>
@@ -80,7 +80,7 @@
                                 </h6>
                                 <div class="mb-2"><strong>Montant :</strong> {{ number_format($aideFnpos->montant, 2, ',', ' ') }} DA</div>
                                 <div class="mb-2"><strong>N° Décision :</strong> {{ $aideFnpos->num_decision }}</div>
-                                <div><strong>Date :</strong> {{ $aideFnpos->date->format('d/m/Y') }}</div>
+                                <div><strong>Date :</strong> {{ \Carbon\Carbon::parse($aideFnpos->date)->format('d/m/Y') }}</div>
                             </div>
                         </div>
                     @else
@@ -237,22 +237,22 @@
     </div>
 </div>
 
-{{-- MODAL CNL --}}
-<div class="modal fade" id="modalCnl" tabindex="-1">
+{{-- MODAL BNH --}}
+<div class="modal fade" id="modalBnh" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Enregistrer l'aide CNL</h5>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Enregistrer l'aide BNH</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('ov.aide.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="souscripteur_id" value="{{ $souscripteur->id }}">
-                <input type="hidden" name="type" value="cnl">
+                <input type="hidden" name="type" value="bnh">
                 <div class="modal-body">
                     <div class="alert alert-info py-2">
                         <i class="bi bi-info-circle me-1"></i>
-                        Le montant CNL sera déduit du reste à payer.
+                        Le montant BNH sera déduit du reste à payer.
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -261,10 +261,6 @@
                                 <input type="number" name="montant" class="form-control" step="0.01" min="1" required>
                                 <span class="input-group-text">DA</span>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">N° Convention <span class="text-danger">*</span></label>
-                            <input type="text" name="num_convention" class="form-control" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">N° Décision <span class="text-danger">*</span></label>
@@ -284,8 +280,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-save me-1"></i> Enregistrer CNL
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Enregistrer BNH
                     </button>
                 </div>
             </form>
@@ -308,16 +304,9 @@
                 <div class="modal-body">
                     <div class="alert alert-info py-2">
                         <i class="bi bi-info-circle me-1"></i>
-                        Le montant FNPOS sera déduit du reste à payer.
+                        Le montant FNPOS (500 000 DA fixe) sera déduit du reste à payer.
                     </div>
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Montant <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" name="montant" class="form-control" step="0.01" min="1" required>
-                                <span class="input-group-text">DA</span>
-                            </div>
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">N° Décision <span class="text-danger">*</span></label>
                             <input type="text" name="num_decision" class="form-control" required>
@@ -344,6 +333,7 @@
         </div>
     </div>
 </div>
+
 <script>
 const resteMax = {{ $resteAPayer }};
 

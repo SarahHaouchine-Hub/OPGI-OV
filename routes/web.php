@@ -63,6 +63,8 @@ Route::middleware(['auth', 'decode.hashids'])->group(function () {
     Route::get('/ov/paiement/{ovId}',          [OvController::class, 'createPaiement'])->name('paiement.create');
     Route::post('/ov/paiement/store',          [OvController::class, 'storePaiement'])->name('paiement.store');
     Route::post('/ov/credit/ov-diff',          [OvController::class, 'storeOvCredit'])->name('ov.credit.ov_diff');
+    Route::get('/ov/{id}/edit',   [OvController::class, 'edit'])   ->name('ov.edit');
+Route::put('/ov/{id}/update', [OvController::class, 'update']) ->name('ov.update');
 
     // ── Désistements & Remplacements ──────────────────────────────────
     Route::get('/desistement',

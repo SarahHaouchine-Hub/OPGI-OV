@@ -6,18 +6,18 @@
     ═══════════════════════════════════════════════════
     ORDRE DE VERSEMENT — LSP | OPGI Dar El Beida
     Style  : Minimaliste & Épuré (Thème Vert LSP)
-    Format : setPaper([0, 0, 419.53, 230], 'portrait')
+    Format : A6 paysage (148mm × 105mm)
     ═══════════════════════════════════════════════════
 --}}
 <style>
-@page {
-    margin: 0px;
+@page { 
+    margin: 0px; 
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
 }
 
 html, body {
@@ -26,33 +26,30 @@ html, body {
     overflow: hidden;
     font-family: 'DejaVu Sans', Arial, sans-serif;
     font-size: 5pt;
-    color: #0d1f0f;
-    background: #f1f8f2;
+    color: #0b3017;         /* Vert très foncé */
+    background: #f0faf3;    /* Vert pâle (bg) */
 }
 
-/* ── CADRE PRINCIPAL ─────────────────────────────── */
 .page {
     width: 100%;
-    border: 1pt solid #4caf50;
+    border: 1pt solid #5bd582; /* Vert vif (bordure) */
     position: relative;
     overflow: hidden;
-    background: #f1f8f2;
+    background: #f0faf3;
     box-sizing: border-box;
     padding-bottom: 2mm;
 }
 
-/* Filigrane */
 .watermark {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     font-size: 90pt; font-weight: bold;
-    color: #1b5e20; opacity: 0.04;
-    white-space: nowrap; pointer-events: none;
+    color: #2b9745; opacity: 0.06; /* Vert moyen (filigrane) */
+    white-space: nowrap; pointer-events: none; 
     z-index: 1000;
 }
 
-/* ── CONTENU ─────────────────────────────────────── */
 .content {
     position: relative;
     margin: 4pt 5mm 0 5mm;
@@ -62,7 +59,7 @@ html, body {
 /* ══ EN-TÊTE ════════════════════════════════════════ */
 .hdr {
     display: table; width: 100%; border-collapse: collapse;
-    border-bottom: 0.5pt solid #81c784;
+    border-bottom: 0.5pt solid #8fdc9f; 
     padding-bottom: 2pt; margin-bottom: 2pt;
     height: 9mm;
 }
@@ -70,28 +67,29 @@ html, body {
     display: table-cell; width: 9%;
     vertical-align: middle; text-align: center;
 }
-.hdr-logo img, .hdr-logo-opgi img { width: 8mm; height: 8mm; }
+.hdr-logo img, .hdr-logo-opgi img { width: 15mm; height: 15mm; }
 
 .hdr-fr {
     display: table-cell; width: 41%;
     vertical-align: middle; padding-left: 3pt;
     font-size: 4pt; font-weight: bold;
-    line-height: 1.5; color: #1a3a1c;
+    line-height: 1.5; color: #1d4426;
+     white-space: nowrap;
 }
-.hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #145216; margin-top: 0.5pt; }
+.hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #165c24; margin-top: 0.5pt; }
 
 .hdr-ar {
     display: table-cell; width: 41%;
     vertical-align: middle; padding-right: 3pt;
     font-size: 4pt; font-weight: bold;
-    line-height: 1.5; text-align: right; direction: rtl; color: #1a3a1c;
+    line-height: 1.5; text-align: right; direction: rtl; color: #1d4426;
 }
-.hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #145216; margin-top: 0.5pt; }
+.hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #165c24; margin-top: 0.5pt; }
 
 /* ══ BANDEAU ════════════════════════════════════════ */
 .banner {
     display: table; width: 100%; border-collapse: collapse;
-    background: linear-gradient(180deg, #81c784 0%, #388e3c 100%);
+    background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%); /* Gradient Vert */
     height: 7mm; margin-bottom: 2pt;
     border-radius: 2pt;
 }
@@ -100,33 +98,28 @@ html, body {
     vertical-align: middle; text-align: center;
     padding: 0.5pt 3pt;
 }
-.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #0d1f0f; line-height: 1; }
-.ban-left .t-suf { font-size: 4.5pt; font-weight: bold; color: #1a3a1c; }
+.ban-left .t-num-line { line-height: 1; }
+.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #0b3017; }
+.ban-left .t-suf-inline { font-size: 4.5pt; font-weight: bold; color: #1d4426; vertical-align: baseline; }
+.ban-left .t-tranche { font-size: 4.5pt; font-weight: bold; color: #1d4426; }
 
 .ban-center {
     display: table-cell; width: 60%;
     vertical-align: middle; text-align: center;
     padding: 0.5pt 4pt;
 }
-.ban-center .prog-lbl {
-    font-size: 5.5pt;
-    font-weight: bold;
-    color: #0d1f0f;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    margin-bottom: 1pt;
+.ban-center .prog-lbl { 
+    font-size: 5.5pt; font-weight: bold; color: #ffffff; 
+    text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 1pt;
 }
-.ban-center .ov-title {
-    font-size: 7.5pt; font-weight: bold;
-    color: #81c784; text-transform: uppercase; letter-spacing: 1.5pt;
-}
+.ban-center .ov-title { font-size: 7.5pt; font-weight: bold; color: #0b3017; text-transform: uppercase; letter-spacing: 1.5pt; }
 
 .ban-right {
     display: table-cell; width: 20%;
     vertical-align: middle; text-align: center; padding: 0.5pt 3pt;
 }
-.ban-right .ref-lbl { font-size: 3.5pt; color: #1a3a1c; text-transform: uppercase; }
-.ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #0d1f0f; font-family: 'DejaVu Sans Mono', monospace; }
+.ban-right .ref-lbl { font-size: 3.5pt; color: #1d4426; text-transform: uppercase; }
+.ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #0b3017; font-family: 'DejaVu Sans Mono', monospace; }
 
 /* ══ IDENTITÉ ═══════════════════════════════════════ */
 .id-row {
@@ -135,126 +128,78 @@ html, body {
 }
 .id-left  { display: table-cell; vertical-align: bottom; }
 .id-right { display: table-cell; vertical-align: bottom; text-align: right; white-space: nowrap; }
-.id-lbl { font-size: 3.8pt; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.3pt; }
+.id-lbl { font-size: 3.8pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.3pt; }
 .id-val {
-    font-size: 7pt; font-weight: bold; color: #0d1f0f;
+    font-size: 7pt; font-weight: bold; color: #0b3017;
     text-transform: uppercase;
-    border-bottom: 0.5pt solid #4caf50;
+    border-bottom: 0.5pt solid #5bd582;
     padding-bottom: 0.5pt; display: inline-block; min-width: 65mm;
 }
-.nin-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; }
-.nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0d1f0f; letter-spacing: 0.5pt; }
+.nin-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; }
+.nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #0b3017; letter-spacing: 0.5pt; }
 
 /* ══ LOGEMENT ═══════════════════════════════════════ */
-.log-row {
-    font-size: 4.5pt; color: #1a3a1c;
-    padding-bottom: 2pt; margin-bottom: 2pt;
-}
+.log-row { font-size: 4.5pt; color: #1d4426; padding-bottom: 2pt; margin-bottom: 2pt; }
 
 /* ══ PAYEZ / MONTANT ════════════════════════════════ */
-.pay-row {
-    display: table; width: 100%; border-collapse: collapse;
-}
-.pay-left {
-    display: table-cell; width: 60%;
-    vertical-align: top; padding-right: 6pt;
-}
-.pay-right {
-    display: table-cell; width: 40%;
-    vertical-align: top; padding-left: 2pt;
-}
+.pay-row { display: table; width: 100%; border-collapse: collapse; }
+.pay-left { display: table-cell; width: 60%; vertical-align: top; padding-right: 6pt; }
+.pay-right { display: table-cell; width: 40%; vertical-align: top; padding-left: 2pt; }
 
-.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #0d1f0f; }
-.payez-invite strong { color: #145216; }
+.payez-label { font-size: 4pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
+.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #0b3017; }
+.payez-invite strong { color: #165c24; }
 
-.prix-cession-row { font-size: 4.3pt; color: #1a3a1c; margin: 2pt 0 1pt; }
-.prix-cession-row strong { color: #0d1f0f; }
+.prix-cession-row { font-size: 4.3pt; color: #1d4426; margin: 2pt 0 1pt; }
+.prix-cession-row strong { color: #0b3017; }
 
-.pay-info-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; margin-bottom: 0.2pt; }
-.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #0d1f0f; margin-bottom: 1.5pt; }
-
-/* Aides */
-.aide-row {
-    font-size: 4pt; color: #1a3a1c;
-    margin-top: 1.5pt;
-    padding: 1.5pt 2pt;
-    background: #e8f5e9;
-    border-radius: 2pt;
-    border-left: 1.5pt solid #4caf50;
-}
-.aide-row strong { color: #145216; }
-
-/* Cadre montant */
-.montant-frame {
-    background: #e8f5e9;
-    padding: 2pt 3pt;
-    text-align: right;
-    margin-bottom: 1pt;
-    border-radius: 2pt;
-    border: 0.5pt solid #81c784;
-}
-.montant-lbl { font-size: 3.5pt; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
-.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #0d1f0f; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
-.montant-devise { font-size: 4.5pt; font-weight: bold; color: #1b5e20; margin-top: 0.5pt; }
-
-/* Lettres */
 .letters-row {
-    padding: 2pt;
-    margin-top: 1pt;
+    padding: 2pt; margin-top: 1pt;
     font-size: 4pt; font-weight: bold; font-style: italic;
-    color: #1a3a1c; background: #dcedc8;
-    border-radius: 2pt;
-    text-align: right;
+    color: #1d4426; background: #e2f9e8; 
+    border-radius: 2pt; text-align: right;
 }
 
-.pct-row {
-    font-size: 4pt;
-    color: #1a3a1c;
-    text-align: right;
-    margin-top: 3pt;
+.montant-frame {
+    background: #e9f8ed; 
+    padding: 2pt 3pt; text-align: right; margin-bottom: 1pt;
+    border-radius: 2pt; border: 0.5pt solid #8fdc9f;
 }
-.pct-row strong { color: #145216; }
+.montant-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
+.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #0b3017; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
+.montant-devise { font-size: 4.5pt; font-weight: bold; color: #2b9745; margin-top: 0.5pt; }
+
+.pay-info-lbl { font-size: 3.5pt; color: #2f9747; text-transform: uppercase; margin-bottom: 0.2pt; }
+.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #0b3017; margin-bottom: 1.5pt; }
 
 /* ══ PIED ════════════════════════════════════════════ */
 .footer-bar {
-    position: relative;
-    margin-top: 2mm;
-    background: linear-gradient(180deg, #81c784 0%, #388e3c 100%);
+    position: relative; margin-top: 0.5mm;
+    background: linear-gradient(180deg, #8fdc9f 0%, #419c53 100%);
     border-radius: 2pt;
 }
-.footer-inner {
-    display: table; width: 100%; border-collapse: collapse;
-    height: 8mm;
-}
+.footer-inner { display: table; width: 100%; border-collapse: collapse; height: 14mm; }
 .ft-delai {
-    display: table-cell; width: 100%;
-    vertical-align: middle; padding: 1.5pt 5pt;
-    font-size: 4.8pt; color: #81c784; text-align: center;
+    display: table-cell; width: 85%; vertical-align: middle;
+    padding: 1pt 5pt; font-size: 4.5pt; color: #0b3017; text-align: center;
 }
-.ft-qr {
-    display: table-cell; width: 15%;
-    vertical-align: middle; text-align: center; padding: 1pt;
-}
-.ft-qr img { width: 7.5mm; height: 7.5mm; }
+.ft-delai-lbl  { font-size: 5pt; font-weight: bold; color: #0b3017; }
+.ft-delai-date { font-size: 4pt; color: #1d4426; margin-top: 0.5pt; }
+
+.ft-qr { display: table-cell; width: 15%; vertical-align: middle; text-align: center; padding: 1pt; }
+.ft-qr img { width: 15mm; height: 15mm; }
+.ft-qr-lbl { font-size: 3pt; color: #1d4426; display: block; margin-top: 0.3pt; text-transform: uppercase; }
 
 /* ══ NOTES ════════════════════════════════════════ */
 .notes-bar {
-    position: relative;
-    margin-top: 1.5mm;
-    padding-left: 5mm;
-    padding-right: 5mm;
-    text-align: center;
+    position: relative; margin-top: 0.5mm;
+    padding-left: 5mm; padding-right: 5mm; text-align: center;
 }
-.note {
-    display: block; font-size: 3pt; line-height: 1.3; color: #145216; margin-bottom: 2pt;
-}
+.note { display: block; font-size: 3pt; line-height: 1.2; color: #165c24; margin-bottom: 0.5pt; }
 .note::before { content: "✦ "; }
 .contact-info {
-    font-size: 2.8pt;
-    color: #1a3a1c;
-    line-height: 1.4;
-    border-top: 0.5pt solid #81c784;
-    padding-top: 1.5pt;
+    font-size: 2.8pt; color: #1d4426; line-height: 1.3;
+    border-top: 0.5pt solid #8fdc9f; padding-top: 0.5pt;
 }
 </style>
 </head>
@@ -268,35 +213,35 @@ html, body {
         {{-- ══ EN-TÊTE ══ --}}
         <div class="hdr">
             <div class="hdr-logo">
-                @if(!empty($logoRepB64))
+                @if($logoRepB64)
                     <img src="{{ $logoRepB64 }}" alt="Rep">
                 @else
                     <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="27" stroke="#2e7d32" stroke-width="2" fill="none"/>
-                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2e7d32" stroke-width="1.5" fill="none"/>
-                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2e7d32" stroke-width="1.5"/>
-                        <polygon points="30,6 33,14 27,14" fill="#4caf50"/>
+                        <circle cx="30" cy="30" r="27" stroke="#2b9745" stroke-width="2" fill="none"/>
+                        <ellipse cx="30" cy="30" rx="10" ry="27" stroke="#2b9745" stroke-width="1.5" fill="none"/>
+                        <line x1="3" y1="30" x2="57" y2="30" stroke="#2b9745" stroke-width="1.5"/>
+                        <polygon points="30,6 33,14 27,14" fill="#5bd582"/>
                     </svg>
                 @endif
             </div>
             <div class="hdr-fr">
                 <div>République Algérienne Démocratique et Populaire</div>
-                <div>Ministère de l'Habitat, de l'Urbanisme et de la Ville</div>
+                <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
                 <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
             </div>
             <div class="hdr-ar">
                 <div>{{ $republique }}</div>
                 <div>{{ $ministere_ar }}</div>
-                <div class="ar-org">{{ $dar_beida_ar }} {{ $opgi_nom_ar }}</div>
+                <div class="ar-org"> {{ $dar_beida_ar }} {{ $opgi_nom_ar }} </div>
             </div>
             <div class="hdr-logo-opgi">
-                @if(!empty($logoOpgiB64))
+                @if($logoOpgiB64)
                     <img src="{{ $logoOpgiB64 }}" alt="OPGI">
                 @else
                     <svg width="22" height="22" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2e7d32" stroke-width="2" fill="#e8f5e9"/>
-                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#4caf50"/>
-                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2e7d32" font-weight="bold">OPGI</text>
+                        <rect x="4" y="10" width="52" height="42" rx="3" stroke="#2b9745" stroke-width="2" fill="#e9f8ed"/>
+                        <rect x="12" y="17" width="36" height="7" rx="2" fill="#5bd582"/>
+                        <text x="18" y="40" font-size="8" font-family="sans-serif" fill="#2b9745" font-weight="bold">OPGI</text>
                     </svg>
                 @endif
             </div>
@@ -304,22 +249,24 @@ html, body {
 
         {{-- ══ BANDEAU ══ --}}
         @php
-            $ordinals = [1=>'1',2=>'2',3=>'3',4=>'4',5=>'5'];
-            $suffixes = [1=>'ère Tranche',2=>'ème Tranche',3=>'ème Tranche',4=>'ème Tranche',5=>'ème Tranche'];
+            $ordinals = [1=>'1', 2=>'2', 3=>'3', 4=>'4', 5=>'5'];
+            $suffixes = [1=>'ère', 2=>'ème', 3=>'ème', 4=>'ème', 5=>'ème'];
             $num = $ov->numero_tranche ?? 1;
         @endphp
         <div class="banner">
             <div class="ban-left">
-                <div class="t-num">{{ $ordinals[$num] ?? $num }}</div>
-                <div class="t-suf">{{ $suffixes[$num] ?? 'ème Tranche' }}</div>
+                <div class="t-num-line">
+                    <span class="t-num">{{ $ordinals[$num] ?? $num }}</span><span class="t-suf-inline">{{ $suffixes[$num] ?? 'ème' }}</span>
+                </div>
+                <div class="t-tranche">Tranche</div>
             </div>
             <div class="ban-center">
-                <div class="prog-lbl">Programme : {{ $typeProgramme }}</div>
+                <div class="prog-lbl">Programme : LSP</div>
                 <div class="ov-title">Ordre de Versement</div>
             </div>
             <div class="ban-right">
-                <div class="ref-lbl">Code logement</div>
-                <div class="ref-val">{{ $ov->souscripteur->code_loge_lpl ?? '—' }}</div>
+                {{-- <div class="ref-lbl">Code logement</div>
+                <div class="ref-val">{{ $ov->souscripteur->code_loge_lpl ?? '—' }}</div> --}}
             </div>
         </div>
 
@@ -327,108 +274,72 @@ html, body {
         <div class="id-row">
             <div class="id-left">
                 <div class="id-lbl">Payez à l'ordre de</div>
-                <div class="id-val">{{ strtoupper($ov->souscripteur->nom) }}&nbsp;{{ strtoupper($ov->souscripteur->prenom) }}</div>
+                <div class="id-val">Mr/Mme {{ strtoupper($ov->souscripteur->nom) }}&nbsp;{{ strtoupper($ov->souscripteur->prenom) }}</div>
             </div>
             <div class="id-right">
                 @if($ov->souscripteur->nin)
-                    <div class="nin-lbl">N.I.N :</div>
-                    <div class="nin-val">{{ $ov->souscripteur->nin }}</div>
+                <div class="nin-lbl">N.I.N :</div>
+                <div class="nin-val">{{ $ov->souscripteur->nin }}</div>
                 @endif
             </div>
         </div>
 
         {{-- ══ LOGEMENT ══ --}}
         @php
-            $logement    = $ov->souscripteur->logement;
-            $site        = $logement->site ?? null;
-            $prog        = $logement->programme ?? null;
-            $nbsp        = "\xc2\xa0";
-            $mChiffres   = number_format((float)$ov->montant_paye, 2, ',', $nbsp);
-            $prixCession = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
-            $nomBanque   = $banqueNom ?? $site->banque_nom ?? $site->nom_agence ?? '—';
-            $numRib      = $ribLsp ?? $site->rib ?? '—';
-            $titulaire   = $site->titulaire ?? 'O.P.G.I. Dar El Beida';
-            $nbsp        = "\xc2\xa0";
-
-            // Aides LSP
-            $montantBnh   = (float)($aideBnh->montant ?? 0);
-            $montantFnpos = $aideFnpos ? 500000.00 : 0.0;
-            $prixNet      = number_format(max(0, ($logement->prix ?? 0) - $totalAides), 2, ',', $nbsp);
+            $logement      = $ov->souscripteur->logement;
+            $site          = $logement->site ?? null;
+            $prog          = $logement->programme ?? null;
+            $nbsp          = "\xc2\xa0";
+            $mChiffres     = number_format((float)$ov->montant_paye, 2, ',', $nbsp);
+            $prixCession   = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
+            $nomAgence     = $site->nom_agence        ?? '—';
+            $numAgence     = $site->num_agence        ?? '—';
+            $adresseAgence = $site->adresse_agence    ?? '';
+            $numCompte     = $site->num_compte_agence ?? '—';
+            $titulaire     = $site->titulaire         ?? 'O.P.G.I. Dar El Beida';
         @endphp
         <div class="log-row">
-            Bât.&nbsp;<strong>{{ $logement->num_batiment ?? '—' }}</strong>
-            &nbsp;—&nbsp;Ét.&nbsp;<strong>{{ $logement->num_etage ?? '—' }}</strong>
+            &nbsp;—&nbsp;Projet :&nbsp;<strong>{{ $site->libelle ?? $prog->libelle ?? '—' }}</strong><br>
+            —&nbsp;Bât.&nbsp;<strong>{{ $logement->num_batiment ?? '—' }}</strong>
             &nbsp;/&nbsp;N° Logement&nbsp;<strong>{{ $logement->num_porte ?? '—' }}</strong>
+            &nbsp;—&nbsp;Ét.&nbsp;<strong>{{ $logement->num_etage ?? '—' }}</strong>
             &nbsp;—&nbsp;Lot EDD&nbsp;<strong>{{ $logement->num_lot ?? '—' }}</strong>
-            &nbsp;—&nbsp;<strong>{{ $logement->type_logement ?? $logement->typologie ?? '—' }}</strong>
-            &nbsp;({{ $logement->superficie ?? $logement->surface ?? '—' }}&nbsp;m²)
-            &nbsp;—&nbsp;Site :&nbsp;<strong>{{ $siteLibelle ?? $site->libelle ?? $prog->libelle ?? '—' }}</strong>
+            &nbsp;—&nbsp;<strong>{{ $logement->typologie ?? '—' }}</strong>
+            &nbsp;({{ $logement->surface ?? '—' }}&nbsp;m²)
         </div>
 
         {{-- ══ PAYEZ / MONTANT ══ --}}
         <div class="pay-row">
             <div class="pay-left">
-
                 <div class="payez-invite">
                     Vous êtes invité(e) à effectuer le versement de la
                     <strong>{{ $trancheLabelFr }} tranche</strong>
-                    du prix de cession du logement
-                    <strong>({{ $typeProgramme }})</strong>
-                    dans un délai de <strong>30 jours</strong>.
+                    du prix de cession du programme
+                    <strong>(LSP)</strong>
+                    dans un délai de <strong>15 jours</strong>.
                 </div>
                 <div class="prix-cession-row">
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
 
-                {{-- Aides déduites --}}
-                @if($aideBnh)
-                    <div class="aide-row">
-                        Aide BNH :&nbsp;<strong>−&nbsp;{{ number_format($montantBnh, 2, ',', "\xc2\xa0") }}&nbsp;DA</strong>
-                    </div>
-                @endif
-                @if($aideFnpos)
-                    <div class="aide-row">
-                        Aide FNPOS :&nbsp;<strong>−&nbsp;500&nbsp;000,00&nbsp;DA</strong>
-                    </div>
-                @endif
-                @if($aideBnh || $aideFnpos)
-                    <div class="aide-row" style="margin-top: 1pt; background: #c8e6c9;">
-                        Prix net à payer :&nbsp;<strong>{!! $prixNet !!}&nbsp;DA</strong>
-                    </div>
-                @endif
-
-                <div class="pay-info-lbl" style="margin-top: 4pt;">Banque / Agence destinataire</div>
+                <div class="pay-info-lbl" style="margin-top: 4pt;">Agence destinataire</div>
                 <div class="pay-info-val">
-                    {{ $nomBanque }}
-                    @if(!empty($site->num_agence) && $site->num_agence !== '—')
-                        &nbsp;— N°&nbsp;{{ $site->num_agence }}
-                    @endif
-                    @if(!empty($site->adresse_agence))
-                        <br><span style="font-weight:normal; font-size:4pt;">{{ $site->adresse_agence }}</span>
-                    @endif
+                    {{ $nomAgence }}@if($numAgence !== '—') &nbsp;— N°&nbsp;{{ $numAgence }}@endif
+                    @if($adresseAgence)<br><span style="font-weight:normal; font-size: 4pt;">{{ $adresseAgence }}</span>@endif
                 </div>
-
-                <div class="pay-info-lbl">Numéro de compte (RIB)</div>
-                <div class="pay-info-val">{{ $numRib }}</div>
-
+                <div class="pay-info-lbl">Numéro de compte</div>
+                <div class="pay-info-val">{{ $numCompte }}</div>
                 <div class="pay-info-lbl">Titulaire du compte</div>
                 <div class="pay-info-val">{{ $titulaire }}</div>
-
             </div>
+
             <div class="pay-right">
-
                 <div class="montant-frame">
-                    <span class="montant-lbl">Montant</span>
+                    <span class="montant-lbl">Montant à verser {{ $trancheLabelFr }} tranche</span>
                     <div class="montant-chiffres">{!! $mChiffres !!}</div>
-                    <div class="montant-devise">Dinar Algérien</div>
+                    <div class="montant-devise">Dinars Algériens</div>
                 </div>
-
                 <div class="letters-row">{{ mb_strtoupper($montantEnLettres, 'UTF-8') }}</div>
-
-                <div class="pct-row">
-                    Représentant :&nbsp;<strong>{{ $ov->pourcentage }}&nbsp;%</strong>&nbsp;à l'ordre de&nbsp;<strong>O.P.G.I. Dar El Beida</strong>.
-                </div>
-
             </div>
         </div>
 
@@ -436,16 +347,14 @@ html, body {
 
     {{-- ══ PIED ══ --}}
     @php
-        $dateCouper = now()->addDays(30)->format('d/m/Y');
+        $dateCouper = now()->addDays(15)->format('d/m/Y');
         $qrB64 = $ov->qrcode ? 'data:image/svg+xml;base64,' . $ov->qrcode : '';
     @endphp
     <div class="footer-bar">
         <div class="footer-inner">
             <div class="ft-delai">
-                <strong>Délai : (30) trente jours</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Le : {{ $datePdf }}
-                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>Délai : (15) quinze jours</strong> &nbsp;&nbsp;|&nbsp;&nbsp; 
+                Le : {{ $datePdf }} &nbsp;&nbsp;|&nbsp;&nbsp; 
                 <strong>Expire : {{ $dateCouper }}</strong>
             </div>
             <div class="ft-qr">
@@ -457,6 +366,7 @@ html, body {
     {{-- ══ NOTES & CONTACTS ══ --}}
     <div class="notes-bar">
         <span class="note">Le versement ne peut être effectué que par et pour l'intéressé. Dépassé le délai mentionné ci-dessus, l'ordre de versement est systématiquement annulé.</span>
+        <span class="note">L'intéressé doit se déplacer au niveau du notaire dans un délai de trente 30 jrs après le paiement de la 1ère tranche pour signature de l'acte s.v.p.</span>
         <div class="contact-info">
             O.P.G.I. Cité Rabia Tahar Bâtiment M/5 - Bab Ezzouar &nbsp;&nbsp;•&nbsp;&nbsp; Tél. 023-83-16-59 &nbsp;&nbsp;•&nbsp;&nbsp; Fax: 023-83-17-00 <br>
             Site Web: https://opgi-darelbeida.dz/ &nbsp;&nbsp;•&nbsp;&nbsp; Facebook : Opgi Dar El Beida &nbsp;&nbsp;•&nbsp;&nbsp; Email: contact@opgi-darelbeida.dz

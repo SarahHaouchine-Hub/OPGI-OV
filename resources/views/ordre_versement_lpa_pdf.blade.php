@@ -2,285 +2,106 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-{{--
-    ═══════════════════════════════════════════════════
-    ORDRE DE VERSEMENT — LPA | OPGI Dar El Beida
-    Style  : Minimaliste & Épuré (Beige / Or)
-    Format : A6 paysage (148mm × 105mm)
-    DomPDF : setPaper([0,0,419.53,297.64],'portrait')
-    ═══════════════════════════════════════════════════
---}}
 <style>
-@page { 
-    margin: 0px; 
-}
-
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-}
-
+@page { margin: 0px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+    width: 100%; height: 100%; overflow: hidden;
     font-family: 'DejaVu Sans', Arial, sans-serif;
-    font-size: 5pt;
-    color: #2b1d0e;
-    background: #faf3e0;
+    font-size: 5pt; color: #2b1d0e; background: #faf3e0;
 }
-
-/* ── CADRE PRINCIPAL ─────────────────────────────── */
 .page {
-    width: 100%;
-    border: 1pt solid #c9a84c; /* Bordure unique et plus douce */
-    position: relative;
-    overflow: hidden;
-    background: #faf3e0;
-    box-sizing: border-box;
-    padding-bottom: 2mm;
+    width: 100%; border: 1pt solid #c9a84c; position: relative;
+    overflow: hidden; background: #faf3e0; box-sizing: border-box;
+    padding-bottom: 1mm; /* Réduit */
 }
-.qr-main {
-    text-align: right; /* Aligne le QR code à droite */
-    margin-top: 3pt;
-}
-.qr-main img {
-    width: 16mm; /* Taille agrandie (ajustez selon l'espace restant) */
-    height: 16mm;
-}
-
-/* Filigrane conservé pour l'authenticité */
 .watermark {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 90pt; font-weight: bold;
-    color: #8b6914; opacity: 0.04;
-    white-space: nowrap; pointer-events: none; 
-    z-index: 1000; /* Modifié ici pour passer au premier plan */
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 80pt; font-weight: bold; color: #8b6914; opacity: 0.06;
+    white-space: nowrap; pointer-events: none; z-index: 1000;
 }
+.content { position: relative; margin: 2pt 5mm 0 5mm; z-index: 3; } /* Marges haut réduites */
 
-/* ── CONTENU ─────────────────────────────────────── */
-.content {
-    position: relative;
-    margin: 4pt 5mm 0 5mm;
-    z-index: 3;
-}
-
-/* ══ EN-TÊTE ════════════════════════════════════════ */
+/* ══ EN-TÊTE ══ */
 .hdr {
     display: table; width: 100%; border-collapse: collapse;
-    border-bottom: 0.5pt solid #e8c96d; /* Ligne très fine */
-    padding-bottom: 2pt; margin-bottom: 2pt;
-    height: 9mm;
+    border-bottom: 0.5pt solid #e8c96d; padding-bottom: 1pt; margin-bottom: 1pt;
+    height: 7mm; /* Réduit de 9mm à 7mm */
 }
-.hdr-logo, .hdr-logo-opgi {
-    display: table-cell; width: 9%;
-    vertical-align: middle; text-align: center;
-}
-.hdr-logo img, .hdr-logo-opgi img { width: 8mm; height: 8mm; }
+.hdr-logo, .hdr-logo-opgi { display: table-cell; width: 9%; vertical-align: middle; text-align: center; }
+.hdr-logo img, .hdr-logo-opgi img { width: 12mm; height: 12mm; } /* Réduit de 15mm à 12mm */
 
-.hdr-fr {
-    display: table-cell; width: 41%;
-    vertical-align: middle; padding-left: 3pt;
-    font-size: 4pt; font-weight: bold;
-    line-height: 1.5; color: #3d2b00;
-}
+.hdr-fr { display: table-cell; width: 41%; vertical-align: middle; padding-left: 2pt; font-size: 4pt; font-weight: bold; line-height: 1.3; color: #3d2b00; white-space: nowrap; }
 .hdr-fr .fr-org { font-size: 4.2pt; font-weight: bold; color: #5a3a00; margin-top: 0.5pt; }
-
-.hdr-ar {
-    display: table-cell; width: 41%;
-    vertical-align: middle; padding-right: 3pt;
-    font-size: 4pt; font-weight: bold;
-    line-height: 1.5; text-align: right; direction: rtl; color: #3d2b00;
-}
+.hdr-ar { display: table-cell; width: 41%; vertical-align: middle; padding-right: 2pt; font-size: 4pt; font-weight: bold; line-height: 1.3; text-align: right; direction: rtl; color: #3d2b00; }
 .hdr-ar .ar-org { font-size: 4.2pt; font-weight: bold; color: #5a3a00; margin-top: 0.5pt; }
 
-/* ══ BANDEAU ════════════════════════════════════════ */
-/* Suppression des bordures, le gradient suffit à structurer */
+/* ══ BANDEAU ══ */
 .banner {
     display: table; width: 100%; border-collapse: collapse;
     background: linear-gradient(180deg, #e8c96d 0%, #d5ae35 100%);
-    height: 7mm; margin-bottom: 2pt;
-    border-radius: 2pt; /* Léger arrondi pour la douceur */
+    height: 6mm; margin-bottom: 1pt; border-radius: 2pt; /* Hauteur et marge réduites */
 }
-.ban-left {
-    display: table-cell; width: 20%;
-    vertical-align: middle; text-align: center;
-    padding: 0.5pt 3pt;
-}
-.ban-left .t-num { font-size: 11pt; font-weight: bold; color: #2b1d0e; line-height: 1; }
-.ban-left .t-suf { font-size: 4.5pt; font-weight: bold; color: #3d2b00; }
-
-.ban-center {
-    display: table-cell; width: 60%;
-    vertical-align: middle; text-align: center;
-    padding: 0.5pt 4pt;
-}
-/* ══ BANDEAU ════════════════════════════════════════ */
-.ban-center .prog-lbl { 
-    font-size: 5.5pt; /* Plus grand */
-    font-weight: bold; /* En gras */
-    color: #5a3a00; /* Couleur plus contrastée/attirante */
-    text-transform: uppercase; 
-    letter-spacing: 0.5pt; 
-    margin-bottom: 1pt;
-}
-.ban-center .ov-title { font-size: 7.5pt; font-weight: bold; color: #2b1d0e; text-transform: uppercase; letter-spacing: 1.5pt; }
-
-.ban-right {
-    display: table-cell; width: 20%;
-    vertical-align: middle; text-align: center; padding: 0.5pt 3pt;
-}
+.ban-left { display: table-cell; width: 20%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
+.ban-left .t-num-line { line-height: 1; }
+.ban-left .t-num { font-size: 10pt; font-weight: bold; color: #2b1d0e; }
+.ban-left .t-suf-inline { font-size: 4.5pt; font-weight: bold; color: #3d2b00; vertical-align: baseline; }
+.ban-left .t-tranche { font-size: 4.5pt; font-weight: bold; color: #3d2b00; }
+.ban-center { display: table-cell; width: 60%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
+.ban-center .prog-lbl { font-size: 5pt; font-weight: bold; color: #5a3a00; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
+.ban-center .ov-title { font-size: 7pt; font-weight: bold; color: #2b1d0e; text-transform: uppercase; letter-spacing: 1.5pt; }
+.ban-right { display: table-cell; width: 20%; vertical-align: middle; text-align: center; padding: 0.5pt 2pt; }
 .ban-right .ref-lbl { font-size: 3.5pt; color: #3d2b00; text-transform: uppercase; }
 .ban-right .ref-val { font-size: 5.5pt; font-weight: bold; color: #2b1d0e; font-family: 'DejaVu Sans Mono', monospace; }
 
-/* ══ IDENTITÉ ═══════════════════════════════════════ */
-.id-row {
-    display: table; width: 100%; border-collapse: collapse;
-    padding-bottom: 1pt; margin-bottom: 1pt;
-}
+/* ══ IDENTITÉ ══ */
+.id-row { display: table; width: 100%; border-collapse: collapse; padding-bottom: 0.5pt; margin-bottom: 0.5pt; }
 .id-left  { display: table-cell; vertical-align: bottom; }
 .id-right { display: table-cell; vertical-align: bottom; text-align: right; white-space: nowrap; }
-.id-lbl { font-size: 3.8pt; color: #7a5c1e; text-transform: uppercase; letter-spacing: 0.3pt; }
-.id-val {
-    font-size: 7pt; font-weight: bold; color: #2b1d0e;
-    text-transform: uppercase;
-    border-bottom: 0.5pt solid #c9a84c; /* Ligne fine et claire */
-    padding-bottom: 0.5pt; display: inline-block; min-width: 65mm;
-}
+.id-lbl { font-size: 3.5pt; color: #7a5c1e; text-transform: uppercase; letter-spacing: 0.3pt; }
+.id-val { font-size: 6.5pt; font-weight: bold; color: #2b1d0e; text-transform: uppercase; border-bottom: 0.5pt solid #c9a84c; padding-bottom: 0.5pt; display: inline-block; min-width: 65mm; }
 .nin-lbl { font-size: 3.5pt; color: #7a5c1e; text-transform: uppercase; }
 .nin-val  { font-size: 5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace; color: #2b1d0e; letter-spacing: 0.5pt; }
 
-/* ══ LOGEMENT ═══════════════════════════════════════ */
-.log-row {
-    font-size: 4.5pt; color: #3d2b00;
-    padding-bottom: 2pt; margin-bottom: 2pt;
-}
+/* ══ LOGEMENT ══ */
+.log-row { font-size: 4.5pt; color: #3d2b00; padding-bottom: 1pt; margin-bottom: 1pt; } /* Réduit */
 
-/* ══ PAYEZ / MONTANT ════════════════════════════════ */
-.pay-row {
-    display: table; width: 100%; border-collapse: collapse;
-}
-.pay-left {
-    display: table-cell; width: 60%;
-    vertical-align: top; padding-right: 6pt;
-}
-.pay-right {
-    display: table-cell; width: 40%;
-    vertical-align: top;
-    padding-left: 2pt;
-}
+/* ══ PAYEZ / MONTANT ══ */
+.pay-row { display: table; width: 100%; border-collapse: collapse; }
+.pay-left { display: table-cell; width: 60%; vertical-align: top; padding-right: 4pt; }
+.pay-right { display: table-cell; width: 40%; vertical-align: top; padding-left: 2pt; }
 
-.payez-label { font-size: 4pt; color: #7a5c1e; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.5pt; }
-.payez-invite { font-size: 4.5pt; line-height: 1.5; color: #2b1d0e; }
+.payez-invite { font-size: 4.5pt; line-height: 1.3; color: #2b1d0e; }
 .payez-invite strong { color: #5a3a00; }
-
-.prix-cession-row { font-size: 4.3pt; color: #3d2b00; margin: 2pt 0 1pt; }
+.prix-cession-row { font-size: 4.3pt; color: #3d2b00; margin: 1pt 0 1pt; }
 .prix-cession-row strong { color: #2b1d0e; }
 
-/* ══ PAYEZ / MONTANT ════════════════════════════════ */
-.letters-row {
-    padding: 2pt;
-    margin-top: 1pt;
-    font-size: 4pt; font-weight: bold; font-style: italic;
-    color: #3d2b00; background: #fdf3d0;
-    border-radius: 2pt;
-    text-align: right; /* Aligné à droite sous le montant en chiffres */
-}
-.pct-row { 
-    font-size: 4pt; /* Légèrement réduit pour garantir que tout tienne sur une ligne */
-    color: #3d2b00; 
-    text-align: right; 
-    margin-top: 3pt; 
-}
-.pct-row strong { color: #5a3a00; }
-
-/* Cadre montant minimisé */
-.montant-frame {
-    background: #fff8e7;
-    padding: 2pt 3pt; /* Paddings réduits */
-    text-align: right;
-    margin-bottom: 1pt;
-    border-radius: 2pt;
-    border: 0.5pt solid #e8c96d; /* Légère bordure pour structurer */
-}
+.montant-frame { background: #fff8e7; padding: 2pt; text-align: right; margin-bottom: 1pt; border-radius: 2pt; border: 0.5pt solid #e8c96d; }
 .montant-lbl { font-size: 3.5pt; color: #7a5c1e; text-transform: uppercase; letter-spacing: 0.5pt; display: block; }
-.montant-chiffres { font-size: 8.5pt; font-weight: bold; color: #2b1d0e; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
+.montant-chiffres { font-size: 8pt; font-weight: bold; color: #2b1d0e; font-family: 'DejaVu Sans Mono', monospace; line-height: 1; }
 .montant-devise { font-size: 4.5pt; font-weight: bold; color: #8b6914; margin-top: 0.5pt; }
+.letters-row { padding: 1.5pt; margin-top: 1pt; font-size: 4pt; font-weight: bold; font-style: italic; color: #3d2b00; background: #fdf3d0; border-radius: 2pt; text-align: right; }
 
 .pay-info-lbl { font-size: 3.5pt; color: #7a5c1e; text-transform: uppercase; margin-bottom: 0.2pt; }
-.pay-info-val {
-    font-size: 4.5pt; font-weight: bold; color: #2b1d0e;
-    margin-bottom: 1.5pt;
-}
+.pay-info-val { font-size: 4.5pt; font-weight: bold; color: #2b1d0e; margin-bottom: 1pt; }
 
-/* ══ PIED ════════════════════════════════════════════ */
-.footer-bar {
-    position: relative;
-    margin-top: 2mm; /* Réduit pour gagner de la place (au lieu de 4mm) */
-    background: linear-gradient(180deg, #e8c96d 0%, #d4aa30 100%);
-    border-radius: 2pt;
-}
-.footer-inner {
-    display: table; width: 100%; border-collapse: collapse;
-    height: 8mm; /* Réduit pour s'adapter à une ligne */
-}
-.ft-delai {
-    display: table-cell; width: 100%;
-    vertical-align: middle; padding: 1.5pt 5pt;
-    font-size: 4.8pt; color: #2b1d0e; text-align: center; /* Centré pour plus d'harmonie */
-}
-.ft-delai-lbl  { font-size: 5pt; font-weight: bold; color: #2b1d0e; }
-.ft-delai-date { font-size: 4pt; color: #3d2b00; margin-top: 0.5pt; }
+/* ══ PIED ══ */
+.footer-bar { position: relative; margin-top: 0.5mm; background: linear-gradient(180deg, #e8c96d 0%, #d4aa30 100%); border-radius: 2pt; }
+.footer-inner { display: table; width: 100%; border-collapse: collapse; height: 11mm; } /* Réduit de 14mm à 11mm */
+.ft-delai { display: table-cell; width: 85%; vertical-align: middle; padding: 1pt 5pt; font-size: 4.5pt; color: #2b1d0e; text-align: center; }
+.ft-qr { display: table-cell; width: 15%; vertical-align: middle; text-align: center; padding: 1pt; }
+.ft-qr img { width: 12mm; height: 12mm; } /* Réduit de 15mm à 12mm */
 
-.ft-compte {
-    display: table-cell; width: 52%;
-    vertical-align: middle; padding: 1.5pt 5pt;
-}
-.ft-compte-lbl { font-size: 3.5pt; color: #3d2b00; text-transform: uppercase; letter-spacing: 0.3pt; }
-/* Numéro de compte allégé */
-.ft-compte-num {
-    font-size: 6.5pt; font-weight: bold; font-family: 'DejaVu Sans Mono', monospace;
-    color: #2b1d0e; letter-spacing: 1pt;
-    display: inline-block;
-}
-.ft-compte-agence { font-size: 3.5pt; color: #3d2b00; margin-top: 0.3pt; }
-
-.ft-qr {
-    display: table-cell; width: 15%;
-    vertical-align: middle; text-align: center; padding: 1pt;
-}
-.ft-qr img { width: 7.5mm; height: 7.5mm; }
-.ft-qr-lbl { font-size: 3pt; color: #3d2b00; display: block; margin-top: 0.3pt; text-transform: uppercase; }
-
-/* ══ NOTES ════════════════════════════════════════ */
-.notes-bar {
-    position: relative; 
-    margin-top: 1.5mm;
-    padding-left: 5mm;
-    padding-right: 5mm;
-    text-align: center;
-}
-.note { 
-    display: block; font-size: 3pt; line-height: 1.3; color: #5a3a00; margin-bottom: 2pt;
-}
+/* ══ NOTES ══ */
+.notes-bar { position: relative; margin-top: 0.5mm; padding-left: 5mm; padding-right: 5mm; text-align: center; }
+.note { display: block; font-size: 3pt; line-height: 1.1; color: #5a3a00; margin-bottom: 0.5pt; }
 .note::before { content: "✦ "; }
-.contact-info {
-    font-size: 2.8pt; /* Taille très fine pour tenir sans déborder */
-    color: #3d2b00;
-    line-height: 1.4;
-    border-top: 0.5pt solid #e8c96d;
-    padding-top: 1.5pt;
-    }
+.contact-info { font-size: 2.8pt; color: #3d2b00; line-height: 1.2; border-top: 0.5pt solid #e8c96d; padding-top: 0.5pt; }
 </style>
 </head>
 <body>
 <div class="page">
-
     <div class="watermark">OPGI</div>
-
     <div class="content">
 
         {{-- ══ EN-TÊTE ══ --}}
@@ -299,7 +120,7 @@ html, body {
             </div>
             <div class="hdr-fr">
                 <div>République Algérienne Démocratique et Populaire</div>
-                <div>Ministère de l'Habitat, de l'Urbanisme et de la Ville</div>
+                <div>Ministère de l'Habitat, de l'urbanisme, de la Ville et de l'Aménagement du Territoire</div>
                 <div class="fr-org">Office de Promotion et de Gestion Immobilière de Dar El Beida</div>
             </div>
             <div class="hdr-ar">
@@ -322,30 +143,29 @@ html, body {
 
         {{-- ══ BANDEAU ══ --}}
         @php
-            $ordinals = [1=>'1',2=>'2',3=>'3',4=>'4',5=>'5'];
-            $suffixes = [1=>'ère Tranche',2=>'ème Tranche',3=>'ème Tranche',4=>'ème Tranche',5=>'ème Tranche'];
+            $ordinals = [1=>'1', 2=>'2', 3=>'3', 4=>'4', 5=>'5'];
+            $suffixes = [1=>'ère', 2=>'ème', 3=>'ème', 4=>'ème', 5=>'ème'];
             $num = $ov->numero_tranche ?? 1;
         @endphp
         <div class="banner">
             <div class="ban-left">
-                <div class="t-num">{{ $ordinals[$num] ?? $num }}</div>
-                <div class="t-suf">{{ $suffixes[$num] ?? 'ème Tranche' }}</div>
+                <div class="t-num-line">
+                    <span class="t-num">{{ $ordinals[$num] ?? $num }}</span><span class="t-suf-inline">{{ $suffixes[$num] ?? 'ème' }}</span>
+                </div>
+                <div class="t-tranche">Tranche</div>
             </div>
             <div class="ban-center">
                 <div class="prog-lbl">Programme : {{ $typeProgramme }}</div>
                 <div class="ov-title">Ordre de Versement</div>
             </div>
-            <div class="ban-right">
-                <div class="ref-lbl">Code logement</div>
-                <div class="ref-val">{{ $ov->souscripteur->code_loge_lpl ?? '—' }}</div>
-            </div>
+            <div class="ban-right"></div>
         </div>
 
         {{-- ══ IDENTITÉ ══ --}}
         <div class="id-row">
             <div class="id-left">
                 <div class="id-lbl">Payez à l'ordre de</div>
-                <div class="id-val">{{ strtoupper($ov->souscripteur->nom) }}&nbsp;{{ strtoupper($ov->souscripteur->prenom) }}</div>
+                <div class="id-val">Mr/Mme {{ strtoupper($ov->souscripteur->nom) }}&nbsp;{{ strtoupper($ov->souscripteur->prenom) }}</div>
             </div>
             <div class="id-right">
                 @if($ov->souscripteur->nin)
@@ -356,7 +176,7 @@ html, body {
         </div>
 
         {{-- ══ LOGEMENT ══ --}}
-       @php
+        @php
             $logement      = $ov->souscripteur->logement;
             $site          = $logement->site ?? null;
             $prog          = $logement->programme ?? null;
@@ -365,25 +185,23 @@ html, body {
             $prixCession   = number_format((float)($logement->prix ?? 0), 2, ',', $nbsp);
             $nomAgence     = $site->nom_agence        ?? '—';
             $numAgence     = $site->num_agence        ?? '—';
-            $adresseAgence = $site->adresse_agence    ?? ''; // Ajout de l'adresse
+            $adresseAgence = $site->adresse_agence    ?? '';
             $numCompte     = $site->num_compte_agence ?? '—';
             $titulaire     = $site->titulaire         ?? 'O.P.G.I. Dar El Beida';
         @endphp
-       <div class="log-row">
-            Bât.&nbsp;<strong>{{ $logement->num_batiment ?? '—' }}</strong>
-            &nbsp;—&nbsp;Ét.&nbsp;<strong>{{ $logement->num_etage ?? '—' }}</strong>
+        <div class="log-row">
+            &nbsp;—&nbsp;Projet :&nbsp;<strong>{{ $site->libelle ?? $prog->libelle ?? '—' }}</strong><br>
+            —&nbsp;Bât.&nbsp;<strong>{{ $logement->num_batiment ?? '—' }}</strong>
             &nbsp;/&nbsp;N° Logement&nbsp;<strong>{{ $logement->num_porte ?? '—' }}</strong>
+            &nbsp;—&nbsp;Ét.&nbsp;<strong>{{ $logement->num_etage ?? '—' }}</strong>
             &nbsp;—&nbsp;Lot EDD&nbsp;<strong>{{ $logement->num_lot ?? '—' }}</strong>
             &nbsp;—&nbsp;<strong>{{ $logement->typologie ?? '—' }}</strong>
             &nbsp;({{ $logement->surface ?? '—' }}&nbsp;m²)
-            &nbsp;—&nbsp;Site :&nbsp;<strong>{{ $site->libelle ?? $prog->libelle ?? '—' }}</strong>
         </div>
 
         {{-- ══ PAYEZ / MONTANT ══ --}}
-      {{-- ══ PAYEZ / MONTANT ══ --}}
         <div class="pay-row">
             <div class="pay-left">
-            
                 <div class="payez-invite">
                     Vous êtes invité(e) à effectuer le versement de la
                     <strong>{{ $trancheLabelFr }} tranche</strong>
@@ -395,37 +213,28 @@ html, body {
                     Prix de cession :&nbsp;<strong>{!! $prixCession !!}&nbsp;DA</strong>
                 </div>
 
-                <div class="pay-info-lbl" style="margin-top: 4pt;">Agence destinataire</div>
+                <div class="pay-info-lbl" style="margin-top: 2pt;">Agence destinataire</div>
                 <div class="pay-info-val">
                     {{ $nomAgence }}@if($numAgence !== '—') &nbsp;— N°&nbsp;{{ $numAgence }}@endif
                     @if($adresseAgence)<br><span style="font-weight:normal; font-size: 4pt;">{{ $adresseAgence }}</span>@endif
                 </div>
                 <div class="pay-info-lbl">Numéro de compte</div>
                 <div class="pay-info-val">{{ $numCompte }}</div>
-                
                 <div class="pay-info-lbl">Titulaire du compte</div>
                 <div class="pay-info-val">{{ $titulaire }}</div>
-
             </div>
-          <div class="pay-right">
-                
+
+            <div class="pay-right">
                 <div class="montant-frame">
-                    <span class="montant-lbl">Montant</span>
+                    <span class="montant-lbl">Montant à verser {{ $trancheLabelFr }} tranche</span>
                     <div class="montant-chiffres">{!! $mChiffres !!}</div>
-                    <div class="montant-devise">Dinar Algérien</div>
+                    <div class="montant-devise">Dinars Algériens</div>
                 </div>
-                
                 <div class="letters-row">{{ mb_strtoupper($montantEnLettres, 'UTF-8') }}</div>
-
-                <div class="pct-row">
-                    Représentant :&nbsp;<strong>{{ $ov->pourcentage }}&nbsp;%</strong> &nbsp;à l'ordre de&nbsp;<strong>O.P.G.I. Dar El Beida</strong>.
-                </div>
-
-              
             </div>
         </div>
 
-    </div>{{-- /.content --}}
+    </div>
 
     {{-- ══ PIED ══ --}}
     @php
@@ -447,14 +256,14 @@ html, body {
 
     {{-- ══ NOTES & CONTACTS ══ --}}
     <div class="notes-bar">
-        <span class="note">✦ Le versement ne peut être effectué que par et pour l'intéressé. Dépassé le délai mentionné ci-dessus, l'ordre de versement est systématiquement annulé.</span>
-        
+        <span class="note">Le versement ne peut être effectué que par et pour l'intéressé. Dépassé le délai mentionné ci-dessus, l'ordre de versement est systématiquement annulé.</span>
+        <span class="note">L'intéressé doit se déplacer au niveau du notaire dans un délai de trente 30 jrs après le paiement de la 1ère tranche pour signature de l'acte s.v.p.</span>
         <div class="contact-info">
             O.P.G.I. Cité Rabia Tahar Bâtiment M/5 - Bab Ezzouar &nbsp;&nbsp;•&nbsp;&nbsp; Tél. 023-83-16-59 &nbsp;&nbsp;•&nbsp;&nbsp; Fax: 023-83-17-00 <br>
             Site Web: https://opgi-darelbeida.dz/ &nbsp;&nbsp;•&nbsp;&nbsp; Facebook : Opgi Dar El Beida &nbsp;&nbsp;•&nbsp;&nbsp; Email: contact@opgi-darelbeida.dz
         </div>
     </div>
 
-</div>{{-- /.page --}}
+</div>
 </body>
 </html>

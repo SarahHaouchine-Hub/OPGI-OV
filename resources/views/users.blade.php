@@ -22,7 +22,6 @@
         font-size: 0.75rem;
         letter-spacing: 0.5px;
     }
-    /* Boutons simplifiés */
     .btn-action {
         padding: 0.4rem 0.8rem;
         border-radius: 6px;
@@ -32,7 +31,6 @@
     .btn-action:hover {
         transform: translateY(-1px);
     }
-    /* Modal simplifié */
     .modal-content {
         border-radius: 12px;
     }
@@ -55,7 +53,7 @@
 </style>
 
     <div class="container py-4">
-        {{-- Alertes --}}
+
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" id="alert" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
@@ -63,8 +61,14 @@
             </div>
         @endif
 
+        @if(session('status'))
+            <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm" id="alert" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i> {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         <div class="card custom-card">
-            {{-- Header --}}
             <div class="card-header card-header-gradient text-white d-flex justify-content-between align-items-center" style="padding: 1.2rem;">
                 <h4 class="mb-0" style="font-size:18px"><i class="bi bi-people-fill me-2"></i> Gestion des Utilisateurs</h4>
                 <button data-bs-toggle="modal" data-bs-target="#addUserModal" class="btn btn-light btn-sm">
@@ -80,6 +84,7 @@
                                 <th class="ps-4">Utilisateur</th>
                                 <th>Email</th>
                                 <th>Rôle</th>
+                                <th>Statut</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
@@ -89,13 +94,28 @@
                                     <td class="ps-4 align-middle fw-bold text-dark">{{ $user->name }}</td>
                                     <td class="align-middle text-muted">{{ $user->email }}</td>
                                     <td class="align-middle">
-                                        <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : 'bg-primary' }} rounded-pill">
-                                            {{ ucfirst($user->role) }}
+                                        <span class="badge rounded-pill
+                                            {{ match($user->role) {
+                                                'admin'                => 'bg-danger',
+                                                'dg'                   => 'bg-dark',
+                                                'dga'                  => 'bg-secondary',
+                                                'chef_service_com'     => 'bg-warning text-dark',
+                                                'charge_etude_lsp_lpa' => 'bg-info text-dark',
+                                                'charge_etude_prom'    => 'bg-success',
+                                                default                => 'bg-primary'
+                                            } }}">
+                                            {{ $user->role_label }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill {{ $user->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                            {{ $user->is_active ? 'Actif' : 'Inactif' }}
                                         </span>
                                     </td>
                                     <td class="pe-4 align-middle text-end">
-                                        <button type="button" class="btn btn-sm btn-primary btn-action me-1" 
-                                            data-bs-toggle="modal" 
+                                        <button type="button"
+                                            class="btn btn-sm btn-primary btn-action me-1"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#editUserModal"
                                             data-id="{{ $user->id }}"
                                             data-name="{{ $user->name }}"
@@ -108,7 +128,7 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="btn btn-sm {{ $user->is_active ? 'btn-danger' : 'btn-success' }} btn-action">
-                                                <i class="bi {{ $user->is_active ? 'bi-lock'  : 'bi-unlock' }}"></i>
+                                                <i class="bi {{ $user->is_active ? 'bi-lock' : 'bi-unlock' }}"></i>
                                                 {{ $user->is_active ? 'Désactiver' : 'Activer' }}
                                             </button>
                                         </form>
@@ -116,7 +136,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="py-5 text-center text-muted">
+                                    <td colspan="5" class="py-5 text-center text-muted">
                                         <i class="bi bi-person-x display-4 d-block mb-2 opacity-25"></i>
                                         <p>Aucun utilisateur enregistré.</p>
                                     </td>
@@ -142,7 +162,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label-custom">Nom complet</label>
-                            <input type="text" name="name" class="form-control"  required>
+                            <input type="text" name="name" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label-custom">Email</label>
@@ -151,8 +171,10 @@
                         <div class="mb-3">
                             <label class="form-label-custom">Rôle</label>
                             <select name="role" class="form-select" required>
-                                <option value="agent">Agent</option>
-                                <option value="admin">Administrateur</option>
+                                <option value="" disabled selected>-- Sélectionner un rôle --</option>
+                                @foreach($roles as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
@@ -173,6 +195,7 @@
         </div>
     </div>
 
+    {{-- MODAL MODIFIER --}}
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -195,13 +218,25 @@
                         <div class="mb-3">
                             <label class="form-label-custom">Rôle</label>
                             <select name="role" id="edit_role" class="form-select" required>
-                                <option value="admin">Administrateur</option>
-                                <option value="agent">Agent</option>
+                                <option value="" disabled>-- Sélectionner un rôle --</option>
+                                @foreach($roles as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-custom">Nouveau mot de passe <small class="text-muted">(optionnel)</small></label>
+                            <label class="form-label-custom">
+                                Nouveau mot de passe
+                                <small class="text-muted fw-normal">(optionnel)</small>
+                            </label>
                             <input type="password" name="password" class="form-control" placeholder="Laissez vide pour ne pas modifier">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">
+                                Confirmer le mot de passe
+                                <small class="text-muted fw-normal">(optionnel)</small>
+                            </label>
+                            <input type="password" name="password_confirmation" class="form-control" placeholder="Laissez vide pour ne pas modifier">
                         </div>
                     </div>
                     <div class="modal-footer border-0">
@@ -214,24 +249,36 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const editUserModal = document.getElementById('editUserModal');
-            editUserModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                document.getElementById('edit_name').value = button.getAttribute('data-name');
-                document.getElementById('edit_email').value = button.getAttribute('data-email');
-                document.getElementById('edit_role').value = button.getAttribute('data-role');
-                const id = button.getAttribute('data-id');
-                document.getElementById('editForm').action = '/users/' + id;
-            });
+    document.addEventListener('DOMContentLoaded', function () {
 
-            const alert = document.getElementById('alert');
-            if (alert) {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 3000);
+        // 1. Réinitialisation du modal d'ajout pour vider les champs
+        const addUserModal = document.getElementById('addUserModal');
+        addUserModal.addEventListener('show.bs.modal', function () {
+            const form = addUserModal.querySelector('form');
+            if (form) {
+                form.reset();
             }
         });
-    </script>
+
+        // 2. Pré-remplissage du modal modifier
+        const editUserModal = document.getElementById('editUserModal');
+        editUserModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            document.getElementById('edit_name').value  = button.getAttribute('data-name');
+            document.getElementById('edit_email').value = button.getAttribute('data-email');
+            document.getElementById('edit_role').value  = button.getAttribute('data-role');
+            const id = button.getAttribute('data-id');
+            document.getElementById('editForm').action  = '/users/' + id;
+        });
+
+        // 3. Fermeture automatique des alertes après 3s
+        document.querySelectorAll('#alert').forEach(function (alertEl) {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertEl);
+                bsAlert.close();
+            }, 3000);
+        });
+    });
+</script>
+
 </x-app-layout>

@@ -28,39 +28,26 @@
         font-family: 'Monaco', monospace;
         color: #2d3436;
     }
-    .btn-outline-secondary {
-        border-radius: 8px;
-        border-color: #6c757d;
-        color: #6c757d;
-        transition: all 0.3s ease;
-    }
-    .btn-outline-secondary:hover {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        color: white;
-    }
 </style>
 
 <div class="py-4">
     <div class="container-fluid px-4">
 
-        {{-- ── Alertes ── --}}
+        {{-- Alertes --}}
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                {{ session('success') }}
+                <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                {{ session('error') }}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
-        {{-- ── Tableau des désistements / remplacements ── --}}
+        {{-- Tableau des désistements / remplacements --}}
         <div class="card custom-card mb-2">
             <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">
@@ -93,7 +80,6 @@
                                         {{ $desistements->firstItem() + $loop->index }}
                                     </td>
 
-                                    {{-- Type --}}
                                     <td>
                                         @if ($desistement->type === 'remplacement')
                                             <span class="badge bg-warning text-dark">
@@ -110,13 +96,11 @@
                                         {{ $desistement->code_loge_lpl }}
                                     </td>
 
-                                    {{-- Ancien souscripteur --}}
                                     <td>
                                         {{ strtoupper($desistement->souscripteur->nom    ?? '') }}
                                         {{ strtoupper($desistement->souscripteur->prenom ?? '') }}
                                     </td>
 
-                                    {{-- Nouveau souscripteur (remplacement uniquement) --}}
                                     <td>
                                         @if ($desistement->type === 'remplacement' && $desistement->nouveauSouscripteur)
                                             <span class="text-success fw-bold">
@@ -134,7 +118,6 @@
                                         Porte&nbsp;{{ $desistement->logement->num_porte  ?? '—' }}
                                     </td>
 
-                                    {{-- Site depuis la relation BDD --}}
                                     <td>{{ $desistement->logement->site->libelle ?? '—' }}</td>
 
                                     <td class="text-danger fw-bold">

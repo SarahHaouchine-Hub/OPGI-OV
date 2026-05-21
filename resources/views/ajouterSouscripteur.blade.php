@@ -40,11 +40,9 @@
     }
     .import-box:hover { border-color: #2a5298; background-color: #f1f5f9; }
 
-    /* Section conjoint masquée par défaut */
     #bloc_conjoint { display: none; }
     #bloc_conjoint.show { display: block; }
 
-    /* Séparateur de section */
     .section-divider {
         display: flex; align-items: center; gap: 12px; margin: 8px 0 16px;
         color: #6c757d; font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
@@ -67,6 +65,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -74,6 +78,21 @@
                 @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
             </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    {{-- ══════════════════════════════════════════════════════════════════════
+         Badge informatif du rôle courant (optionnel, utile pour le debug)
+    ══════════════════════════════════════════════════════════════════════════ --}}
+    @if($allowedProgrammes !== null)
+        <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3">
+            <i class="bi bi-shield-lock-fill"></i>
+            <span class="small">
+                Votre profil vous donne accès aux programmes :
+                @foreach($allowedProgrammes as $prog)
+                    <span class="badge bg-primary ms-1">{{ $prog }}</span>
+                @endforeach
+            </span>
         </div>
     @endif
 
@@ -90,6 +109,34 @@
         </div>
 
         <div class="card-body p-4">
+
+            {{-- ── Helper Blade : calcule si un programme est autorisé ──────── --}}
+            {{-- $allowedProgrammes === null  → accès total                      --}}
+            {{-- $allowedProgrammes = ['LSP','LPA'] → only those keys            --}}
+            @php
+                /**
+                 * Retourne true si le libellé de programme est accessible
+                 * par le rôle courant.
+                 *
+                 * @param  string        $label            Ex : 'LPL', 'LSP', 'LPA'
+                 * @param  array|null    $allowedProgrammes
+                 */
+                $canImport = function (string $label) use ($allowedProgrammes): bool {
+                    if ($allowedProgrammes === null) return true;
+                    $upper = strtoupper(trim($label));
+                    foreach ($allowedProgrammes as $key) {
+                        if (str_contains($upper, strtoupper($key))) return true;
+                    }
+                    return false;
+                };
+
+                $showLpl = $canImport('LPL') || $canImport('PROMOTIONNEL');
+                $showLsp = $canImport('LSP');
+                $showLpa = $canImport('LPA');
+                // L'onglet Import n'est affiché que si au moins une carte import est visible
+                $showImportTab = $showLpl || $showLsp || $showLpa;
+            @endphp
+
             <ul class="nav nav-tabs mb-4" id="inscriptionTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="individual-tab" data-bs-toggle="tab"
@@ -97,24 +144,26 @@
                         <i class="bi bi-person-badge me-1"></i> Saisie individuelle
                     </button>
                 </li>
+                @if($showImportTab)
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="import-tab" data-bs-toggle="tab"
                             data-bs-target="#import" type="button" role="tab">
                         <i class="bi bi-file-earmark-excel me-1"></i> Import Excel
                     </button>
                 </li>
+                @endif
             </ul>
 
             <div class="tab-content" id="inscriptionTabContent">
 
-                {{-- ═══════════════════════════════════════════════════════════════
+                {{-- ═══════════════════════════════════════════════════════════
                      ONGLET SAISIE INDIVIDUELLE
                 ═══════════════════════════════════════════════════════════════ --}}
                 <div class="tab-pane fade show active" id="individual" role="tabpanel">
                     <form action="{{ route('souscripteur.store') }}" method="POST" id="mainForm">
                         @csrf
 
-                        {{-- ══════════════════════════════════════════════════════
+                        {{-- ══════════════════════════════════════════════════
                              BLOC 1 — INFORMATIONS PERSONNELLES
                         ══════════════════════════════════════════════════════ --}}
                         <div class="inner-card mb-4 overflow-hidden">
@@ -124,84 +173,84 @@
                             </div>
                             <div class="p-4">
 
-                               {{-- NIN --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">
-            NIN <span class="text-muted fw-normal">(Numéro d'Identification Nationale)</span>
-        </label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-            <input type="text" name="nin"
-                   class="form-control @error('nin') is-invalid @enderror"
-                   value="{{ old('nin') }}" required maxlength="18"
-                   placeholder="Ex: 1 99999999999999 99"
-                   pattern="[0-9\s]{18,20}">
-        </div>
-        @error('nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
+                                {{-- NIN --}}
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">
+                                            NIN <span class="text-muted fw-normal">(Numéro d'Identification Nationale)</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+                                            <input type="text" name="nin"
+                                                   class="form-control @error('nin') is-invalid @enderror"
+                                                   value="{{ old('nin') }}" required maxlength="18"
+                                                   placeholder="Ex: 1 99999999999999 99"
+                                                   pattern="[0-9\s]{18,20}">
+                                        </div>
+                                        @error('nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
-{{-- Nom / Prénom (FR) --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Nom (FR)</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" name="nom"
-                   class="form-control @error('nom') is-invalid @enderror"
-                   value="{{ old('nom') }}" required placeholder="NOM">
-        </div>
-        @error('nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Prénom (FR)</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" name="prenom"
-                   class="form-control @error('prenom') is-invalid @enderror"
-                   value="{{ old('prenom') }}" required placeholder="Prénom">
-        </div>
-        @error('prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
+                                {{-- Nom / Prénom --}}
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Nom (FR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input type="text" name="nom"
+                                                   class="form-control @error('nom') is-invalid @enderror"
+                                                   value="{{ old('nom') }}" required placeholder="NOM">
+                                        </div>
+                                        @error('nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Prénom (FR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input type="text" name="prenom"
+                                                   class="form-control @error('prenom') is-invalid @enderror"
+                                                   value="{{ old('prenom') }}" required placeholder="Prénom">
+                                        </div>
+                                        @error('prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
-{{-- Date naissance / Lieu naissance / Situation --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">Date de Naissance</label>
-        <input type="date" name="date_naissance"
-               class="form-control @error('date_naissance') is-invalid @enderror"
-               value="{{ old('date_naissance') }}" required style="border-radius:8px;">
-        @error('date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">Lieu de Naissance</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-            <input type="text" name="lieu_naissance"
-                   class="form-control @error('lieu_naissance') is-invalid @enderror"
-                   value="{{ old('lieu_naissance') }}" placeholder="Ville / Commune">
-        </div>
-        @error('lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">Situation Familiale</label>
-        <select name="situation_familiale" id="sel_situation"
-                class="form-select @error('situation_familiale') is-invalid @enderror" required>
-            <option value="celibataire" {{ old('situation_familiale','celibataire') == 'celibataire' ? 'selected':'' }}>Célibataire</option>
-            <option value="marie"       {{ old('situation_familiale') == 'marie'       ? 'selected':'' }}>Marié(e)</option>
-            <option value="divorce"     {{ old('situation_familiale') == 'divorce'     ? 'selected':'' }}>Divorcé(e)</option>
-            <option value="veuf"        {{ old('situation_familiale') == 'veuf'        ? 'selected':'' }}>Veuf / Veuve</option>
-        </select>
-        @error('situation_familiale')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
+                                {{-- Date / Lieu / Situation --}}
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Date de Naissance</label>
+                                        <input type="date" name="date_naissance"
+                                               class="form-control @error('date_naissance') is-invalid @enderror"
+                                               value="{{ old('date_naissance') }}" required style="border-radius:8px;">
+                                        @error('date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Lieu de Naissance</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                            <input type="text" name="lieu_naissance"
+                                                   class="form-control @error('lieu_naissance') is-invalid @enderror"
+                                                   value="{{ old('lieu_naissance') }}" placeholder="Ville / Commune">
+                                        </div>
+                                        @error('lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Situation Familiale</label>
+                                        <select name="situation_familiale" id="sel_situation"
+                                                class="form-select @error('situation_familiale') is-invalid @enderror" required>
+                                            <option value="celibataire" {{ old('situation_familiale','celibataire') == 'celibataire' ? 'selected':'' }}>Célibataire</option>
+                                            <option value="marie"       {{ old('situation_familiale') == 'marie'       ? 'selected':'' }}>Marié(e)</option>
+                                            <option value="divorce"     {{ old('situation_familiale') == 'divorce'     ? 'selected':'' }}>Divorcé(e)</option>
+                                            <option value="veuf"        {{ old('situation_familiale') == 'veuf'        ? 'selected':'' }}>Veuf / Veuve</option>
+                                        </select>
+                                        @error('situation_familiale')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
                             </div>
                         </div>{{-- /BLOC 1 --}}
 
-                        {{-- ══════════════════════════════════════════════════════
+                        {{-- ══════════════════════════════════════════════════
                              BLOC 2 — PARENTS DU SOUSCRIPTEUR
                         ══════════════════════════════════════════════════════ --}}
                         <div class="inner-card mb-4 overflow-hidden">
@@ -211,7 +260,6 @@
                             </div>
                             <div class="p-4">
 
-                                {{-- Père --}}
                                 <div class="section-divider"><i class="bi bi-person me-1"></i> Père</div>
                                 <div class="row g-4 mb-3">
                                     <div class="col-md-6">
@@ -236,7 +284,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Mère --}}
                                 <div class="section-divider"><i class="bi bi-person me-1"></i> Mère</div>
                                 <div class="row g-4 mb-3">
                                     <div class="col-md-6">
@@ -264,7 +311,7 @@
                             </div>
                         </div>{{-- /BLOC 2 --}}
 
-                        {{-- ══════════════════════════════════════════════════════
+                        {{-- ══════════════════════════════════════════════════
                              BLOC 3 — CONJOINT (affiché uniquement si marié)
                         ══════════════════════════════════════════════════════ --}}
                         <div id="bloc_conjoint"
@@ -278,68 +325,63 @@
 
                                 <div class="section-divider">Identité</div>
 
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">NIN du Conjoint</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+                                            <input type="text" name="conjoint_nin"
+                                                   class="form-control @error('conjoint_nin') is-invalid @enderror"
+                                                   value="{{ old('conjoint_nin') }}" maxlength="18"
+                                                   placeholder="Ex: 2 99999999999999 99">
+                                        </div>
+                                        @error('conjoint_nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
-{{-- NIN conjoint --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-4">
-        <label class="form-label small fw-bold">NIN du Conjoint</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-            <input type="text" name="conjoint_nin"
-                   class="form-control @error('conjoint_nin') is-invalid @enderror"
-                   value="{{ old('conjoint_nin') }}" maxlength="18"
-                   placeholder="Ex: 2 99999999999999 99">
-        </div>
-        @error('conjoint_nin')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Nom du Conjoint (FR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
+                                            <input type="text" name="conjoint_nom"
+                                                   class="form-control @error('conjoint_nom') is-invalid @enderror"
+                                                   value="{{ old('conjoint_nom') }}" placeholder="Nom">
+                                        </div>
+                                        @error('conjoint_nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Prénom du Conjoint (FR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
+                                            <input type="text" name="conjoint_prenom"
+                                                   class="form-control @error('conjoint_prenom') is-invalid @enderror"
+                                                   value="{{ old('conjoint_prenom') }}" placeholder="Prénom">
+                                        </div>
+                                        @error('conjoint_prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
-{{-- Nom / Prénom conjoint --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Nom du Conjoint (FR)</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
-            <input type="text" name="conjoint_nom"
-                   class="form-control @error('conjoint_nom') is-invalid @enderror"
-                   value="{{ old('conjoint_nom') }}" placeholder="Nom">
-        </div>
-        @error('conjoint_nom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Prénom du Conjoint (FR)</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person-heart"></i></span>
-            <input type="text" name="conjoint_prenom"
-                   class="form-control @error('conjoint_prenom') is-invalid @enderror"
-                   value="{{ old('conjoint_prenom') }}" placeholder="Prénom">
-        </div>
-        @error('conjoint_prenom')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
+                                <div class="row g-4 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Date de Naissance du Conjoint</label>
+                                        <input type="date" name="conjoint_date_naissance"
+                                               class="form-control @error('conjoint_date_naissance') is-invalid @enderror"
+                                               value="{{ old('conjoint_date_naissance') }}" style="border-radius:8px;">
+                                        @error('conjoint_date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Lieu de Naissance (FR)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                            <input type="text" name="conjoint_lieu_naissance"
+                                                   class="form-control @error('conjoint_lieu_naissance') is-invalid @enderror"
+                                                   value="{{ old('conjoint_lieu_naissance') }}" placeholder="Ville / Commune">
+                                        </div>
+                                        @error('conjoint_lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
 
-{{-- Date / Lieu naissance conjoint --}}
-<div class="row g-4 mb-3">
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Date de Naissance du Conjoint</label>
-        <input type="date" name="conjoint_date_naissance"
-               class="form-control @error('conjoint_date_naissance') is-invalid @enderror"
-               value="{{ old('conjoint_date_naissance') }}" style="border-radius:8px;">
-        @error('conjoint_date_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-6">
-        <label class="form-label small fw-bold">Lieu de Naissance (FR)</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-            <input type="text" name="conjoint_lieu_naissance"
-                   class="form-control @error('conjoint_lieu_naissance') is-invalid @enderror"
-                   value="{{ old('conjoint_lieu_naissance') }}" placeholder="Ville / Commune">
-        </div>
-        @error('conjoint_lieu_naissance')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-    </div>
-</div>
-
-                                {{-- Parents du conjoint — Père --}}
                                 <div class="section-divider"><i class="bi bi-people me-1"></i> Parents du Conjoint — Père</div>
                                 <div class="row g-4 mb-3">
                                     <div class="col-md-6">
@@ -364,7 +406,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Parents du conjoint — Mère --}}
                                 <div class="section-divider"><i class="bi bi-people me-1"></i> Parents du Conjoint — Mère</div>
                                 <div class="row g-4 mb-3">
                                     <div class="col-md-6">
@@ -392,7 +433,7 @@
                             </div>
                         </div>{{-- /BLOC 3 conjoint --}}
 
-                        {{-- ══════════════════════════════════════════════════════
+                        {{-- ══════════════════════════════════════════════════
                              BLOC 4 — AFFECTATION
                         ══════════════════════════════════════════════════════ --}}
                         <div class="inner-card mb-4 overflow-hidden border-primary-subtle">
@@ -496,9 +537,10 @@
                     </form>
                 </div>{{-- /tab-pane individual --}}
 
-                {{-- ═══════════════════════════════════════════════════════════════
-                     ONGLET IMPORT EXCEL
+                {{-- ═══════════════════════════════════════════════════════════
+                     ONGLET IMPORT EXCEL  (masqué si aucun import autorisé)
                 ═══════════════════════════════════════════════════════════════ --}}
+                @if($showImportTab)
                 <div class="tab-pane fade" id="import" role="tabpanel" aria-labelledby="import-tab">
 
                     @if(session('import_errors'))
@@ -515,7 +557,8 @@
 
                     <div class="row g-4 mt-1">
 
-                        {{-- LPL --}}
+                        {{-- ── CARTE LPL / PROMOTIONNEL ─────────────────────── --}}
+                        @if($showLpl)
                         <div class="col-md-4">
                             <div class="card h-100 border-0 shadow-sm"
                                  style="border-top:4px solid #1E3C72!important;border-radius:12px;">
@@ -523,7 +566,7 @@
                                     <div class="mb-3">
                                         <span class="badge px-3 py-2 fs-6 fw-bold"
                                               style="background-color:#1E3C72;color:#fff;border-radius:8px;">
-                                             Promotionnel
+                                            Promotionnel
                                         </span>
                                     </div>
                                     <p class="text-muted small flex-grow-1">
@@ -551,8 +594,10 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
-                        {{-- LSP --}}
+                        {{-- ── CARTE LSP ────────────────────────────────────── --}}
+                        @if($showLsp)
                         <div class="col-md-4">
                             <div class="card h-100 border-0 shadow-sm"
                                  style="border-top:4px solid #1A5276!important;border-radius:12px;">
@@ -588,8 +633,10 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
-                        {{-- LPA --}}
+                        {{-- ── CARTE LPA ────────────────────────────────────── --}}
+                        @if($showLpa)
                         <div class="col-md-4">
                             <div class="card h-100 border-0 shadow-sm"
                                  style="border-top:4px solid #6C3483!important;border-radius:12px;">
@@ -625,35 +672,41 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                     </div>{{-- /row --}}
-<div class="mt-4">
-    <div class="d-flex gap-3 align-items-start p-3 rounded mb-2" style="background:#eef4ff;border:0.5px solid #b5d4f4;">
-        <i class="bi bi-table text-primary fs-5 flex-shrink-0 mt-1"></i>
-        <div>
-            <p class="mb-1 small fw-bold text-primary">Structure du fichier </p>
-            <p class="mb-0 small text-muted">
-                <code>Nom FR | Prénom FR  Date naissance | NIN | Wilaya | Programme | Projet | Commune | N° Bâtiment | N° Étage | N° Porte | N° Lot | Surface | Typologie | Prix...</code>
-            </p>
-        </div>
-    </div>
-    <div class="d-flex gap-3 align-items-start p-3 rounded mb-2" style="background:#eaf3de;border:0.5px solid #c0dd97;">
-        <i class="bi bi-fonts text-success fs-5 flex-shrink-0 mt-1"></i>
-        <div>
-            <p class="mb-1 small fw-bold text-success">Formater la colonne NIN en <code>TEXTE</code> avant la saisie</p>
-            <p class="mb-0 small text-muted">Évite la notation scientifique (ex : <code>1.23E+17</code>) qui tronque le numéro d'identification.</p>
-        </div>
-    </div>
-    <div class="d-flex gap-3 align-items-start p-3 rounded" style="background:#fff8e1;border:0.5px solid #fac775;">
-        <i class="bi bi-download text-warning fs-5 flex-shrink-0 mt-1"></i>
-        <div>
-            <p class="mb-1 small fw-bold" style="color:#b7791f;">Utiliser impérativement le modèle fourni pour chaque type</p>
-            <p class="mb-0 small text-muted">Télécharger le fichier modèle correspondant (<code>Promotionnel</code>, <code>LSP</code> ou <code>LPA</code>) — ne pas créer un nouveau fichier depuis zéro.</p>
-        </div>
-    </div>
-</div>
+
+                    <div class="mt-4">
+                        <div class="d-flex gap-3 align-items-start p-3 rounded mb-2"
+                             style="background:#eef4ff;border:0.5px solid #b5d4f4;">
+                            <i class="bi bi-table text-primary fs-5 flex-shrink-0 mt-1"></i>
+                            <div>
+                                <p class="mb-1 small fw-bold text-primary">Structure du fichier</p>
+                                <p class="mb-0 small text-muted">
+                                    <code>Nom FR | Prénom FR | Date naissance | NIN | Wilaya | Programme | Projet | Commune | N° Bâtiment | N° Étage | N° Porte | N° Lot | Surface | Typologie | Prix...</code>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 align-items-start p-3 rounded mb-2"
+                             style="background:#eaf3de;border:0.5px solid #c0dd97;">
+                            <i class="bi bi-fonts text-success fs-5 flex-shrink-0 mt-1"></i>
+                            <div>
+                                <p class="mb-1 small fw-bold text-success">Formater la colonne NIN en <code>TEXTE</code> avant la saisie</p>
+                                <p class="mb-0 small text-muted">Évite la notation scientifique (ex : <code>1.23E+17</code>) qui tronque le numéro d'identification.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 align-items-start p-3 rounded"
+                             style="background:#fff8e1;border:0.5px solid #fac775;">
+                            <i class="bi bi-download text-warning fs-5 flex-shrink-0 mt-1"></i>
+                            <div>
+                                <p class="mb-1 small fw-bold" style="color:#b7791f;">Utiliser impérativement le modèle fourni pour chaque type</p>
+                                <p class="mb-0 small text-muted">Télécharger le fichier modèle correspondant — ne pas créer un nouveau fichier depuis zéro.</p>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>{{-- /tab-pane import --}}
+                @endif
 
             </div>{{-- /tab-content --}}
         </div>{{-- /card-body --}}
@@ -665,15 +718,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const $ = id => document.getElementById(id);
 
-    // ── Affichage dynamique du bloc conjoint ─────────────────────────────────
+    // ── Bloc conjoint ─────────────────────────────────────────────────────────
     const selSituation = $("sel_situation");
     const blocConjoint = $("bloc_conjoint");
 
     function toggleConjoint() {
         const isMarie = selSituation.value === 'marie';
         blocConjoint.classList.toggle('show', isMarie);
-
-        // Champs requis uniquement si marié(e)
         const required = ['conjoint_nom', 'conjoint_prenom', 'conjoint_nin', 'conjoint_date_naissance'];
         blocConjoint.querySelectorAll('input, select').forEach(el => el.removeAttribute('required'));
         if (isMarie) {
@@ -683,9 +734,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     }
-
     selSituation.addEventListener('change', toggleConjoint);
-    toggleConjoint(); // État initial
+    toggleConjoint();
 
     // ── Cascade affectation ───────────────────────────────────────────────────
     const selWilaya   = $("sel_wilaya");
@@ -747,12 +797,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             sel.disabled = false;
             return true;
-        } catch (e) {
-            console.error(e);
-            return false;
-        } finally {
-            spin(wrapId, false);
-        }
+        } catch (e) { console.error(e); return false; }
+        finally     { spin(wrapId, false); }
     }
 
     function setDefaultAlger(selectEl) {
@@ -850,14 +896,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 10);
     });
 
-    // Initialisation cascade
     if (!selWilaya.value) {
         if (setDefaultAlger(selWilaya)) selWilaya.dispatchEvent(new Event('change'));
     } else {
         selWilaya.dispatchEvent(new Event('change'));
     }
 
-    // Auto-dismiss alertes
     const alertEl = document.getElementById('alert');
     if (alertEl) setTimeout(() => new bootstrap.Alert(alertEl).close(), 4000);
 });
