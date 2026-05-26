@@ -3,76 +3,54 @@
 @section('content')
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
 
     :root {
         --gold:        #F5C200;
-        --gold-dark:   #C99A00;
-        --gold-light:  #FFE566;
+        --gold-hover:  #DBAD00;
         --blue:        #1035A0;
         --blue-mid:    #1A4BC4;
-        --blue-light:  #3A6EE8;
+        --blue-light:  #EEF2FF;
         --white:       #FFFFFF;
-        --off-white:   #F8F7F2;
-        --dark:        #0D1B3E;
-        --text-muted:  #6B7A99;
+        --bg-light:    #F4F7FA; /* Nouveau fond très clair */
+        --slate-50:    #F8FAFC;
+        --slate-100:   #F1F5F9;
+        --slate-200:   #E2E8F0;
+        --slate-400:   #94A3B8;
+        --slate-700:   #334155;
+        --slate-900:   #0F172A;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: 'Outfit', sans-serif;
-        background: var(--dark);
+        background-color: var(--bg-light); /* Remplacement du noir */
         min-height: 100vh;
         overflow-x: hidden;
     }
 
-    /* ── Animated background ── */
+    /* ── Fond Clair Flouté (Light Ambient Glow) ── */
     .opgi-bg {
         position: fixed;
         inset: 0;
-        background:
-            radial-gradient(ellipse 80% 60% at 20% 10%, rgba(245,194,0,.18) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 80% at 85% 90%, rgba(16,53,160,.45) 0%, transparent 60%),
-            linear-gradient(160deg, #0a1428 0%, #0D1B3E 50%, #091020 100%);
+        background: radial-gradient(circle at 15% 15%, rgba(245, 194, 0, 0.04) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(16, 53, 160, 0.06) 0%, transparent 40%),
+                    var(--bg-light);
         z-index: 0;
     }
 
-    /* Floating geometric rings inspired by the circular logo */
+    /* Motif très discret pour texturer le fond clair */
     .opgi-bg::before {
         content: '';
         position: absolute;
-        width: 600px; height: 600px;
-        border-radius: 50%;
-        border: 2px solid rgba(245,194,0,.08);
-        top: -150px; left: -150px;
-        animation: slowSpin 30s linear infinite;
-    }
-    .opgi-bg::after {
-        content: '';
-        position: absolute;
-        width: 400px; height: 400px;
-        border-radius: 50%;
-        border: 1.5px solid rgba(26,75,196,.15);
-        bottom: -100px; right: -100px;
-        animation: slowSpin 20s linear infinite reverse;
-    }
-
-    @keyframes slowSpin {
-        from { transform: rotate(0deg); }
-        to   { transform: rotate(360deg); }
-    }
-
-    /* Gold dots pattern */
-    .dots-layer {
-        position: fixed;
         inset: 0;
-        background-image: radial-gradient(circle, rgba(245,194,0,.06) 1px, transparent 1px);
-        background-size: 32px 32px;
-        z-index: 0;
+        background-image: radial-gradient(rgba(16, 53, 160, 0.05) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.6;
     }
 
-    /* ── Main wrapper ── */
+    /* ── Wrapper Principal ── */
     .login-wrapper {
         position: relative;
         z-index: 1;
@@ -80,422 +58,355 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px;
+        padding: 20px;
     }
 
-    /* ── Card ── */
+    /* ── Carte de Connexion ── */
     .login-card {
         display: flex;
         width: 100%;
-        max-width: 960px;
-        min-height: 580px;
-        border-radius: 24px;
+        max-width: 920px;
+        min-height: 560px;
+        background: var(--white);
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow:
-            0 0 0 1px rgba(245,194,0,.12),
-            0 40px 80px rgba(0,0,0,.5),
-            0 0 80px rgba(245,194,0,.06);
-        animation: cardIn .7s cubic-bezier(.22,1,.36,1) both;
+        /* Ombre beaucoup plus douce et claire pour un fond blanc */
+        box-shadow: 0 20px 40px -10px rgba(16, 53, 160, 0.08), 
+                    0 0 20px rgba(0, 0, 0, 0.02);
     }
 
-    @keyframes cardIn {
-        from { opacity: 0; transform: translateY(28px) scale(.97); }
-        to   { opacity: 1; transform: none; }
-    }
-
-    /* ── LEFT PANEL ── */
+    /* ── PANNEAU GAUCHE (Branding) ── */
     .panel-left {
-        flex: 0 0 42%;
+        flex: 0 0 40%;
+        /* Bleu plus vibrant et moderne, fini le bleu très sombre/noir */
+        background: linear-gradient(135deg, var(--blue-mid) 0%, var(--blue) 100%);
         position: relative;
-        background: linear-gradient(160deg, var(--gold) 0%, #E0A800 55%, #C48A00 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 48px 36px;
+        padding: 40px;
+        color: var(--white);
         overflow: hidden;
     }
 
-    /* Decorative circle ring inside left panel */
-    .panel-left::before {
-        content: '';
-        position: absolute;
-        width: 420px; height: 420px;
-        border-radius: 50%;
-        border: 40px solid rgba(0,0,0,.06);
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-    }
+    /* Ligne dorée en haut du panneau gauche */
     .panel-left::after {
         content: '';
         position: absolute;
-        width: 280px; height: 280px;
-        border-radius: 50%;
-        border: 2px solid rgba(255,255,255,.25);
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
+        top: 0; left: 0; width: 100%; height: 4px;
+        background: var(--gold);
     }
 
-    /* Diagonal stripe texture */
-    .panel-stripe {
+    /* Effet de lumière doux dans le panneau gauche */
+    .panel-left::before {
+        content: '';
         position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 18px,
-            rgba(0,0,0,.04) 18px,
-            rgba(0,0,0,.04) 19px
-        );
+        top: -50px; left: -50px;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     }
 
     .logo-container {
         position: relative;
-        z-index: 2;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 20px;
+        gap: 24px;
         text-align: center;
+        z-index: 2;
     }
 
-    .logo-ring {
-        width: 160px; height: 160px;
+    .logo-wrapper-img {
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         background: var(--white);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow:
-            0 0 0 6px rgba(255,255,255,.3),
-            0 16px 40px rgba(0,0,0,.2);
-        padding: 8px;
-        transition: transform .4s ease;
+        padding: 6px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
-    .logo-ring:hover { transform: scale(1.04); }
 
-    .logo-ring img {
-        width: 100%;
-        height: 100%;
+    .logo-wrapper-img img {
+        width: 100%; height: 100%;
         object-fit: contain;
         border-radius: 50%;
     }
 
     .brand-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .brand-subtitle-ar {
         font-family: 'Cairo', sans-serif;
-        font-size: 1.45rem;
-        font-weight: 900;
-        color: var(--dark);
-        line-height: 1.3;
-        text-shadow: 0 1px 0 rgba(255,255,255,.3);
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--gold);
+        margin-top: 4px;
     }
 
-    .brand-subtitle {
-        font-size: .78rem;
-        font-weight: 600;
-        letter-spacing: .08em;
-        color: rgba(13,27,62,.7);
-        text-transform: uppercase;
+    .brand-location-ar {
+        font-family: 'Cairo', sans-serif;
+        font-size: 0.9rem;
+        color: var(--blue-light);
+        margin-top: 2px;
     }
 
-    /* Badge at bottom of left panel */
     .ministry-badge {
         position: absolute;
-        bottom: 28px;
+        bottom: 30px;
         z-index: 2;
         display: flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(0,0,0,.12);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.2);
-        border-radius: 100px;
-        padding: 6px 16px 6px 8px;
-    }
-    .ministry-badge .flag-dot {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-    .ministry-badge .flag-dot img { width: 100%; height: 100%; object-fit: cover; }
-    .ministry-badge span {
-        font-family: 'Cairo', sans-serif;
-        font-size: .7rem;
-        font-weight: 700;
-        color: rgba(13,27,62,.85);
-        line-height: 1.2;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 6px 14px;
+        border-radius: 50px;
     }
 
-    /* ── RIGHT PANEL ── */
+    .ministry-badge img {
+        width: 20px; height: 20px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .ministry-badge span {
+        font-family: 'Cairo', sans-serif;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--white);
+        line-height: 1.3;
+    }
+
+    /* ── PANNEAU DROIT (Formulaire) ── */
     .panel-right {
         flex: 1;
-        background: var(--white);
+        padding: 50px 60px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 52px 52px;
-        position: relative;
-        overflow: hidden;
+        background: var(--white);
     }
 
-    /* Subtle blue geometric accent top-right */
-    .panel-right::before {
-        content: '';
-        position: absolute;
-        top: -60px; right: -60px;
-        width: 200px; height: 200px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(16,53,160,.07) 0%, transparent 70%);
-    }
-
-    /* Gold line accent bottom-left */
-    .panel-right::after {
-        content: '';
-        position: absolute;
-        bottom: 0; left: 0;
-        width: 4px; height: 100%;
-        background: linear-gradient(to bottom, transparent, var(--gold), transparent);
-        opacity: .5;
-    }
-
-    /* Header */
     .form-header {
-        margin-bottom: 36px;
+        margin-bottom: 32px;
     }
-    .form-header .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: .72rem;
-        font-weight: 600;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: var(--blue-mid);
-        margin-bottom: 10px;
-    }
-    .form-header .eyebrow::before {
-        content: '';
-        display: block;
-        width: 20px; height: 2px;
-        background: var(--gold);
-    }
+
     .form-header h2 {
-        font-family: 'Outfit', sans-serif;
-        font-size: 2rem;
+        font-size: 1.75rem;
         font-weight: 700;
-        color: var(--dark);
-        line-height: 1.15;
+        color: var(--slate-900);
     }
+
     .form-header p {
-        font-size: .85rem;
-        color: var(--text-muted);
-        margin-top: 8px;
+        font-size: 0.9rem;
+        color: var(--slate-400);
+        margin-top: 4px;
     }
 
-    /* Divider */
-    .gold-divider {
-        width: 48px; height: 3px;
-        background: linear-gradient(90deg, var(--gold), var(--gold-light));
-        border-radius: 2px;
-        margin: 12px 0 20px;
+    .form-header p strong {
+        color: var(--slate-700);
     }
 
-    /* Alert */
+    /* Alertes */
     .alert-opgi {
-        background: #f0f9f0;
-        border-left: 3px solid #27ae60;
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
         border-radius: 8px;
-        padding: 10px 14px;
-        font-size: .82rem;
-        color: #1e8449;
-        margin-bottom: 20px;
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        color: #166534;
+        margin-bottom: 24px;
     }
 
-    /* Field */
+    /* Groupes de champs */
     .field-group {
         margin-bottom: 20px;
     }
+
     .field-label {
         display: block;
-        font-size: .78rem;
+        font-size: 0.8rem;
         font-weight: 600;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        color: var(--dark);
-        margin-bottom: 8px;
+        color: var(--slate-700);
+        margin-bottom: 6px;
     }
+
     .field-wrap {
         position: relative;
     }
+
     .field-icon {
         position: absolute;
-        left: 16px;
+        left: 14px;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--text-muted);
+        color: var(--slate-400);
         pointer-events: none;
-        transition: color .2s;
+        transition: color 0.2s;
     }
-    .field-wrap:focus-within .field-icon { color: var(--blue-mid); }
 
     .opgi-input {
         width: 100%;
-        height: 50px;
-        padding: 0 16px 0 46px;
-        border: 1.5px solid #E2E6EF;
-        border-radius: 12px;
+        height: 46px;
+        padding: 0 40px 0 42px;
+        border: 1px solid var(--slate-200);
+        border-radius: 10px;
         font-family: 'Outfit', sans-serif;
-        font-size: .9rem;
-        color: var(--dark);
-        background: var(--off-white);
+        font-size: 0.9rem;
+        color: var(--slate-900);
+        background: var(--slate-50);
         outline: none;
-        transition: border-color .25s, box-shadow .25s, background .25s;
+        transition: all 0.2s ease;
     }
-    .opgi-input::placeholder { color: #B0B8CC; }
-    .opgi-input:focus {
-        border-color: var(--blue-mid);
-        background: var(--white);
-        box-shadow: 0 0 0 4px rgba(16,53,160,.08);
-    }
-    .opgi-input.is-invalid {
-        border-color: #e74c3c;
-        box-shadow: 0 0 0 4px rgba(231,76,60,.08);
-    }
-    .invalid-feedback { font-size: .78rem; color: #e74c3c; margin-top: 6px; }
 
-    /* Remember me */
+    .opgi-input:focus {
+        border-color: var(--blue);
+        background: var(--white);
+        box-shadow: 0 0 0 4px rgba(16, 53, 160, 0.1);
+    }
+
+    .field-wrap:focus-within .field-icon {
+        color: var(--blue);
+    }
+
+    /* Bouton de visibilité mot de passe */
+    .password-toggle {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--slate-400);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+    }
+    .password-toggle:hover { color: var(--slate-700); }
+
+    /* Erreurs de validation */
+    .opgi-input.is-invalid {
+        border-color: #EF4444;
+        background-color: #FEF2F2;
+    }
+    .invalid-feedback {
+        font-size: 0.78rem;
+        color: #EF4444;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Se souvenir de moi */
     .remember-row {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 28px;
+        gap: 8px;
+        margin-bottom: 24px;
     }
+
     .opgi-check {
-        width: 18px; height: 18px;
-        accent-color: var(--blue-mid);
+        width: 16px; height: 16px;
+        accent-color: var(--blue);
         cursor: pointer;
-        border-radius: 4px;
     }
+
     .remember-row label {
-        font-size: .83rem;
-        color: var(--text-muted);
+        font-size: 0.85rem;
+        color: var(--slate-700);
         cursor: pointer;
         user-select: none;
     }
 
-    /* Submit button */
+    /* Bouton Soumettre */
     .btn-opgi {
         width: 100%;
-        height: 52px;
+        height: 48px;
         border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--blue) 0%, var(--blue-mid) 60%, var(--blue-light) 100%);
+        border-radius: 10px;
+        background: var(--blue);
         color: var(--white);
         font-family: 'Outfit', sans-serif;
-        font-size: .95rem;
-        font-weight: 600;
-        letter-spacing: .04em;
+        font-size: 0.95rem;
+        font-weight: 500;
         cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        transition: transform .2s, box-shadow .2s;
-        box-shadow: 0 6px 24px rgba(16,53,160,.35);
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(16, 53, 160, 0.15);
     }
-    .btn-opgi::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,.12), transparent);
-    }
-    /* Gold shimmer on hover */
-    .btn-opgi::after {
-        content: '';
-        position: absolute;
-        top: 0; left: -100%;
-        width: 60%; height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(245,194,0,.2), transparent);
-        transform: skewX(-20deg);
-        transition: left .5s ease;
-    }
-    .btn-opgi:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 32px rgba(16,53,160,.45);
-    }
-    .btn-opgi:hover::after { left: 160%; }
-    .btn-opgi:active { transform: translateY(0); }
 
-    /* Footer note */
-    .form-footer {
-        margin-top: 28px;
-        padding-top: 20px;
-        border-top: 1px solid #EEF0F5;
-        text-align: center;
-        font-size: .75rem;
-        color: #B0B8CC;
-        line-height: 1.7;
+    .btn-opgi:hover {
+        background: var(--blue-mid);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(16, 53, 160, 0.25);
     }
-    .form-footer strong { color: var(--text-muted); }
+
+    .btn-opgi:active {
+        transform: translateY(0);
+    }
+
+    /* Pied de page du formulaire */
+    .form-footer {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px solid var(--slate-100);
+        text-align: center;
+        font-size: 0.75rem;
+        color: var(--slate-400);
+        line-height: 1.5;
+    }
+
+    .form-footer strong {
+        color: var(--slate-700);
+    }
 
     /* ── Responsive ── */
-    @media (max-width: 720px) {
-        .login-card { flex-direction: column; }
-        .panel-left {
-            flex: 0 0 auto;
-            padding: 40px 24px 32px;
-            min-height: 220px;
-        }
-        .panel-left::before { width: 260px; height: 260px; border-width: 28px; }
-        .logo-ring { width: 110px; height: 110px; }
-        .brand-title { font-size: 1.1rem; }
+    @media (max-width: 768px) {
+        .login-card { flex-direction: column; min-height: auto; }
+        .panel-left { flex: 0 0 auto; padding: 36px 20px; }
         .ministry-badge { display: none; }
-        .panel-right { padding: 36px 28px; }
+        .panel-right { padding: 36px 24px; }
+        .logo-wrapper-img { width: 100px; height: 100px; }
     }
 </style>
 
 <div class="opgi-bg"></div>
-<div class="dots-layer"></div>
 
 <div class="login-wrapper">
     <div class="login-card">
 
-        {{-- ══ LEFT PANEL ══ --}}
+        {{-- ══ PANNEAU GAUCHE ══ --}}
         <div class="panel-left">
-            <div class="panel-stripe"></div>
-
             <div class="logo-container">
-                <div class="logo-ring">
+                <div class="logo-wrapper-img">
                     <img src="{{ asset('images/OPGI.jpg') }}" alt="Logo OPGI">
                 </div>
 
                 <div>
                     <div class="brand-title">OPGI</div>
-                    <div class="brand-subtitle" style="margin-top:6px;">
-                        ديوان الترقية والتسيير العقاري
-                    </div>
-                    <div class="brand-subtitle" style="margin-top:3px; color:rgba(13,27,62,.55);">
-                        الدار البيضاء
-                    </div>
+                    <div class="brand-subtitle-ar">ديوان الترقية والتسيير العقاري</div>
+                    <div class="brand-location-ar">الدار البيضاء</div>
                 </div>
             </div>
 
             <div class="ministry-badge">
-                <div class="flag-dot">
-                    <img src="{{ asset('images/algeria.png') }}" alt="Algérie">
-                </div>
+                <img src="{{ asset('images/algeria.png') }}" alt="Algérie">
                 <span>وزارة السكن والعمران<br>والمدينة</span>
             </div>
         </div>
 
-        {{-- ══ RIGHT PANEL ══ --}}
+        {{-- ══ PANNEAU DROIT ══ --}}
         <div class="panel-right">
 
             <div class="form-header">
-               
                 <h2>Connexion</h2>
-                <div class="gold-divider"></div>
                 <p>Système de Gestion des Souscripteurs<br>
-                <strong style="color:var(--dark);"> Office de Promotion et de Gestion Immobilière.</strong></p>
+                <strong>Office de Promotion et de Gestion Immobilière</strong></p>
             </div>
 
             @if (session('status'))
@@ -509,7 +420,7 @@
                 <div class="field-group">
                     <label class="field-label" for="email">Adresse Email</label>
                     <div class="field-wrap">
-                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="4" width="20" height="16" rx="3"/>
                             <polyline points="2,4 12,13 22,4"/>
                         </svg>
@@ -531,7 +442,7 @@
                 <div class="field-group">
                     <label class="field-label" for="password">Mot de passe</label>
                     <div class="field-wrap">
-                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2"/>
                             <path d="M7 11V7a5 5 0 0110 0v4"/>
                         </svg>
@@ -544,11 +455,17 @@
                             required
                             autocomplete="current-password"
                         >
+                        <button type="button" id="togglePassword" class="password-toggle" aria-label="Afficher/Masquer le mot de passe">
+                            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
                     </div>
                     <x-input-error :messages="$errors->get('password')" class="invalid-feedback" />
                 </div>
 
-                {{-- Remember --}}
+                {{-- Remember Me --}}
                 <div class="remember-row">
                     <input type="checkbox" id="remember_me" name="remember" class="opgi-check">
                     <label for="remember_me">Se souvenir de moi</label>
@@ -565,5 +482,23 @@
         </div>
     </div>
 </div>
+
+{{-- Script UX pour la visibilité du mot de passe --}}
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            // Icone œil barré
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            passwordInput.type = 'password';
+            // Icone œil normal
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    });
+</script>
 
 @endsection
