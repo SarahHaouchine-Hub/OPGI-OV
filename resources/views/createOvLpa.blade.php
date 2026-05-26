@@ -50,24 +50,43 @@
     @endif
 
     @php
-        // T1 = tranche normale, T2 = credit_reel (payé auto), T3 = credit_diff (différence)
+        // ─── Variables dérivées depuis les données du controller ───────────────
+        // $ovsDone = tous les OVs triés par numero_tranche (passé par le controller)
         $ovsDoneNormaux = $ovsDone->where('type_ov', null);
         $ovCreditReel   = $ovsDone->firstWhere('type_ov', 'credit_reel');
         $ovCreditDiff   = $ovsDone->firstWhere('type_ov', 'credit_diff');
 
-        // Vérifier si T2 normale existe déjà (pour masquer le bouton crédit)
-        $ovT2NormaleExiste = $ovsDoneNormaux->where('numero_tranche', 2)->first() !== null;
+        // CORRECTION : $ovT2Normal doit être recalculé ici car le controller
+        // ne le passe pas dans compact() — c'est une variable locale dans createLpa()
+        $ovT2Normal = $ovsDoneNormaux->where('numero_tranche', 2)->first();
+        $ovT2NormaleExiste = $ovT2Normal !== null;
 
+        // Différence crédit (attestation - réel)
         $diffCreditCalc = $creditBancaire
             ? ($creditBancaire->montant_attestation - $creditBancaire->montant_reel)
             : 0;
 
+        // Dossier soldé = crédit enregistré + OV crédit réel existe
+        //                 + (pas de différence OU différence payée)
         $dossierSoldeResume = $creditBancaire
             && $ovCreditReel
             && (
                 $diffCreditCalc <= 0
                 || ($ovCreditDiff && $ovCreditDiff->paiement !== null)
             );
+
+        // CORRECTION : $peutAfficherCredit est calculé dans le controller
+        // Il est basé sur au moins 1 tranche PAYÉE (paiement !== null),
+        // pas juste générée. On conserve la variable passée par le controller.
+        // Si pour une raison quelconque elle n'est pas définie, on la recalcule :
+        if (!isset($peutAfficherCredit)) {
+            $tranchesPayees = $ovsDoneNormaux->filter(fn($o) => $o->paiement !== null);
+            $peutAfficherCredit = (
+                $tranchesPayees->count() >= 1
+                && $aideBnh !== null
+                && $creditBancaire === null
+            );
+        }
     @endphp
 
     <div class="card custom-card" style="border:none; border-radius:15px">
@@ -267,8 +286,8 @@
                         <i class="bi bi-list-check me-2"></i>
                         OVs déjà générés
                         ({{ $ovsDoneNormaux->count() }} tranche(s) normale(s)
-                        @if($ovCreditReel) + T2 Crédit Réel @endif
-                        @if($ovCreditDiff) + T3 Différence @endif)
+                        @if($ovCreditReel) + Crédit Réel @endif
+                        @if($ovCreditDiff) + Différence @endif)
                     </h6>
                 </div>
                 <div class="card-body p-0">
@@ -313,13 +332,13 @@
                                 </tr>
                                 @endforeach
 
-                                {{-- T2 : OV Crédit Réel --}}
+                                {{-- OV Crédit Réel --}}
                                 @if($ovCreditReel)
                                 <tr style="background:#e8f5e9;">
-                                    <td class="text-center fw-bold text-success">T2</td>
+                                    <td class="text-center fw-bold text-success">T{{ $ovCreditReel->numero_tranche }}</td>
                                     <td class="text-center">
                                         <span class="badge bg-success">
-                                            <i class="bi bi-bank me-1"></i>T2 Crédit Réel
+                                            <i class="bi bi-bank me-1"></i>Crédit Réel
                                         </span>
                                     </td>
                                     <td class="text-center text-muted">—</td>
@@ -336,13 +355,13 @@
                                 </tr>
                                 @endif
 
-                                {{-- T3 : OV Différence --}}
+                                {{-- OV Différence --}}
                                 @if($ovCreditDiff)
                                 <tr style="background:#fff3e0;">
-                                    <td class="text-center fw-bold" style="color:#e65100;">T3</td>
+                                    <td class="text-center fw-bold" style="color:#e65100;">T{{ $ovCreditDiff->numero_tranche }}</td>
                                     <td class="text-center">
                                         <span class="badge" style="background:#e65100;">
-                                            <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Différence
                                         </span>
                                     </td>
                                     <td class="text-center text-muted">—</td>
@@ -371,7 +390,7 @@
                                 </tr>
                                 @if($ovCreditReel)
                                 <tr class="table-secondary">
-                                    <td colspan="3" class="text-end text-success">T2 Crédit Réel (Payé par banque) :</td>
+                                    <td colspan="3" class="text-end text-success">Crédit Réel (Payé par banque) :</td>
                                     <td class="text-center fw-bold text-success">
                                         {{ number_format($ovCreditReel->montant_paye, 2, ',', ' ') }} DA
                                     </td>
@@ -380,7 +399,7 @@
                                 @endif
                                 @if($ovCreditDiff)
                                 <tr class="table-secondary">
-                                    <td colspan="3" class="text-end" style="color:#e65100;">T3 Différence :</td>
+                                    <td colspan="3" class="text-end" style="color:#e65100;">Différence (reste à payer) :</td>
                                     <td class="text-center fw-bold" style="color:#e65100;">
                                         {{ number_format($ovCreditDiff->montant_paye, 2, ',', ' ') }} DA
                                     </td>
@@ -450,8 +469,9 @@
                     </div>
                 </div>
             </div>
+
             @else
-            {{-- SECTION 3 (mode crédit) --}}
+            {{-- SECTION 3 mode crédit --}}
             <div class="card shadow-sm mb-4 border-0">
                 <div class="card-header text-white" style="background-color: rgb(60 88 130);">
                     <h6 class="mb-0">
@@ -462,30 +482,33 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
 
-                        {{-- T1 --}}
+                        {{-- Tranches normales payées avant le crédit --}}
+                        @foreach($ovsDoneNormaux as $ovN)
                         <div class="text-center">
                             <span class="badge bg-success px-3 py-2" style="font-size:0.85rem;">
                                 <i class="bi bi-check-circle me-1"></i>
-                                T1 — {{ number_format($ovsDoneNormaux->firstWhere('numero_tranche',1)->montant_paye ?? 0, 0, ',', ' ') }} DA
+                                T{{ $ovN->numero_tranche }} — {{ number_format($ovN->montant_paye, 0, ',', ' ') }} DA
+                                @if($ovN->paiement) ✓ Payé @else ⏳ En attente @endif
                             </span>
                         </div>
                         <div class="text-muted">→</div>
+                        @endforeach
 
-                        {{-- T2 Crédit Réel --}}
+                        {{-- OV Crédit Réel --}}
                         <div class="text-center">
                             @if($ovCreditReel)
                                 <span class="badge bg-success px-3 py-2" style="font-size:0.85rem;">
                                     <i class="bi bi-bank me-1"></i>
-                                    T2 Crédit Réel — {{ number_format($ovCreditReel->montant_paye, 0, ',', ' ') }} DA ✓ Payé par banque
+                                    T{{ $ovCreditReel->numero_tranche }} Crédit Réel — {{ number_format($ovCreditReel->montant_paye, 0, ',', ' ') }} DA ✓ Payé par banque
                                 </span>
                             @else
                                 <span class="badge bg-secondary px-3 py-2" style="font-size:0.85rem;">
-                                    <i class="bi bi-bank me-1"></i>T2 Crédit Réel — En cours
+                                    <i class="bi bi-bank me-1"></i>Crédit Réel — En cours
                                 </span>
                             @endif
                         </div>
 
-                        {{-- T3 Différence (si diff > 0) --}}
+                        {{-- CORRECTION : @if fermé correctement après l'OV différence --}}
                         @if($diffCreditCalc > 0)
                             <div class="text-muted">→</div>
                             <div class="text-center">
@@ -493,31 +516,31 @@
                                     @if($ovCreditDiff->paiement)
                                         <span class="badge bg-success px-3 py-2" style="font-size:0.85rem;">
                                             <i class="bi bi-check-circle me-1"></i>
-                                            T3 Différence — {{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA ✓ Payé
+                                            T{{ $ovCreditDiff->numero_tranche }} Différence — {{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA ✓ Payé
                                         </span>
                                     @else
                                         <span class="badge bg-warning text-dark px-3 py-2" style="font-size:0.85rem;">
                                             <i class="bi bi-clock me-1"></i>
-                                            T3 Différence — {{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA — En attente
+                                            T{{ $ovCreditDiff->numero_tranche }} Différence — {{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA — En attente
                                         </span>
                                     @endif
                                 @else
                                     <span class="badge bg-secondary px-3 py-2" style="font-size:0.85rem;">
-                                        <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence — Non générée
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Différence — Non générée
                                     </span>
                                 @endif
                             </div>
                         @endif
+                        {{-- FIN CORRECTION --}}
 
                         {{-- Statut global --}}
                         <div class="ms-auto">
                             @if($dossierSoldeResume)
                                 <span class="badge bg-success px-3 py-2" style="font-size:0.9rem;">
-                                    <i class="bi bi-check-all me-1"></i>
-                                    <i class="bi bi-bank me-1"></i> Dossier Complet
+                                    <i class="bi bi-check-all me-1"></i> Dossier Complet
                                 </span>
                             @else
-                                <small class="text-muted">T2→T5 remplacées par crédit bancaire</small>
+                                <small class="text-muted">Tranches suivantes remplacées par crédit bancaire</small>
                             @endif
                         </div>
                     </div>
@@ -527,24 +550,26 @@
                             <div class="alert alert-success py-2 mb-0">
                                 <i class="bi bi-check-circle-fill me-2"></i>
                                 <strong>Dossier entièrement soldé.</strong>
-                                T1 ({{ number_format($ovsDoneNormaux->firstWhere('numero_tranche',1)->montant_paye ?? 0, 0, ',', ' ') }} DA)
-                                + T2 Crédit Réel ({{ number_format($creditBancaire->montant_reel, 0, ',', ' ') }} DA)
+                                @foreach($ovsDoneNormaux as $ovN)
+                                    T{{ $ovN->numero_tranche }} ({{ number_format($ovN->montant_paye, 0, ',', ' ') }} DA) +
+                                @endforeach
+                                Crédit Réel ({{ number_format($creditBancaire->montant_reel, 0, ',', ' ') }} DA)
                                 @if($ovCreditDiff && $ovCreditDiff->paiement)
-                                    + T3 Différence ({{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA)
+                                    + Différence ({{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA)
                                 @endif
                                 = Complet.
                             </div>
                         @elseif($ovCreditReel && $diffCreditCalc > 0 && $ovCreditDiff && !$ovCreditDiff->paiement)
                             <div class="alert alert-warning py-2 mb-0">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                <strong>T3 en attente de paiement :</strong>
+                                <strong>Différence en attente de paiement :</strong>
                                 {{ number_format($ovCreditDiff->montant_paye, 2, ',', ' ') }} DA restants à payer.
-                                Utilisez le bouton <strong>"Payer T3"</strong> dans la liste des OVs.
+                                Utilisez le bouton <strong>"Payer"</strong> dans la liste des OVs.
                             </div>
                         @elseif(!$ovCreditReel)
                             <div class="alert alert-info py-2 mb-0">
                                 <i class="bi bi-info-circle me-1"></i>
-                                Crédit enregistré — OVs T2/T3 en cours de génération.
+                                Crédit enregistré — OVs crédit/différence en cours de génération.
                             </div>
                         @endif
                     </div>
@@ -554,6 +579,8 @@
 
             {{-- ══════════════════════════════════════════════════════
                  SECTION 4 : Formulaire nouvelle tranche
+                 Affiché uniquement si PAS de crédit bancaire enregistré
+                 ET prochaineTranche <= 5
             ══════════════════════════════════════════════════════ --}}
             @if(!$creditBancaire)
             <form action="{{ route('ov.store.lpa') }}" method="POST">
@@ -602,6 +629,8 @@
                                 <small class="text-muted">
                                     @if($prochaineTranche === 4 && $aideFnpos)
                                         ({{ number_format($prix2 * 25 / 100, 0, ',', ' ') }} − 500 000) DA
+                                    @elseif($prochaineTranche === 5)
+                                        Solde restant ({{ $pourcentage }}% de la base)
                                     @else
                                         {{ $pourcentage }}% × {{ number_format($prix2, 0, ',', ' ') }} DA
                                     @endif
@@ -626,9 +655,15 @@
                                     <input type="text" class="form-control border-danger text-danger fw-bold"
                                            value="{{ number_format($montantRestant, 2, ',', ' ') }} DA" readonly>
                                 </div>
+                                @if($prochaineTranche === 5)
+                                    <small class="text-success fw-semibold">
+                                        <i class="bi bi-check-circle me-1"></i>Dernière tranche — dossier soldé après paiement
+                                    </small>
+                                @endif
                             </div>
                         </div>
 
+                        {{-- VSP --}}
                         @php
                             $vspDejaFait = $ovsDoneNormaux->contains(fn($ov) => (bool)$ov->vsp);
                         @endphp
@@ -674,7 +709,9 @@
                     @endif
                 </div>
             </form>
+
             @else
+            {{-- Crédit enregistré : bouton retour uniquement --}}
             <div class="text-center mt-2 mb-4">
                 <a href="{{ route('ov.index') }}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Retour à la liste
@@ -684,6 +721,14 @@
 
             {{-- ══════════════════════════════════════════════════════
                  SECTION 5 : CRÉDIT BANCAIRE
+                 Règles du controller (storeCreditBancaire) :
+                 - $peutAfficherCredit = au moins 1 tranche PAYÉE (paiement !== null)
+                                       + aideBnh présente
+                                       + ovT2Normal === null  (pas de T2 normale)
+                                       + creditBancaire === null
+                 - MODIFIÉ : le crédit est autorisé après n'importe quelle tranche payée
+                   (plus seulement après T1). Tant que T2 normale n'existe pas.
+                 - Si $ovT2Normal !== null → message "non disponible"
             ══════════════════════════════════════════════════════ --}}
             @if($peutAfficherCredit)
             <div class="mt-5">
@@ -697,33 +742,36 @@
                     </div>
                     <div class="card-body">
                         @if($creditBancaire)
-                            {{-- Crédit déjà enregistré : affichage des infos --}}
+                            {{-- Crédit déjà enregistré --}}
                             <div class="row g-3">
                                 <div class="col-md-3 text-center">
                                     <div class="text-muted small fw-semibold mb-1">Montant Attestation</div>
                                     <div class="fw-bold" style="font-size:1.1rem;color:#6f42c1;">
                                         {{ number_format($creditBancaire->montant_attestation, 2, ',', ' ') }} DA
                                     </div>
+                                    <small class="text-muted">
+                                        = Prix − BNH − tranches payées{{ $aideFnpos ? ' − FNPOS' : '' }}
+                                    </small>
                                 </div>
                                 <div class="col-md-3 text-center">
-                                    <div class="text-muted small fw-semibold mb-1">Montant Réel Banque (T2)</div>
+                                    <div class="text-muted small fw-semibold mb-1">Montant Réel Banque</div>
                                     <div class="fw-bold text-success" style="font-size:1.1rem;">
                                         {{ number_format($creditBancaire->montant_reel, 2, ',', ' ') }} DA
                                     </div>
                                     <small class="text-success"><i class="bi bi-bank me-1"></i>Payé par banque</small>
                                 </div>
                                 <div class="col-md-3 text-center">
-                                    <div class="text-muted small fw-semibold mb-1">Différence (T3)</div>
+                                    <div class="text-muted small fw-semibold mb-1">Différence (reste à payer)</div>
                                     <div class="fw-bold {{ $diffCreditCalc > 0 ? 'text-warning' : 'text-success' }}" style="font-size:1.1rem;">
                                         {{ number_format(max(0, $diffCreditCalc), 2, ',', ' ') }} DA
                                     </div>
                                     @if($diffCreditCalc > 0)
                                         @if($ovCreditDiff && $ovCreditDiff->paiement)
-                                            <small class="text-success">✓ T3 payée</small>
+                                            <small class="text-success">✓ Payée</small>
                                         @elseif($ovCreditDiff)
-                                            <small class="text-warning">⏳ T3 en attente de paiement</small>
+                                            <small class="text-warning">⏳ En attente de paiement</small>
                                         @else
-                                            <small class="text-danger">⚠️ T3 non générée</small>
+                                            <small class="text-danger">⚠️ OV non généré</small>
                                         @endif
                                     @else
                                         <small class="text-success">✓ Aucune différence</small>
@@ -748,41 +796,67 @@
                                     <div class="alert alert-success py-2 mb-0">
                                         <i class="bi bi-check-circle-fill me-2"></i>
                                         <strong>Dossier entièrement soldé.</strong>
-                                        T1 ({{ number_format($ovsDoneNormaux->firstWhere('numero_tranche',1)->montant_paye ?? 0, 0, ',', ' ') }} DA)
-                                        + T2 Crédit Réel ({{ number_format($creditBancaire->montant_reel, 0, ',', ' ') }} DA)
-                                        @if($ovCreditDiff && $ovCreditDiff->paiement)
-                                            + T3 Différence ({{ number_format($ovCreditDiff->montant_paye, 0, ',', ' ') }} DA)
-                                        @endif
-                                        = Complet.
                                     </div>
                                 @elseif($ovCreditReel && $diffCreditCalc > 0 && $ovCreditDiff && !$ovCreditDiff->paiement)
                                     <div class="alert alert-warning py-2 mb-0">
                                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                        <strong>T3 en attente de paiement :</strong>
-                                        {{ number_format($ovCreditDiff->montant_paye, 2, ',', ' ') }} DA restants à payer.
-                                        Utilisez le bouton <strong>"Payer T3"</strong> dans la liste des OVs.
+                                        <strong>Différence en attente de paiement :</strong>
+                                        {{ number_format($ovCreditDiff->montant_paye, 2, ',', ' ') }} DA restants.
+                                        Utilisez le bouton <strong>"Payer"</strong> dans la liste des OVs.
                                     </div>
                                 @elseif(!$ovCreditReel)
                                     <div class="alert alert-info py-2 mb-0">
                                         <i class="bi bi-info-circle me-1"></i>
-                                        Crédit enregistré — OVs T2/T3 en cours de génération.
+                                        Crédit enregistré — OVs en cours de génération.
                                     </div>
                                 @endif
                             </div>
 
                         @else
-                            {{-- ✅ CORRIGÉ : bouton toujours visible, FNPOS optionnelle --}}
+                            {{-- Crédit pas encore enregistré --}}
                             <div class="text-center py-3">
                                 <p class="text-muted mb-3">
                                     <i class="bi bi-info-circle me-1"></i>
                                     Aucun crédit bancaire enregistré. Si le souscripteur bénéficie d'un prêt bancaire, enregistrez-le ici.
                                 </p>
+
+                                {{-- CORRECTION : information sur les tranches déjà payées --}}
+                                @php
+                                    $tranchesPayeesCount = $ovsDoneNormaux->filter(fn($o) => $o->paiement !== null)->count();
+                                @endphp
+                            <!-- APRÈS -->
+<div class="alert alert-info py-2 mb-3 text-start d-inline-flex align-items-center gap-2">
+    <i class="bi bi-info-circle fs-5"></i>
+    <span>
+        <strong>{{ $tranchesPayeesCount }} tranche(s) payée(s)</strong> —
+        le crédit bancaire peut être enregistré après n'importe quelle tranche payée
+        (T1, T2, T3 ou T4), tant qu'aucun crédit n'est encore enregistré.
+    </span>
+</div>
+
                                 @if(!$aideFnpos)
                                     <div class="alert alert-info py-2 mb-3 d-inline-flex align-items-center gap-2">
                                         <i class="bi bi-info-circle fs-5"></i>
                                         <span>Aide FNPOS non enregistrée — elle ne sera pas déduite du montant crédit.</span>
                                     </div>
                                 @endif
+
+                                {{-- Formule du montant attestation attendu --}}
+                                @if($montantAttestationAuto)
+                                <div class="alert alert-secondary py-2 mb-3 text-start">
+                                    <strong>Montant attestation attendu :</strong>
+                                    {{ number_format($montantAttestationAuto, 2, ',', ' ') }} DA<br>
+                                    <small class="text-muted">
+                                        = (Prix − BNH) − tranches payées{{ $aideFnpos ? ' − FNPOS' : '' }}<br>
+                                        = ({{ number_format($prixLogement, 0, ',', ' ') }}
+                                        − {{ number_format($montantBnh, 0, ',', ' ') }})
+                                        − {{ number_format($totalPaye, 0, ',', ' ') }}
+                                        @if($aideFnpos) − {{ number_format($fnposMontant, 0, ',', ' ') }} @endif
+                                        = <strong>{{ number_format($montantAttestationAuto, 2, ',', ' ') }} DA</strong>
+                                    </small>
+                                </div>
+                                @endif
+
                                 <button type="button" class="btn btn-outline-secondary"
                                         data-bs-toggle="modal" data-bs-target="#modalCredit">
                                     <i class="bi bi-bank me-2"></i>
@@ -793,24 +867,16 @@
                     </div>
                 </div>
             </div>
-            @elseif(!$creditBancaire && $ovT2NormaleExiste)
-            <div class="mt-5">
-                <hr>
-                <div class="alert alert-secondary d-flex align-items-center gap-2">
-                    <i class="bi bi-lock-fill fs-5 text-muted"></i>
-                    <span>
-                        <strong>Crédit bancaire non disponible :</strong>
-                        la Tranche 2 normale a déjà été générée. Le crédit bancaire n'est autorisé qu'après la Tranche 1 uniquement.
-                    </span>
-                </div>
-            </div>
-            @endif
+
+           @endif
 
         </div>
     </div>
 </div>
 
-{{-- MODAL BNH --}}
+{{-- ══════════════════════════════════════════════════════
+     MODAL BNH
+══════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="modalBnh" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -864,7 +930,9 @@
     </div>
 </div>
 
-{{-- MODAL FNPOS --}}
+{{-- ══════════════════════════════════════════════════════
+     MODAL FNPOS
+══════════════════════════════════════════════════════ --}}
 <div class="modal fade" id="modalFnpos" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -914,7 +982,18 @@
     </div>
 </div>
 
-{{-- MODAL CRÉDIT BANCAIRE --}}
+{{-- ══════════════════════════════════════════════════════
+     MODAL CRÉDIT BANCAIRE
+     Règles du controller storeCreditBancaire (version corrigée) :
+       - montant_attestation : readonly (calculé auto), tolérance ±0.01 DA
+       - montant_reel : obligatoire (nullable → si absent = attestation)
+       - date_attestation : obligatoire
+       - date_versement_reel : SUPPRIMÉ (retiré du controller)
+       - pieces_jointes : optionnel
+       - Crédit autorisé après n'importe quelle tranche payée (pas seulement T1)
+       - OV Crédit Réel → tranche = dernière_normale + 1
+       - OV Différence  → tranche = dernière_normale + 2 (si différence > 0)
+══════════════════════════════════════════════════════ --}}
 @if($peutAfficherCredit && !$creditBancaire)
 <div class="modal fade" id="modalCredit" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -929,19 +1008,34 @@
                 <div class="modal-body">
                     <div class="alert alert-warning py-2">
                         <i class="bi bi-exclamation-triangle me-1"></i>
-                        En enregistrant un crédit bancaire, les tranches T2→T5 seront remplacées par :
+                        En enregistrant un crédit bancaire, les tranches suivantes seront remplacées par :
                         <ul class="mb-0 mt-1">
-                            <li><strong>T2 Crédit Réel</strong> : montant réel de la banque (payé automatiquement)</li>
-                            <li><strong>T3 Différence</strong> : différence éventuelle entre attestation et montant réel (si applicable)</li>
+                            <li>
+                                <strong>OV Crédit Réel (T{{ $ovsDoneNormaux->count() + 1 }})</strong> :
+                                montant versé par la banque (marqué payé automatiquement)
+                            </li>
+                            @if($montantAttestationAuto)
+                            <li>
+                                <strong>OV Différence (T{{ $ovsDoneNormaux->count() + 2 }})</strong> :
+                                reste à payer par le souscripteur (si attestation &gt; réel)
+                            </li>
+                            @endif
                         </ul>
                     </div>
                     <div class="row g-3">
+
+                        {{-- Montant attestation : readonly, calculé par le controller --}}
                         <div class="col-md-6">
                             <label class="form-label fw-bold">
                                 Montant Attestation <span class="text-danger">*</span>
                                 <small class="text-muted fw-normal">(calculé automatiquement)</small>
                             </label>
                             <div class="input-group">
+                                {{--
+                                    CORRECTION : readonly car le controller vérifie
+                                    abs(montant_attestation - montantAttendu) <= 0.01
+                                    La valeur est pré-remplie avec $montantAttestationAuto
+                                --}}
                                 <input type="number" name="montant_attestation" class="form-control fw-bold"
                                        step="0.01" min="1" id="inp_attestation"
                                        value="{{ $montantAttestationAuto ?? '' }}" readonly>
@@ -949,34 +1043,55 @@
                             </div>
                             @if($montantAttestationAuto)
                                 <small class="text-muted">
-                                    = (Prix − BNH) − T1{{ $aideFnpos ? ' − FNPOS' : '' }}
+                                    = (Prix − BNH) − tranches payées{{ $aideFnpos ? ' − FNPOS' : '' }}
                                     = {{ number_format($montantAttestationAuto, 2, ',', ' ') }} DA
                                 </small>
                             @endif
                         </div>
+
+                        {{-- Montant réel banque --}}
                         <div class="col-md-6">
                             <label class="form-label fw-bold">
                                 Montant Réel Banque <span class="text-danger">*</span>
                                 <small class="text-muted fw-normal">(versé réellement)</small>
                             </label>
                             <div class="input-group">
-                                <input type="number" name="montant_reel" class="form-control"
-                                       step="0.01" min="1" id="inp_reel"
-                                       oninput="calcDifference()" required>
+                                {{--
+                                    CORRECTION : required — le controller le valide (nullable|numeric|min:0)
+                                    Si absent → controller met montant_reel = montant_attestation
+                                    Ne peut PAS dépasser montant_attestation
+                                --}}
+                             <input type="number" name="montant_reel" class="form-control"
+       step="0.01" min="0" id="inp_reel"
+       placeholder="Laisser vide = égal à l'attestation"
+       oninput="calcDifference()">
                                 <span class="input-group-text">DA</span>
                             </div>
+                            <small class="text-muted">
+    Optionnel. Si absent, le montant réel = montant attestation (dossier soldé directement).
+    Si inférieur → un OV différence est généré pour le reste à payer.
+    Ne peut pas dépasser le montant attestation.
+</small>
                         </div>
+
+                        {{-- Alerte différence calculée en JS --}}
                         <div class="col-12">
                             <div id="diff_alert" class="alert d-none py-2 mb-0"></div>
                         </div>
+
+                        {{-- Date attestation --}}
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Date Attestation <span class="text-danger">*</span></label>
                             <input type="date" name="date_attestation" class="form-control" required>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Date Versement Réel <small class="text-muted fw-normal">(optionnel)</small></label>
-                            <input type="date" name="date_versement_reel" class="form-control">
-                        </div>
+
+                        {{--
+                            CORRECTION : date_versement_reel SUPPRIMÉ
+                            Le champ a été retiré du controller (storeCreditBancaire)
+                            et de CreditBancaire::create — ne pas l'afficher
+                        --}}
+
+                        {{-- Scan attestation --}}
                         <div class="col-12">
                             <label class="form-label fw-bold">Scan Attestation <small class="text-muted fw-normal">(optionnel)</small></label>
                             <input type="file" name="pieces_jointes" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
@@ -1011,20 +1126,26 @@ function calcDifference() {
 
     if (att > 0 && reel > 0) {
         const diff = att - reel;
-        div.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
-        if (diff > 0) {
-            div.className = 'alert alert-danger py-2 mb-0';
-            div.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>'
-                + '<strong>Différence : ' + diff.toLocaleString('fr-DZ') + ' DA</strong>'
-                + ' — Un OV T3 Différence sera généré automatiquement et mis en attente de paiement.';
-        } else if (diff < 0) {
+        div.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info');
+
+        if (reel > att) {
+            // Le montant réel ne peut pas dépasser l'attestation (controller bloque)
             div.className = 'alert alert-warning py-2 mb-0';
-            div.innerHTML = '<i class="bi bi-info-circle me-1"></i>'
-                + 'Le montant réel est supérieur à l\'attestation de '
-                + Math.abs(diff).toLocaleString('fr-DZ') + ' DA.';
+            div.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>'
+                + '<strong>Attention :</strong> Le montant réel ne peut pas dépasser le montant de l\'attestation ('
+                + att.toLocaleString('fr-DZ') + ' DA). Le controller rejettera cette soumission.';
+        } else if (diff > 0) {
+            // Différence > 0 → OV différence généré automatiquement
+            div.className = 'alert alert-info py-2 mb-0';
+            div.innerHTML = '<i class="bi bi-info-circle-fill me-1"></i>'
+                + '<strong>Différence : ' + diff.toLocaleString('fr-DZ', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' DA</strong>'
+                + ' — Un OV Différence (T{{ $ovsDoneNormaux->count() + 2 }}) sera généré automatiquement'
+                + ' et mis en attente de paiement par le souscripteur.';
         } else {
+            // Montants identiques → dossier soldé directement
             div.className = 'alert alert-success py-2 mb-0';
-            div.innerHTML = '<i class="bi bi-check-circle me-1"></i>Montants identiques — dossier soldé automatiquement. Aucun OV T3 généré.';
+            div.innerHTML = '<i class="bi bi-check-circle me-1"></i>'
+                + 'Montants identiques — dossier soldé automatiquement après enregistrement. Aucun OV différence généré.';
         }
     } else {
         div.classList.add('d-none');

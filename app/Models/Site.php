@@ -16,6 +16,7 @@ class Site extends Model
         'num_agence',
         'adresse_agence',      // ← NOUVEAU
         'num_compte_agence',   // ← NOUVEAU
+         'titulaire',   // ← NOUVEAU
         'user_id',
     ];
 

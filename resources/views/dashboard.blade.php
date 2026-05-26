@@ -732,6 +732,13 @@
                             <input type="text" name="num_compte_agence" class="form-control" placeholder="Ex : 00012345678901234567">
                         </div>
                         <div class="col-12">
+    <label class="form-label">
+        <i class="bi bi-person-badge me-1"></i>Titulaire du compte
+    </label>
+    <input type="text" name="titulaire" class="form-control"
+           placeholder="Ex : O.P.G.I. Dar El Beida">
+</div>
+                        <div class="col-12">
                             <label class="form-label"><i class="bi bi-geo me-1"></i>Adresse agence</label>
                             <input type="text" name="adresse_agence" class="form-control" placeholder="Ex : 12 Rue Didouche Mourad, Alger">
                         </div>

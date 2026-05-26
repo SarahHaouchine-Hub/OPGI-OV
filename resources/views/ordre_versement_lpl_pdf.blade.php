@@ -217,7 +217,7 @@ html, body {
     Titulaire du compte
 </div>
 <div class="pay-info-val">
-    {{ $titulaire }}
+    BNH
 </div>
 
 <div class="pay-info-lbl">

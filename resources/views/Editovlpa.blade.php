@@ -123,7 +123,7 @@
                 <div class="mb-4">
                     <div class="info-label mb-2">Progression des tranches LPA</div>
                     <div class="tranche-steps">
-                        @foreach([1=>25, 2=>15, 3=>35, 4=>25, 5=>5] as $t => $pct)
+                        @foreach([1=>20, 2=>15, 3=>35, 4=>25, 5=>5] as $t => $pct)
                             @php
                                 $isCurrent = $t === $tranche;
                                 $isDone    = $souscripteur->ovs->where('type_ov', null)->where('numero_tranche', $t)->where('id', '!=', $ov->id)->isNotEmpty();

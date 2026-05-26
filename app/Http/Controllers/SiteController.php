@@ -23,6 +23,7 @@ class SiteController extends Controller
             'num_agence'         => 'nullable|string|max:255',
             'adresse_agence'     => 'nullable|string|max:500',   // ← NOUVEAU
             'num_compte_agence'  => 'nullable|string|max:255',   // ← NOUVEAU
+             'titulaire'          => 'nullable|string|max:255',  // ← NOUVEAU
         ]);
 
         Site::create([
@@ -35,6 +36,7 @@ class SiteController extends Controller
             'num_agence'         => $request->num_agence,
             'adresse_agence'     => $request->adresse_agence,    // ← NOUVEAU
             'num_compte_agence'  => $request->num_compte_agence, // ← NOUVEAU
+             'titulaire'          => $request->titulaire,         // ← NOUVEAU
             'user_id'            => Auth::id(),
         ]);
 

@@ -168,17 +168,23 @@
                                 $ovT3Credit        = null;
 
                                 if ($creditEnregistre) {
-                                    $ovT2Fait       = $s->ovs->contains(fn($o) => $o->numero_tranche === 2);
-                                    $ovDiffDejaFait = $s->ovs->contains(fn($o) => $o->numero_tranche === 3);
-                                    $ovT3Credit     = $s->ovs->firstWhere('numero_tranche', 3);
-                                    $ovT3Paye       = $ovT3Credit !== null && $ovT3Credit->paiement !== null;
+                             // APRÈS
+$ovCreditReel     = $s->ovs->firstWhere('type_ov', 'credit_reel');
+$ovCreditDiff     = $s->ovs->firstWhere('type_ov', 'credit_diff');
+$ovsDoneNormaux   = $s->ovs->whereNull('type_ov');
 
-                                    $diffCredit        = $creditBancaire->montant_attestation - $creditBancaire->montant_reel;
-                                    $paiementParCredit = $ovT2Fait && ($diffCredit <= 0 || $ovT3Paye);
+$ovCreditReelFait = $ovCreditReel !== null;
+$ovCreditDiffFait = $ovCreditDiff !== null;
+$ovCreditDiffPaye = $ovCreditDiff !== null && $ovCreditDiff->paiement !== null;
 
-                                    $totalOvsCredit = $diffCredit > 0 ? 3 : 2;
-                                    $nbOvsCrees     = $s->ovs->whereIn('numero_tranche', [1, 2, 3])->count();
-                                    $tousOvsGeneres = $nbOvsCrees === $totalOvsCredit;
+$diffCredit        = $creditBancaire
+    ? ($creditBancaire->montant_attestation - ($creditBancaire->montant_reel ?? $creditBancaire->montant_attestation))
+    : 0;
+$paiementParCredit = $ovCreditReelFait && ($diffCredit <= 0 || $ovCreditDiffPaye);
+
+$totalOvsCredit = $ovsDoneNormaux->count() + ($diffCredit > 0 ? 2 : 1);
+$nbOvsCrees     = $s->ovs->count();
+$tousOvsGeneres = $ovCreditReelFait && ($diffCredit <= 0 || $ovCreditDiffFait);
                                 }
 
                                 $nbTranchesNormales = $creditEnregistre
@@ -274,27 +280,31 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
                                             <div class="d-flex align-items-center gap-2">
 
-                                                @if($creditEnregistre)
-                                                    @if($ov->numero_tranche === 1)
-                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">1/{{ $totalOvsCredit }}</span>
-                                                        <span class="badge bg-warning text-dark">T1</span>
-                                                    @elseif($ov->numero_tranche === 2)
-                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">2/{{ $totalOvsCredit }}</span>
-                                                        <span class="badge bg-info text-dark">
-                                                            <i class="bi bi-bank me-1"></i>T2 Crédit Réel
-                                                        </span>
-                                                    @elseif($ov->numero_tranche === 3)
-                                                        <span class="badge bg-secondary" style="font-size:0.7rem;">3/{{ $totalOvsCredit }}</span>
-                                                        <span class="badge" style="background:#6f42c1;">
-                                                            <i class="bi bi-exclamation-triangle me-1"></i>T3 Différence
-                                                        </span>
-                                                    @endif
-                                                @else
-                                                    <span class="badge bg-primary">{{ $ov->pourcentage }}%</span>
-                                                    @if($programme === 'LPA' && $ov->numero_tranche)
-                                                        <span class="badge bg-warning text-dark">T{{ $ov->numero_tranche }}/5</span>
-                                                    @endif
-                                                @endif
+                                          {{-- APRÈS — basé sur type_ov, numéro de tranche dynamique --}}
+@php $ovPos = $s->ovs->values()->search(fn($o) => $o->id === $ov->id) + 1; @endphp
+
+@if($ov->type_ov === 'credit_reel')
+    <span class="badge bg-secondary" style="font-size:0.7rem;">{{ $ovPos }}/{{ $totalOvsCredit }}</span>
+    <span class="badge bg-info text-dark">
+        <i class="bi bi-bank me-1"></i>T{{ $ov->numero_tranche }} Crédit Réel
+    </span>
+
+@elseif($ov->type_ov === 'credit_diff')
+    <span class="badge bg-secondary" style="font-size:0.7rem;">{{ $ovPos }}/{{ $totalOvsCredit }}</span>
+    <span class="badge" style="background:#6f42c1;">
+        <i class="bi bi-exclamation-triangle me-1"></i>T{{ $ov->numero_tranche }} Différence
+    </span>
+
+@else
+    {{-- Tranche normale --}}
+    @if($creditEnregistre)
+        <span class="badge bg-secondary" style="font-size:0.7rem;">{{ $ovPos }}/{{ $totalOvsCredit }}</span>
+    @endif
+    <span class="badge bg-primary">{{ $ov->pourcentage }}%</span>
+    @if($programme === 'LPA' && $ov->numero_tranche)
+        <span class="badge bg-warning text-dark">T{{ $ov->numero_tranche }}/5</span>
+    @endif
+@endif
 
                                                 @if($ov->vsp)
                                                     <span class="badge bg-success" title="VSP effectué">
@@ -417,12 +427,13 @@
                                             <span class="badge bg-success px-3 py-2">
                                                 <i class="bi bi-check-all me-1"></i> Complet
                                             </span>
-                                        @elseif($ovT3Credit !== null && $ovT3Credit->paiement === null)
-                                            <div class="d-flex flex-column gap-2 align-items-center">
-                                                <a href="{{ route('paiement.create', Hashids::encode($ovT3Credit->id)) }}"
-                                                   class="btn btn-warning btn-action btn-sm shadow-sm fw-bold w-100">
-                                                    <i class="bi bi-bank me-1"></i> Payer T3
-                                                </a>
+                                        {{-- APRÈS — basé sur type_ov --}}
+@elseif($ovCreditDiff !== null && $ovCreditDiff->paiement === null)
+    <div class="d-flex flex-column gap-2 align-items-center">
+        <a href="{{ route('paiement.create', Hashids::encode($ovCreditDiff->id)) }}"
+           class="btn btn-warning btn-action btn-sm shadow-sm fw-bold w-100">
+            <i class="bi bi-bank me-1"></i> Payer T{{ $ovCreditDiff->numero_tranche }}
+        </a>
                                                 <a href="{{ route('ov.create', Hashids::encode($s->id)) }}"
                                                    class="btn btn-secondary btn-action btn-sm shadow-sm w-100">
                                                     <i class="bi bi-eye me-1"></i> Voir Dossier

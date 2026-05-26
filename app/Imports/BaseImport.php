@@ -48,58 +48,43 @@ abstract class BaseImport implements ToCollection, WithStartRow
      *   - $adresseAgence   → sites.adresse_agence
      *   - $numCompteAgence → sites.num_compte_agence
      */
-    protected function resolveOrCreateSite(
-        Wilaya    $wilaya,
-        Programme $programme,
-        string    $siteVal,
-        string    $communeVal,
-        string    $numConvBnh      = '',
-        string    $nomAgence       = '',
-        string    $numAgence       = '',
-        string    $adresseAgence   = '',   // ← nouveau v12
-        string    $numCompteAgence = ''    // ← nouveau v12
-    ): Site {
+  protected function resolveOrCreateSite(
+    Wilaya    $wilaya,
+    Programme $programme,
+    string    $siteVal,
+    string    $communeVal,
+    string    $numConvBnh      = '',
+    string    $nomAgence       = '',
+    string    $numAgence       = '',
+    string    $adresseAgence   = '',
+    string    $numCompteAgence = '',
+    string    $titulaire       = ''    // ← NOUVEAU
+): Site {
 
-        // ── Recherche exacte ──────────────────────────────────────────────
+    $site = Site::where('wilaya_id', $wilaya->id)
+        ->where('programme_id', $programme->id)
+        ->whereRaw('LOWER(TRIM(libelle)) = ?', [strtolower($siteVal)])
+        ->first();
+
+    if (!$site) {
         $site = Site::where('wilaya_id', $wilaya->id)
             ->where('programme_id', $programme->id)
-            ->whereRaw('LOWER(TRIM(libelle)) = ?', [strtolower($siteVal)])
+            ->whereRaw('LOWER(libelle) LIKE ?', ['%'.strtolower($siteVal).'%'])
             ->first();
+    }
 
-        // ── Recherche partielle si pas trouvé ─────────────────────────────
-        if (!$site) {
-            $site = Site::where('wilaya_id', $wilaya->id)
-                ->where('programme_id', $programme->id)
-                ->whereRaw('LOWER(libelle) LIKE ?', ['%'.strtolower($siteVal).'%'])
-                ->first();
-        }
+    if ($site) {
+        $toUpdate = [];
+        if ($numConvBnh      !== '' && empty($site->num_convention_bnh)) $toUpdate['num_convention_bnh'] = $numConvBnh;
+        if ($nomAgence       !== '' && empty($site->nom_agence))         $toUpdate['nom_agence']         = $nomAgence;
+        if ($numAgence       !== '' && empty($site->num_agence))         $toUpdate['num_agence']         = $numAgence;
+        if ($adresseAgence   !== '' && empty($site->adresse_agence))     $toUpdate['adresse_agence']     = $adresseAgence;
+        if ($numCompteAgence !== '' && empty($site->num_compte_agence))  $toUpdate['num_compte_agence']  = $numCompteAgence;
+        if ($titulaire       !== '' && empty($site->titulaire))          $toUpdate['titulaire']          = $titulaire;  // ← NOUVEAU
+        if (!empty($toUpdate)) $site->update($toUpdate);
+        return $site;
+    }
 
-        // ── Site trouvé → mise à jour partielle des champs agence/convention
-        if ($site) {
-            $toUpdate = [];
-
-            if ($numConvBnh !== '' && empty($site->num_convention_bnh)) {
-                $toUpdate['num_convention_bnh'] = $numConvBnh;
-            }
-            if ($nomAgence !== '' && empty($site->nom_agence)) {
-                $toUpdate['nom_agence'] = $nomAgence;
-            }
-            if ($numAgence !== '' && empty($site->num_agence)) {
-                $toUpdate['num_agence'] = $numAgence;
-            }
-            if ($adresseAgence !== '' && empty($site->adresse_agence)) {       // ← nouveau v12
-                $toUpdate['adresse_agence'] = $adresseAgence;
-            }
-            if ($numCompteAgence !== '' && empty($site->num_compte_agence)) {  // ← nouveau v12
-                $toUpdate['num_compte_agence'] = $numCompteAgence;
-            }
-
-            if (!empty($toUpdate)) {
-                $site->update($toUpdate);
-            }
-
-            return $site;
-        }
 
         // ── Site introuvable → résolution de la commune puis création ─────
         $commune = Commune::where('wilaya_id', $wilaya->id)
@@ -130,6 +115,7 @@ abstract class BaseImport implements ToCollection, WithStartRow
             'num_agence'         => $numAgence        ?: null,
             'adresse_agence'     => $adresseAgence    ?: null,   // ← nouveau v12
             'num_compte_agence'  => $numCompteAgence  ?: null,   // ← nouveau v12
+            'titulaire'          => $titulaire         ?: null,  // ← NOUVEAU
             'user_id'            => Auth::id(),
         ]);
     }

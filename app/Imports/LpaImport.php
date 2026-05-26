@@ -63,8 +63,8 @@ class LpaImport extends BaseImport
 
     private const AIDE_OFFSET   = 31;
     private const AGENCE_OFFSET = 50;
-    private const FNPOS_OFFSET  = 54;
-    private const ROW_SIZE      = 56;
+    private const FNPOS_OFFSET  = 55;
+    private const ROW_SIZE      = 57;
 
     private const SITUATION_MAP = [
         'mariée'      => 'Marié',
@@ -163,14 +163,15 @@ class LpaImport extends BaseImport
                 $numDecBnh  = $this->str($arr[$o + 2] ?? '');
                 $dateBnh    = $this->safeParse($arr[$o + 3] ?? '');
 
-                // ── Agence (AY→BB = 50→53) ────────────────────────────────
+               // ── Agence (AY→BC = 50→54) ────────────────────────────────
                 $a                = self::AGENCE_OFFSET;
                 $nomAgence        = $this->str($arr[$a]     ?? ''); // col 50 — nom
                 $adresseAgence    = $this->str($arr[$a + 1] ?? ''); // col 51 — adresse  ← NOUVEAU
                 $numAgence        = $this->str($arr[$a + 2] ?? ''); // col 52 — n°agence
                 $numCompteAgence  = $this->str($arr[$a + 3] ?? ''); // col 53 — n°compte ← NOUVEAU
+                $titulaire        = $this->str($arr[$a + 4] ?? ''); // col 54 ← NOUVEAU
 
-                // ── Aide FNPOS (BC→BD = 54→55) ────────────────────────────
+                // ── Aide FNPOS (BD→BE = 55→56) ────────────────────────────
                 $f            = self::FNPOS_OFFSET;
                 $numDecFnpos  = $this->str($arr[$f]     ?? '');
                 $dateFnposRaw = $this->str($arr[$f + 1] ?? '');
@@ -229,7 +230,7 @@ class LpaImport extends BaseImport
                 $site = $this->resolveOrCreateSite(
                     $wilaya, $programme, $siteVal, $communeVal,
                     $numConvBnh, $nomAgence, $numAgence,
-                    $adresseAgence, $numCompteAgence  // ← NOUVEAU
+                    $adresseAgence, $numCompteAgence ,   $titulaire // ← NOUVEAU
                 );
 
                 $logement = $this->resolveOrCreateLogement(

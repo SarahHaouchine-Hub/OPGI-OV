@@ -170,7 +170,7 @@ class OvController extends Controller
         if ($creditBancaire !== null) {
             $ovT2Fait  = $ovsDone->contains(fn($o) => $o->numero_tranche === 2 && in_array($o->type_ov, ['credit_reel', null]));
             $ovT3Fait  = $ovsDone->contains(fn($o) => $o->numero_tranche === 3 && in_array($o->type_ov, ['credit_diff', null]));
-            $diffCredit = $creditBancaire->montant_attestation - $creditBancaire->montant_reel;
+            $diffCredit = $creditBancaire->montant_attestation - ($creditBancaire->montant_reel ?? 0);
             $dossierSolde = $ovT2Fait && ($diffCredit <= 0 || $ovT3Fait);
             if ($dossierSolde) {
                 return redirect()->route('ov.index')
@@ -199,17 +199,20 @@ class OvController extends Controller
         $tranches       = self::LPA_TRANCHES;
         $ovT2Normal     = $ovsDone->where('type_ov', null)->where('numero_tranche', 2)->first();
 
+        // ── MODIFIÉ : Le crédit peut être enregistré après n'importe quelle tranche payée ──
+        // Condition : au moins 1 tranche normale payée ET pas encore de crédit ET pas de T2 normale
+        $derniereTranchePaye = $ovsDoneNormaux->filter(fn($o) => $o->paiement !== null)->count();
         $peutAfficherCredit = (
-            $ovsDone->where('type_ov', null)->count() >= 1 &&
+            $derniereTranchePaye >= 1 &&
             $aideBnh !== null &&
-            $ovT2Normal === null
+            $creditBancaire === null
         );
 
         $montantAttestationAuto = null;
-        if ($ovsDone->where('type_ov', null)->count() >= 1) {
-            $montantT1              = (float) ($ovsDone->firstWhere('numero_tranche', 1)->montant_paye ?? 0);
+        if ($ovsDoneNormaux->count() >= 1) {
+            $totalPayeNormaux       = (float) $ovsDoneNormaux->sum('montant_paye');
             $fnposDeduit            = $aideFnpos ? $fnposMontant : 0.0;
-            $montantAttestationAuto = max(0.0, ($prix2 - $montantT1) - $fnposDeduit);
+            $montantAttestationAuto = max(0.0, ($prix2 - $totalPayeNormaux) - $fnposDeduit);
         }
 
         return view('createOvLpa', compact(
@@ -259,7 +262,6 @@ class OvController extends Controller
 
         $souscripteur = Souscripteur::with('logement.programme')->findOrFail($request->souscripteur_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
@@ -321,12 +323,10 @@ class OvController extends Controller
 
         $souscripteur = Souscripteur::with(['logement.programme', 'ovs', 'aides'])->findOrFail($request->souscripteur_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
 
-        // ── Restriction : 1er OV réservé au DG ──────────────────────────────
         if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv()) {
             return back()->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
         }
@@ -345,7 +345,7 @@ class OvController extends Controller
         if ($creditBancaire !== null && $prochaineTranche > 1) {
             return back()->with('error',
                 'Un crédit bancaire est enregistré pour ce dossier. '
-                . 'Les tranches T2→T5 ne peuvent pas être générées. '
+                . 'Les tranches suivantes ne peuvent pas être générées manuellement. '
                 . 'Utilisez le bouton "Générer OV différence" si nécessaire.'
             );
         }
@@ -431,12 +431,10 @@ class OvController extends Controller
 
         $souscripteur = Souscripteur::with(['logement.programme', 'ovs', 'aides'])->findOrFail($request->souscripteur_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
 
-        // ── Restriction : 1er OV réservé au DG ──────────────────────────────
         if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv()) {
             return back()->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
         }
@@ -511,7 +509,6 @@ class OvController extends Controller
 
         $souscripteur = Souscripteur::with('logement.site', 'logement.programme')->findOrFail($request->souscripteur_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
@@ -558,22 +555,26 @@ class OvController extends Controller
 
     // =========================================================================
     // STORE — CRÉDIT BANCAIRE
+    // MODIFIÉ :
+    //   • montant_reel nullable (sans crédit réel = montant_attestation)
+    //   • date_versement_reel supprimée
+    //   • crédit autorisé après n'importe quelle tranche payée (pas seulement T1)
+    //   • si montant_reel < montant_attestation → OV différence uniquement
     // =========================================================================
     public function storeCreditBancaire(Request $request)
     {
         $request->validate([
             'souscripteur_id'      => 'required|exists:souscripteurs,id',
             'montant_attestation'  => 'required|numeric|min:1',
-            'montant_reel'         => 'required|numeric|min:1',
+            // montant_reel est désormais optionnel
+            'montant_reel'         => 'nullable|numeric|min:0',
             'date_attestation'     => 'required|date',
-            'date_versement_reel'  => 'nullable|date',
             'pieces_jointes'       => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
-        $souscripteur = Souscripteur::with(['ovs', 'aides', 'creditBancaire', 'logement.site', 'logement.programme'])
+        $souscripteur = Souscripteur::with(['ovs.paiement', 'aides', 'creditBancaire', 'logement.site', 'logement.programme'])
             ->findOrFail($request->souscripteur_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
@@ -583,47 +584,43 @@ class OvController extends Controller
             return back()->with('error', "L'aide BNH doit être enregistrée avant d'enregistrer un crédit bancaire.");
         }
 
-        $aideFnpos     = $souscripteur->aides->firstWhere('type', 'fnpos');
-        $montantFnpos  = $aideFnpos ? self::FNPOS_MONTANT_FIXE : 0.0;
-
         if ($souscripteur->creditBancaire) {
             return back()->with('error', 'Un crédit bancaire est déjà enregistré pour ce souscripteur.');
         }
 
-        $ovT1 = $souscripteur->ovs->where('type_ov', null)->where('numero_tranche', 1)->first();
-        if (!$ovT1) {
-            return back()->with('error', 'La Tranche 1 doit être générée avant d\'enregistrer un crédit bancaire.');
-        }
-        if (!$ovT1->paiement) {
-            return back()->with('error', '⚠️ La Tranche 1 doit être PAYÉE avant d\'enregistrer un crédit bancaire.');
+        // ── MODIFIÉ : au moins 1 tranche normale PAYÉE (quelle que soit la tranche) ──
+        $ovsDoneNormaux    = $souscripteur->ovs->where('type_ov', null)->sortBy('numero_tranche');
+        $tranchesPayees    = $ovsDoneNormaux->filter(fn($o) => $o->paiement !== null);
+
+        if ($tranchesPayees->isEmpty()) {
+            return back()->with('error', 'Au moins une tranche doit être payée avant d\'enregistrer un crédit bancaire.');
         }
 
-        $ovT2Normal = $souscripteur->ovs->where('type_ov', null)->where('numero_tranche', 2)->first();
-        if ($ovT2Normal) {
-            return back()->with('error',
-                'Impossible d\'enregistrer un crédit bancaire : la Tranche 2 normale a déjà été générée. '
-                . 'Le crédit bancaire n\'est autorisé qu\'après la Tranche 1 uniquement.'
-            );
+        // Vérifier qu'aucun OV "crédit" n'existe déjà
+        $ovCreditExiste = $souscripteur->ovs->whereNotNull('type_ov')->isNotEmpty();
+        if ($ovCreditExiste) {
+            return back()->with('error', 'Des OVs de crédit existent déjà pour ce dossier.');
         }
 
-        $prixLogement    = (float) $souscripteur->logement->prix;
-        $montantBnh      = (float) $aideBnh->montant;
-        $montantT1       = (float) $ovT1->montant_paye;
-        $montantAttendu  = $prixLogement - $montantBnh - $montantT1 - $montantFnpos;
+        $aideFnpos     = $souscripteur->aides->firstWhere('type', 'fnpos');
+        $montantFnpos  = $aideFnpos ? self::FNPOS_MONTANT_FIXE : 0.0;
+        $prixLogement  = (float) $souscripteur->logement->prix;
+        $montantBnh    = (float) $aideBnh->montant;
+
+        // Total des tranches normales déjà payées
+        $totalPayeNormaux = (float) $ovsDoneNormaux->sum('montant_paye');
+        $prix2            = max(0.0, $prixLogement - $montantBnh);
+
+        // Montant attendu de l'attestation = ce qui reste à payer après les tranches normales (- FNPOS si présente)
+        $montantAttendu = max(0.0, $prix2 - $totalPayeNormaux - $montantFnpos);
 
         if ($montantAttendu <= 0) {
             return back()->with('error',
-                'Le montant restant à payer est nul ou négatif. Aucun crédit bancaire nécessaire. '
-                . 'Calcul : (' . number_format($prixLogement, 2, ',', ' ')
-                . ' − ' . number_format($montantBnh, 2, ',', ' ')
-                . ') − ' . number_format($montantT1, 2, ',', ' ')
-                . ($montantFnpos > 0 ? ' − ' . number_format($montantFnpos, 2, ',', ' ') : '')
-                . ' = ' . number_format($montantAttendu, 2, ',', ' ') . ' DA.'
+                'Le montant restant à payer est nul ou négatif. Aucun crédit bancaire nécessaire.'
             );
         }
 
         $montantAttestation = (float) $request->montant_attestation;
-        $montantReel        = (float) $request->montant_reel;
         $tolerance          = 0.01;
 
         if (abs($montantAttestation - $montantAttendu) > $tolerance) {
@@ -631,14 +628,19 @@ class OvController extends Controller
                 '❌ Le montant de l\'attestation (' . number_format($montantAttestation, 2, ',', ' ') . ' DA) '
                 . 'ne correspond pas au montant attendu (' . number_format($montantAttendu, 2, ',', ' ') . ' DA). '
                 . '<br><br><strong>Formule de calcul :</strong><br>'
-                . '(Prix − BNH) − T1' . ($montantFnpos > 0 ? ' − FNPOS' : '') . '<br>'
+                . '(Prix − BNH) − tranches payées' . ($montantFnpos > 0 ? ' − FNPOS' : '') . '<br>'
                 . '= (' . number_format($prixLogement, 2, ',', ' ')
                 . ' − ' . number_format($montantBnh, 2, ',', ' ')
-                . ') − ' . number_format($montantT1, 2, ',', ' ')
+                . ') − ' . number_format($totalPayeNormaux, 2, ',', ' ')
                 . ($montantFnpos > 0 ? ' − ' . number_format($montantFnpos, 2, ',', ' ') : '')
                 . '<br>= <strong>' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong>'
             )->withInput();
         }
+
+        // ── MODIFIÉ : montant_reel optionnel — si absent = même valeur que attestation ──
+        $montantReel = $request->filled('montant_reel')
+            ? (float) $request->montant_reel
+            : $montantAttestation;
 
         if ($montantReel > $montantAttestation) {
             return back()->with('error',
@@ -648,7 +650,11 @@ class OvController extends Controller
             )->withInput();
         }
 
+        // ── MODIFIÉ : la différence = ce qui RESTE à payer (attestation − réel) ──
         $difference = max(0.0, $montantAttestation - $montantReel);
+
+        // Numéro de tranche pour les OVs crédit (suite des tranches normales)
+        $prochaineTrancheCredit = $ovsDoneNormaux->count() + 1;
 
         $filePath = null;
         if ($request->hasFile('pieces_jointes')) {
@@ -662,20 +668,22 @@ class OvController extends Controller
                 'montant_attestation' => $montantAttestation,
                 'montant_reel'        => $montantReel,
                 'date_attestation'    => $request->date_attestation,
-                'date_versement_reel' => $request->date_versement_reel,
+                // date_versement_reel supprimée
                 'pieces_jointes'      => $filePath,
                 'user_id'             => Auth::id(),
             ]);
 
-            [$qrPlainT2, $qrHashedT2, $qrDataT2] = $this->buildQr('LPA-CREDIT', $souscripteur, $montantReel, 2);
+            // ── OV Crédit Réel (montant versé par la banque) ──
+            [$qrPlainT2, $qrHashedT2, $qrDataT2] = $this->buildQr('LPA-CREDIT', $souscripteur, $montantReel, $prochaineTrancheCredit);
 
-            $ovT2 = Ov::create([
+            $ovCredit = Ov::create([
                 'souscripteur_id'    => $souscripteur->id,
                 'montant_total'      => $prixLogement,
                 'pourcentage'        => round(($montantReel / max(1, $prixLogement)) * 100, 2),
                 'montant_paye'       => $montantReel,
+                // ── MODIFIÉ : montant_restant = différence (ce qui reste à payer) ──
                 'montant_restant'    => $difference,
-                'numero_tranche'     => 2,
+                'numero_tranche'     => $prochaineTrancheCredit,
                 'vsp'                => false,
                 'type_ov'            => 'credit_reel',
                 'qr_content_plain'   => $qrPlainT2,
@@ -684,31 +692,35 @@ class OvController extends Controller
                 'user_id'            => Auth::id(),
             ]);
 
+            // Paiement automatique pour le montant réel banque
             Paiement::create([
-                'ov_id'          => $ovT2->id,
+                'ov_id'          => $ovCredit->id,
                 'num_recu'       => 'CREDIT-AUTO-' . $souscripteur->id . '-' . time(),
                 'nom_agence'     => $souscripteur->logement->site->nom_agence ?? 'Banque',
                 'num_agence'     => $souscripteur->logement->site->num_agence ?? '—',
-                'date_paiement'  => $request->date_versement_reel ?? $request->date_attestation,
+                'date_paiement'  => $request->date_attestation,
                 'recu_pdf'       => null,
                 'user_id'        => Auth::id(),
             ]);
 
-            $ovT3 = null;
+            $ovDiff = null;
+            // ── MODIFIÉ : OV différence = uniquement si différence > 0 ──
+            // L'OV différence représente le RESTE À PAYER par le souscripteur
             if ($difference > 0) {
-                [$qrPlainT3, $qrHashedT3, $qrDataT3] = $this->buildQr('LPA-DIFF', $souscripteur, $difference, 3);
-                $ovT3 = Ov::create([
+                $trancheDiff = $prochaineTrancheCredit + 1;
+                [$qrPlainDiff, $qrHashedDiff, $qrDataDiff] = $this->buildQr('LPA-DIFF', $souscripteur, $difference, $trancheDiff);
+                $ovDiff = Ov::create([
                     'souscripteur_id'    => $souscripteur->id,
                     'montant_total'      => $prixLogement,
                     'pourcentage'        => round(($difference / max(1, $prixLogement)) * 100, 2),
                     'montant_paye'       => $difference,
                     'montant_restant'    => 0,
-                    'numero_tranche'     => 3,
+                    'numero_tranche'     => $trancheDiff,
                     'vsp'                => false,
                     'type_ov'            => 'credit_diff',
-                    'qr_content_plain'   => $qrPlainT3,
-                    'qr_content_hashed'  => $qrHashedT3,
-                    'qrcode'             => $qrDataT3,
+                    'qr_content_plain'   => $qrPlainDiff,
+                    'qr_content_hashed'  => $qrHashedDiff,
+                    'qrcode'             => $qrDataDiff,
                     'user_id'            => Auth::id(),
                 ]);
             }
@@ -716,24 +728,26 @@ class OvController extends Controller
             Logement::where('code_loge_lpl', $souscripteur->code_loge_lpl)->update(['flag' => 2]);
             DB::commit();
 
-            $pdfUrl      = route('ov.pdf', Hashids::encode($ovT2->id));
+            $pdfUrl = route('ov.pdf', Hashids::encode($ovCredit->id));
+
             $recapCalcul = '<br><br><strong>📊 Récapitulatif :</strong><br>'
                 . '• Prix logement : ' . number_format($prixLogement, 2, ',', ' ') . ' DA<br>'
                 . '• Aide BNH : −' . number_format($montantBnh, 2, ',', ' ') . ' DA<br>'
-                . '• T1 payée : −' . number_format($montantT1, 2, ',', ' ') . ' DA<br>'
+                . '• Tranches payées : −' . number_format($totalPayeNormaux, 2, ',', ' ') . ' DA<br>'
                 . ($montantFnpos > 0 ? '• Aide FNPOS : −' . number_format($montantFnpos, 2, ',', ' ') . ' DA<br>' : '')
-                . '• <strong>Reste (crédit) : ' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong><br>'
-                . '• T2 (crédit réel) : ' . number_format($montantReel, 2, ',', ' ') . ' DA ✅ PAYÉE';
+                . '• <strong>Reste (crédit attestation) : ' . number_format($montantAttendu, 2, ',', ' ') . ' DA</strong><br>'
+                . '• Montant réel banque : ' . number_format($montantReel, 2, ',', ' ') . ' DA ✅ PAYÉ';
 
             if ($difference > 0) {
-                $recapCalcul .= '<br>• T3 (différence) : ' . number_format($difference, 2, ',', ' ') . ' DA ⏳ EN ATTENTE';
+                $recapCalcul .= '<br>• <strong>Reste à payer par souscripteur : ' . number_format($difference, 2, ',', ' ') . ' DA</strong> ⏳ EN ATTENTE';
                 return redirect()->route('ov.index')
                     ->with('pdf_url', $pdfUrl)
                     ->with('warning',
                         '✅ Crédit bancaire enregistré avec succès !'
                         . $recapCalcul
-                        . '<br><br>⚠️ <strong>Une T3 complémentaire a été générée</strong> pour la différence. '
-                        . 'Le dossier sera soldé après paiement de cette T3.'
+                        . '<br><br>⚠️ <strong>Un OV complémentaire a été généré</strong> pour le reste à payer ('
+                        . number_format($difference, 2, ',', ' ') . ' DA). '
+                        . 'Le dossier sera soldé après paiement de cet OV.'
                     );
             }
 
@@ -785,7 +799,6 @@ class OvController extends Controller
     {
         $ov = Ov::with('souscripteur.logement.site', 'souscripteur.logement.programme')->findOrFail($ovId);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($ov->souscripteur->logement->programme->libelle ?? '')) {
             return redirect()->route('ov.index')->with('error', $this->accessDeniedMessage());
         }
@@ -807,7 +820,6 @@ class OvController extends Controller
 
         $ov = Ov::with('souscripteur.logement.site', 'souscripteur.logement.programme')->findOrFail($request->ov_id);
 
-        // ── Restriction par programme selon le rôle ──────────────────────────
         if (!$this->canAccessProgramme($ov->souscripteur->logement->programme->libelle ?? '')) {
             return back()->with('error', $this->accessDeniedMessage());
         }
@@ -874,7 +886,6 @@ class OvController extends Controller
         };
     }
 
-    // ── EDIT LPL ─────────────────────────────────────────────────────────────
     private function editLpl(Ov $ov)
     {
         $souscripteur    = $ov->souscripteur;
@@ -886,7 +897,6 @@ class OvController extends Controller
         return response()->view('editOvLpl', compact('ov', 'souscripteur', 'prixLogement', 'reste', 'code_loge'));
     }
 
-    // ── EDIT LSP ─────────────────────────────────────────────────────────────
     private function editLsp(Ov $ov)
     {
         $souscripteur    = $ov->souscripteur;
@@ -904,7 +914,6 @@ class OvController extends Controller
         ));
     }
 
-    // ── EDIT LPA ─────────────────────────────────────────────────────────────
     private function editLpa(Ov $ov)
     {
         $souscripteur    = $ov->souscripteur;
@@ -973,7 +982,6 @@ class OvController extends Controller
         };
     }
 
-    // ── UPDATE LPL ────────────────────────────────────────────────────────────
     private function updateLpl(Request $request, Ov $ov)
     {
         $request->validate(['pourcentage' => 'required|numeric|min:5|max:50', 'montant_paye' => 'required|numeric|min:1']);
@@ -1005,7 +1013,6 @@ class OvController extends Controller
         return redirect()->route('ov.index')->with('success', 'Ordre de versement LPL modifié avec succès.');
     }
 
-    // ── UPDATE LSP ────────────────────────────────────────────────────────────
     private function updateLsp(Request $request, Ov $ov)
     {
         $request->validate(['montant_a_payer' => 'required|numeric|min:1']);
@@ -1040,7 +1047,6 @@ class OvController extends Controller
         return redirect()->route('ov.index')->with('success', 'Ordre de versement LSP modifié avec succès.');
     }
 
-    // ── UPDATE LPA ────────────────────────────────────────────────────────────
     private function updateLpa(Request $request, Ov $ov)
     {
         $souscripteur = $ov->souscripteur;
@@ -1146,8 +1152,8 @@ class OvController extends Controller
         $num      = $ov->numero_tranche ?? 1;
         $ordinal  = $ordinals[$num] ?? ($num . 'ÈME');
         switch ($ov->type_ov ?? null) {
-            case 'credit_reel': $tLabel = $ordinal . ' TRANCHE — CRÉDIT RÉEL';       break;
-            case 'credit_diff': $tLabel = $ordinal . ' TRANCHE — DIFFÉRENCE CRÉDIT'; break;
+            case 'credit_reel': $tLabel = $ordinal . ' TRANCHE — CRÉDIT RÉEL';         break;
+            case 'credit_diff': $tLabel = $ordinal . ' TRANCHE — RESTE À PAYER';       break;
             default:            $tLabel = $ordinal . ' TRANCHE';
         }
 
@@ -1169,8 +1175,8 @@ class OvController extends Controller
             'dar_beida_ar'     => $Arabic->utf8Glyphs('الدار البيضاء'),
         ];
 
-       return Pdf::loadView('ordre_versement_lpa_pdf', $data)
-            ->setPaper([0, 0, 419.53, 245], 'portrait') // Hauteur réduite de 280 à 245
+        return Pdf::loadView('ordre_versement_lpa_pdf', $data)
+            ->setPaper([0, 0, 419.53, 245], 'portrait')
             ->stream('OV_LPA_' . $ov->id . '.pdf');
     }
 
@@ -1219,8 +1225,8 @@ class OvController extends Controller
             'dar_beida_ar'       => $Arabic->utf8Glyphs('الدار البيضاء'),
         ];
 
-    return Pdf::loadView('ordre_versement_lpl_pdf', $data)
-            ->setPaper([0, 0, 419.53, 245], 'portrait') // Hauteur réduite de 280 à 245
+        return Pdf::loadView('ordre_versement_lpl_pdf', $data)
+            ->setPaper([0, 0, 419.53, 245], 'portrait')
             ->stream('OV_LPL_' . $ov->id . '.pdf');
     }
 
@@ -1275,8 +1281,8 @@ class OvController extends Controller
             'dar_beida_ar'       => $Arabic->utf8Glyphs('الدار البيضاء'),
         ];
 
-       return Pdf::loadView('ordre_versement_lsp_pdf', $data)
-            ->setPaper([0, 0, 419.53, 245], 'portrait') // Hauteur réduite de 280 à 245
+        return Pdf::loadView('ordre_versement_lsp_pdf', $data)
+            ->setPaper([0, 0, 419.53, 245], 'portrait')
             ->stream('OV_LSP_' . $ov->id . '.pdf');
     }
 
