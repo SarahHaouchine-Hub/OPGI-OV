@@ -19,6 +19,9 @@ class Logement extends Model
         'site_id',
         'programme_id',
         'user_id',        // ← manquait
+        'box_num',
+    'box_superficie',
+    'box_num_lot',
     ];
 
     public function souscripteur()

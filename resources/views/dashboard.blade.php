@@ -794,7 +794,40 @@
                         </div>
 
                         <div class="col-12"><hr class="my-1" style="border-color:var(--border)"></div>
+                           {{-- Toggle box/stationnement --}}
+<div class="col-12" id="wrap_toggle_box" style="display:none">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="toggle_box" 
+               onchange="document.getElementById('section_box').style.display = this.checked ? '' : 'none'">
+        <label class="form-check-label fw-semibold" for="toggle_box" style="font-size:.85rem">
+            <i class="bi bi-p-square-fill me-1 text-primary"></i>Inclure un box / stationnement
+        </label>
+    </div>
+</div>
 
+<div id="section_box" style="display:none" class="col-12">
+    <div class="row g-3">
+        <div class="col-12">
+            <hr class="my-0" style="border-color:var(--border)">
+            <p class="text-muted" style="font-size:.75rem;margin:.5rem 0 0">
+                <i class="bi bi-info-circle me-1"></i>Informations optionnelles du box / stationnement
+            </p>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-p-square me-1"></i>N° Box</label>
+            <input type="text" name="box_num" class="form-control" placeholder="Ex : B-12">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-rulers me-1"></i>Superficie box (m²)</label>
+            <input type="number" step="0.01" name="box_superficie" class="form-control" 
+                   placeholder="Ex : 12.50" min="0">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-hash me-1"></i>N° Lot box</label>
+            <input type="text" name="box_num_lot" class="form-control" placeholder="Ex : LOT-B-001">
+        </div>
+    </div>
+</div>
                         <div class="col-md-4">
                             <label class="form-label"><i class="bi bi-building me-1"></i>Bâtiment</label>
                             <input type="text" name="num_batiment" class="form-control" placeholder="Ex : A" required>
@@ -911,15 +944,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 (o,p) => { o.value=p.id; o.textContent=p.libelle; });
             if (ok) { badge('mb1','done'); badge('mb2','active'); }
         });
-        logProg.addEventListener('change', async function() {
-            resetSel(logSite, "-- Choisir d'abord un programme --");
-            badge('mb2','active');
-            if (!this.value) return;
-            logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
-            const ok = await loadInto(`/api/souscripteur/sites/${logWilaya.value}/${this.value}`, logSite, 'mwrap_site',
-                (o,s) => { o.value=s.id; o.textContent=s.libelle; });
-            if (ok) { badge('mb2','done'); badge('mb3','active'); }
+      logProg.addEventListener('change', async function() {
+    resetSel(logSite, "-- Choisir d'abord un programme --");
+    badge('mb2','active');
+
+    // ── Box/stationnement visible uniquement si Promotionnel ──
+    const libelle = this.options[this.selectedIndex]?.text?.toUpperCase() || '';
+    const isPromo = libelle.includes('PROMOTIONNEL');
+    document.getElementById('wrap_toggle_box').style.display = isPromo ? '' : 'none';
+    if (!isPromo) {
+        document.getElementById('toggle_box').checked = false;
+        document.getElementById('section_box').style.display = 'none';
+        ['box_num','box_superficie','box_num_lot'].forEach(name => {
+            const el = document.querySelector(`[name="${name}"]`);
+            if (el) el.value = '';
         });
+    }
+
+    if (!this.value) return;
+    logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
+    const ok = await loadInto(`/api/souscripteur/sites/${logWilaya.value}/${this.value}`, logSite, 'mwrap_site',
+        (o,s) => { o.value=s.id; o.textContent=s.libelle; });
+    if (ok) { badge('mb2','done'); badge('mb3','active'); }
+});
         logSite.addEventListener('change', function() { if (this.value) badge('mb3','done'); });
         if (setDefaultAlger(logWilaya)) logWilaya.dispatchEvent(new Event('change'));
     }
@@ -1086,6 +1133,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ${logement.num_lot  ? `<span class="litem">Lot ${logement.num_lot}</span>`   : ''}
             ${logement.typologie ? `<span class="litem">${logement.typologie}</span>`   : ''}
             ${logement.surface   ? `<span class="litem">${logement.surface} m²</span>` : ''}
+            ${logement.box_num ? `<span class="litem"><i class="bi bi-p-square me-1"></i>Box ${logement.box_num}</span>` : ''}
         </div>`;
 
         if (!s) {

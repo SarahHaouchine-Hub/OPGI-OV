@@ -20,6 +20,9 @@ class LogementController extends Controller
             'typologie'    => 'nullable|in:F2,F3,F4,F5,F6',
             'prix'         => 'required|numeric|min:0',
             'programme_id' => 'required|exists:programmes,id',
+            'box_num'         => 'nullable|string|max:20',
+'box_superficie'  => 'nullable|numeric|min:0',
+'box_num_lot'     => 'nullable|string|max:50',
         ]);
 
         Logement::create([
@@ -33,6 +36,9 @@ class LogementController extends Controller
             'prix'         => $request->prix,
             'programme_id' => $request->programme_id,
             'flag'         => 0,
+            'box_num'        => $request->box_num,
+'box_superficie' => $request->box_superficie,
+'box_num_lot'    => $request->box_num_lot,
             'user_id'      => Auth::id(),
         ]);
 
