@@ -363,4 +363,43 @@ $totalRemplacements = \DB::table('desistements')
             'logements' => $logements,
         ]);
     }
+    public function historiqueLogementsSite($siteId)
+{
+    
+    $site = Site::with('wilaya', 'programme')->findOrFail($siteId);
+    if (!$this->canAccessProgramme($site->programme->libelle ?? '')) {
+        return response()->json(['error' => $this->accessDeniedMessage()], 403);
+    }
+
+    $desistements = \DB::table('desistements')
+        ->join('logements', 'logements.id', '=', 'desistements.logement_id')
+        ->join('souscripteurs as ancien', 'ancien.id', '=', 'desistements.souscripteur_id')
+        ->leftJoin('souscripteurs as nouveau', 'nouveau.id', '=', 'desistements.nouveau_souscripteur_id')
+        ->where('logements.site_id', $siteId)
+        ->where('desistements.type', 'remplacement')
+        ->orderBy('desistements.date_desistement', 'desc')
+        ->get([
+            'desistements.id',
+            'desistements.date_desistement',
+            'desistements.code_loge_lpl as ancien_code',
+            'logements.id as logement_id',
+            'logements.num_batiment',
+            'logements.num_etage',
+            'logements.num_porte',
+            'logements.num_lot',
+            'logements.typologie',
+            'logements.flag',
+            'logements.code_loge_lpl as code_actuel',
+            'ancien.id as ancien_id',
+            'ancien.nom as ancien_nom',
+            'ancien.prenom as ancien_prenom',
+            'ancien.nin as ancien_nin',
+            'nouveau.id as nouveau_id',
+            'nouveau.nom as nouveau_nom',
+            'nouveau.prenom as nouveau_prenom',
+            'nouveau.nin as nouveau_nin',
+        ]);
+
+    return response()->json($desistements);
+}
 }

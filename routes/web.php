@@ -63,8 +63,9 @@ Route::middleware(['auth', 'decode.hashids'])->group(function () {
     Route::get('/ov/paiement/{ovId}',          [OvController::class, 'createPaiement'])->name('paiement.create');
     Route::post('/ov/paiement/store',          [OvController::class, 'storePaiement'])->name('paiement.store');
     Route::post('/ov/credit/ov-diff',          [OvController::class, 'storeOvCredit'])->name('ov.credit.ov_diff');
-    Route::get('/ov/{id}/edit',   [OvController::class, 'edit'])   ->name('ov.edit');
-Route::put('/ov/{id}/update', [OvController::class, 'update']) ->name('ov.update');
+    Route::get('/ov/{id}/edit',                [OvController::class, 'edit'])->name('ov.edit');
+    Route::put('/ov/{id}/update',              [OvController::class, 'update'])->name('ov.update');
+    Route::get('/ov/{id}/cheque',              [OvController::class, 'generateCheque'])->name('ov.cheque');
 
     // ── Désistements & Remplacements ──────────────────────────────────
     Route::get('/desistement',
@@ -72,10 +73,6 @@ Route::put('/ov/{id}/update', [OvController::class, 'update']) ->name('ov.update
 
     Route::post('/desistement/{idLogement}/remplacer',
         [DesistementController::class, 'remplacer'])->name('createRemplacement');
-
-    // ── API recherche NIN (désistement) ───────────────────────────────
-    Route::get('/api/souscripteur/search-nin/{nin}',
-        [DesistementController::class, 'searchByNin'])->name('api.souscripteur.search-nin');
 
     // ── API Dashboard ─────────────────────────────────────────────────
     Route::prefix('api/dashboard')->group(function () {
@@ -86,23 +83,30 @@ Route::put('/ov/{id}/update', [OvController::class, 'update']) ->name('ov.update
 
     // ── API Géographique ──────────────────────────────────────────────
     Route::prefix('api')->group(function () {
-        Route::get('/communes/{wilayaId}',         [DashboardController::class, 'communes']);
-        Route::get('/sites/{wilayaId}',            [SiteController::class, 'sitesByWilaya']);
-        Route::get('/logements-site/{siteId}',     [DashboardController::class, 'logementsBySite'])->name('api.logements.site');
+        Route::get('/communes/{wilayaId}',                    [DashboardController::class, 'communes']);
+        Route::get('/sites/{wilayaId}',                       [SiteController::class, 'sitesByWilaya']);
+
+        // IMPORTANT : /historique AVANT le paramètre générique {siteId}
+        Route::get('/logements-site/{siteId}/historique',     [DashboardController::class, 'historiqueLogementsSite']);
+        Route::get('/logements-site/{siteId}',                [DashboardController::class, 'logementsBySite'])->name('api.logements.site');
     });
-Route::get('/ov/{id}/cheque', [OvController::class, 'generateCheque'])->name('ov.cheque');
+
+    // ── API recherche NIN (désistement) ───────────────────────────────
+    Route::get('/api/souscripteur/search-nin/{nin}',
+        [DesistementController::class, 'searchByNin'])->name('api.souscripteur.search-nin');
+
     // ── API Cascade souscripteur ──────────────────────────────────────
     Route::prefix('api/souscripteur')->group(function () {
-        Route::get('/programmes-by-wilaya/{wilayaId}',             [SouscripteurController::class, 'programmesByWilaya']);
-        Route::get('/sites/{wilayaId}/{programmeId}',              [SouscripteurController::class, 'sitesByWilayaProgramme']);
-        Route::get('/batiments/{siteId}',                          [SouscripteurController::class, 'batimentsBySite']);
-        Route::get('/etages/{siteId}/{batiment}',                  [SouscripteurController::class, 'etagesBySiteBat']);
-        Route::get('/portes/{siteId}/{batiment}/{etage}',          [SouscripteurController::class, 'portesBySiteBatEtage']);
+        Route::get('/programmes-by-wilaya/{wilayaId}',              [SouscripteurController::class, 'programmesByWilaya']);
+        Route::get('/sites/{wilayaId}/{programmeId}',               [SouscripteurController::class, 'sitesByWilayaProgramme']);
+        Route::get('/batiments/{siteId}',                           [SouscripteurController::class, 'batimentsBySite']);
+        Route::get('/etages/{siteId}/{batiment}',                   [SouscripteurController::class, 'etagesBySiteBat']);
+        Route::get('/portes/{siteId}/{batiment}/{etage}',           [SouscripteurController::class, 'portesBySiteBatEtage']);
 
-        Route::get('/programmes-by-wilaya/{wilayaId}',             [DashboardController::class, 'programmesByWilaya'])->name('dash.programmes');
+        Route::get('/programmes-by-wilaya/{wilayaId}',              [DashboardController::class, 'programmesByWilaya'])->name('dash.programmes');
         Route::get('/sites-by-wilaya-programme/{wilayaId}/{progId}',[DashboardController::class, 'sitesByWilayaProgramme']);
-        Route::get('/batiments-dash/{siteId}',                     [DashboardController::class, 'batimentsBySite']);
-        Route::get('/etages-dash/{siteId}/{batiment}',             [DashboardController::class, 'etagesBySiteBatiment']);
+        Route::get('/batiments-dash/{siteId}',                      [DashboardController::class, 'batimentsBySite']);
+        Route::get('/etages-dash/{siteId}/{batiment}',              [DashboardController::class, 'etagesBySiteBatiment']);
     });
 
 });

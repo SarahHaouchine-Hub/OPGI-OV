@@ -260,6 +260,40 @@
     border: 2px solid #e2e8f0; border-top-color: var(--accent);
     border-radius: 50%; animation: db-spin .6s linear infinite; pointer-events: none;
 }
+
+/* ── Onglets ── */
+.modal-tabs {
+    display: flex;
+    gap: 4px;
+    padding: .5rem 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+    background: white;
+}
+.btn-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: .45rem .9rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color .15s, border-color .15s;
+}
+.btn-tab.active { color: var(--navy-mid); border-bottom-color: var(--navy-mid); }
+
+/* Table historique */
+.hist-table { font-size: .8rem; margin: 0; width: 100%; }
+.hist-table thead th {
+    background: #f8fafc; font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted); font-weight: 700;
+    padding: .55rem .9rem; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.hist-table tbody td { padding: .6rem .9rem; vertical-align: middle; border-bottom: 1px solid #f8fafc; }
+.hist-table tbody tr:hover { background: #f8fafc; }
+.badge-ancien { background:#fee2e2;color:#991b1b;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px }
+.badge-actuel { background:#d1fae5;color:#065f46;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px }
 @keyframes db-spin { to { transform: translateY(-50%) rotate(360deg); } }
 </style>
 
@@ -322,16 +356,11 @@
         <div class="sc-value">{{ $soldes }}</div>
         <div class="sc-sub">Transactions clôturées</div>
     </div>
-    {{-- <div class="stat-card sc-danger" id="cardstat5">
-    <div class="sc-label">Désistés</div>
-    <div class="sc-value">{{ $desistes }}</div>
-    <div class="sc-sub">Logements libérés</div>
-</div> --}}
-<div class="stat-card sc-danger" id="cardstat6">
-    <div class="sc-label"><i class="bi bi-arrow-repeat me-1"></i>Remplacés</div>
-    <div class="sc-value">{{ $totalRemplacements }}</div>
-    <div class="sc-sub">Souscripteurs remplacés</div>
-</div>
+    <div class="stat-card sc-danger" id="cardstat6">
+        <div class="sc-label"><i class="bi bi-arrow-repeat me-1"></i>Remplacés</div>
+        <div class="sc-value">{{ $totalRemplacements }}</div>
+        <div class="sc-sub">Souscripteurs remplacés</div>
+    </div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
@@ -553,6 +582,7 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width:95vw">
         <div class="modal-content">
 
+            {{-- En-tête --}}
             <div class="modal-head-navy d-flex align-items-start justify-content-between">
                 <div>
                     <h5 class="modal-title fw-bold mb-1" id="ml_title">
@@ -563,83 +593,169 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="ml-filters">
-                <div class="row g-2 align-items-center">
-                    <div class="col-12 col-sm-4 col-md-3">
-                        <input type="text" id="ml_search" class="form-control form-control-sm"
-                            placeholder="🔍 Nom / Prénom du souscripteur...">
-                    </div>
-                    <div class="col-6 col-sm-3 col-md-2">
-                        <select id="ml_batiment" class="form-select form-select-sm">
-                            <option value="">Tous bâtiments</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-3 col-md-2">
-                        <select id="ml_etage" class="form-select form-select-sm" disabled>
-                            <option value="">Tous étages</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-3 col-md-2">
-                        <select id="ml_status" class="form-select form-select-sm">
-                            <option value="">Tous statuts</option>
-                            <option value="0">Libre</option>
-                            <option value="1">Inscrit</option>
-                            <option value="2">Soldé</option>
-                            <option value="3">Remplacé</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-auto">
-                        <span id="ml_count" class="badge" style="background:#f1f5f9;color:#475569;font-weight:700;font-size:.78rem">0 logement(s)</span>
-                    </div>
-                    <div class="col-auto ms-auto">
-                        <button class="btn-outline-secondary" style="font-size:.78rem;padding:.28rem .7rem" onclick="mlResetFiltres()">
-                            <i class="bi bi-x-lg me-1"></i>Réinitialiser
-                        </button>
-                    </div>
-                </div>
+            {{-- ═══ ONGLETS — placés HORS du bloc filtres ═══ --}}
+            <div class="modal-tabs">
+                <button class="btn-tab active" id="tab-lgt-btn" onclick="switchModalTab('logements')">
+                    <i class="bi bi-houses me-1"></i>Logements
+                </button>
+                <button class="btn-tab" id="tab-hist-btn" onclick="switchModalTab('historique')">
+                    <i class="bi bi-arrow-repeat me-1"></i>Historique remplacements
+                    <span id="hist_badge" class="badge rounded-pill"
+                          style="background:#fee2e2;color:#991b1b;margin-left:4px;font-size:.65rem">0</span>
+                </button>
             </div>
 
             <div class="modal-body p-0">
-                <div class="ml-table-wrap">
-                    <table class="ml-table table table-hover">
-                        <thead>
-                            <tr class="text-center">
-                                <th>N°</th>
-                                <th>Bâtiment</th>
-                                <th>Étage</th>
-                                <th>Porte</th>
-                                <th>Lot</th>
-                                <th>Typo.</th>
-                                <th>Surface</th>
-                                <th>Prix (DA)</th>
-                                <th>État</th>
-                                <th>Souscripteur</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ml_tbody">
-                            <tr>
-                                <td colspan="10" class="text-center py-5 text-muted">
-                                    <div class="spinner-border text-primary mb-2" role="status"></div>
-                                    <div style="font-size:.85rem">Chargement des logements...</div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
 
-                <div class="ml-pag">
-                    <span id="ml_page_info" class="text-muted"></span>
-                    <div class="d-flex gap-2 align-items-center">
-                        <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem" id="ml_prev" onclick="mlChangePage(-1)">
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                        <span id="ml_page_num" class="text-muted fw-semibold" style="font-size:.78rem"></span>
-                        <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem" id="ml_next" onclick="mlChangePage(1)">
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
+                {{-- ═══ PANEL LOGEMENTS ═══ --}}
+                <div id="panel-logements">
+
+                    {{-- Filtres logements --}}
+                    <div class="ml-filters">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-sm-4 col-md-3">
+                                <input type="text" id="ml_search" class="form-control form-control-sm"
+                                    placeholder="🔍 Nom / Prénom du souscripteur...">
+                            </div>
+                            <div class="col-6 col-sm-3 col-md-2">
+                                <select id="ml_batiment" class="form-select form-select-sm">
+                                    <option value="">Tous bâtiments</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-3 col-md-2">
+                                <select id="ml_etage" class="form-select form-select-sm" disabled>
+                                    <option value="">Tous étages</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-3 col-md-2">
+                                <select id="ml_status" class="form-select form-select-sm">
+                                    <option value="">Tous statuts</option>
+                                    <option value="0">Libre</option>
+                                    <option value="1">Inscrit</option>
+                                    <option value="2">Soldé</option>
+                                    <option value="3">Remplacé</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-auto">
+                                <span id="ml_count" class="badge" style="background:#f1f5f9;color:#475569;font-weight:700;font-size:.78rem">0 logement(s)</span>
+                            </div>
+                            <div class="col-auto ms-auto">
+                                <button class="btn-outline-secondary" style="font-size:.78rem;padding:.28rem .7rem" onclick="mlResetFiltres()">
+                                    <i class="bi bi-x-lg me-1"></i>Réinitialiser
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+
+                    {{-- Tableau logements --}}
+                    <div class="ml-table-wrap">
+                        <table class="ml-table table table-hover">
+                            <thead>
+                                <tr class="text-center">
+                                    <th>N°</th>
+                                    <th>Bâtiment</th>
+                                    <th>Étage</th>
+                                    <th>Porte</th>
+                                    <th>Lot</th>
+                                    <th>Typo.</th>
+                                    <th>Surface</th>
+                                    <th>Prix (DA)</th>
+                                    <th>État</th>
+                                    <th>Souscripteur</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ml_tbody">
+                                <tr>
+                                    <td colspan="10" class="text-center py-5 text-muted">
+                                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                                        <div style="font-size:.85rem">Chargement des logements...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Pagination logements --}}
+                    <div class="ml-pag">
+                        <span id="ml_page_info" class="text-muted"></span>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem"
+                                id="ml_prev" onclick="mlChangePage(-1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span id="ml_page_num" class="text-muted fw-semibold" style="font-size:.78rem"></span>
+                            <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem"
+                                id="ml_next" onclick="mlChangePage(1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>{{-- /panel-logements --}}
+
+                {{-- ═══ PANEL HISTORIQUE ═══ --}}
+                <div id="panel-historique" style="display:none">
+
+                    {{-- Filtres historique --}}
+                    <div class="ml-filters">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-sm-5">
+                                <input type="text" id="hist_search" class="form-control form-control-sm"
+                                    placeholder="🔍 Nom, NIN, code Logement..." oninput="renderHistorique()">
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <select id="hist_bat" class="form-select form-select-sm" onchange="renderHistorique()">
+                                    <option value="">Tous bâtiments</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Tableau historique --}}
+                    <div class="ml-table-wrap">
+                        <table class="hist-table table table-hover">
+                            <thead>
+                                <tr class="text-center">
+                                    <th>N°</th>
+                                    <th class="text-start">Logement</th>
+                                    <th class="text-start">Ancien souscripteur</th>
+                                    <th></th>
+                                    <th class="text-start">Nouveau souscripteur</th>
+                                    <th>Code Logement</th>
+                                    <th>Date</th>
+                                    <th>État actuel</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hist_tbody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        <i class="bi bi-arrow-repeat display-4 d-block mb-3" style="opacity:.3"></i>
+                                        <p class="small">Cliquez sur l'onglet pour charger l'historique</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Pagination historique --}}
+                    <div class="ml-pag">
+                        <span id="hist_pag_info" class="text-muted"></span>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem"
+                                id="hist_prev" onclick="window._histPage--;renderHistorique()">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span id="hist_page_num" class="text-muted fw-semibold" style="font-size:.78rem"></span>
+                            <button class="btn-outline-secondary" style="padding:.22rem .55rem;font-size:.78rem"
+                                id="hist_next" onclick="window._histPage++;renderHistorique()">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>{{-- /panel-historique --}}
+
+            </div>{{-- /modal-body --}}
         </div>
     </div>
 </div>
@@ -732,12 +848,12 @@
                             <input type="text" name="num_compte_agence" class="form-control" placeholder="Ex : 00012345678901234567">
                         </div>
                         <div class="col-12">
-    <label class="form-label">
-        <i class="bi bi-person-badge me-1"></i>Titulaire du compte
-    </label>
-    <input type="text" name="titulaire" class="form-control"
-           placeholder="Ex : O.P.G.I. Dar El Beida">
-</div>
+                            <label class="form-label">
+                                <i class="bi bi-person-badge me-1"></i>Titulaire du compte
+                            </label>
+                            <input type="text" name="titulaire" class="form-control"
+                                   placeholder="Ex : O.P.G.I. Dar El Beida">
+                        </div>
                         <div class="col-12">
                             <label class="form-label"><i class="bi bi-geo me-1"></i>Adresse agence</label>
                             <input type="text" name="adresse_agence" class="form-control" placeholder="Ex : 12 Rue Didouche Mourad, Alger">
@@ -794,40 +910,42 @@
                         </div>
 
                         <div class="col-12"><hr class="my-1" style="border-color:var(--border)"></div>
-                           {{-- Toggle box/stationnement --}}
-<div class="col-12" id="wrap_toggle_box" style="display:none">
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="toggle_box" 
-               onchange="document.getElementById('section_box').style.display = this.checked ? '' : 'none'">
-        <label class="form-check-label fw-semibold" for="toggle_box" style="font-size:.85rem">
-            <i class="bi bi-p-square-fill me-1 text-primary"></i>Inclure un box / stationnement
-        </label>
-    </div>
-</div>
 
-<div id="section_box" style="display:none" class="col-12">
-    <div class="row g-3">
-        <div class="col-12">
-            <hr class="my-0" style="border-color:var(--border)">
-            <p class="text-muted" style="font-size:.75rem;margin:.5rem 0 0">
-                <i class="bi bi-info-circle me-1"></i>Informations optionnelles du box / stationnement
-            </p>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label"><i class="bi bi-p-square me-1"></i>N° Box</label>
-            <input type="text" name="box_num" class="form-control" placeholder="Ex : B-12">
-        </div>
-        <div class="col-md-4">
-            <label class="form-label"><i class="bi bi-rulers me-1"></i>Superficie box (m²)</label>
-            <input type="number" step="0.01" name="box_superficie" class="form-control" 
-                   placeholder="Ex : 12.50" min="0">
-        </div>
-        <div class="col-md-4">
-            <label class="form-label"><i class="bi bi-hash me-1"></i>N° Lot box</label>
-            <input type="text" name="box_num_lot" class="form-control" placeholder="Ex : LOT-B-001">
-        </div>
-    </div>
-</div>
+                        {{-- Toggle box/stationnement --}}
+                        <div class="col-12" id="wrap_toggle_box" style="display:none">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggle_box"
+                                       onchange="document.getElementById('section_box').style.display = this.checked ? '' : 'none'">
+                                <label class="form-check-label fw-semibold" for="toggle_box" style="font-size:.85rem">
+                                    <i class="bi bi-p-square-fill me-1 text-primary"></i>Inclure un box / stationnement
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="section_box" style="display:none" class="col-12">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <hr class="my-0" style="border-color:var(--border)">
+                                    <p class="text-muted" style="font-size:.75rem;margin:.5rem 0 0">
+                                        <i class="bi bi-info-circle me-1"></i>Informations optionnelles du box / stationnement
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label"><i class="bi bi-p-square me-1"></i>N° Box</label>
+                                    <input type="text" name="box_num" class="form-control" placeholder="Ex : B-12">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label"><i class="bi bi-rulers me-1"></i>Superficie box (m²)</label>
+                                    <input type="number" step="0.01" name="box_superficie" class="form-control"
+                                           placeholder="Ex : 12.50" min="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label"><i class="bi bi-hash me-1"></i>N° Lot box</label>
+                                    <input type="text" name="box_num_lot" class="form-control" placeholder="Ex : LOT-B-001">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-4">
                             <label class="form-label"><i class="bi bi-building me-1"></i>Bâtiment</label>
                             <input type="text" name="num_batiment" class="form-control" placeholder="Ex : A" required>
@@ -944,29 +1062,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 (o,p) => { o.value=p.id; o.textContent=p.libelle; });
             if (ok) { badge('mb1','done'); badge('mb2','active'); }
         });
-      logProg.addEventListener('change', async function() {
-    resetSel(logSite, "-- Choisir d'abord un programme --");
-    badge('mb2','active');
-
-    // ── Box/stationnement visible uniquement si Promotionnel ──
-    const libelle = this.options[this.selectedIndex]?.text?.toUpperCase() || '';
-    const isPromo = libelle.includes('PROMOTIONNEL');
-    document.getElementById('wrap_toggle_box').style.display = isPromo ? '' : 'none';
-    if (!isPromo) {
-        document.getElementById('toggle_box').checked = false;
-        document.getElementById('section_box').style.display = 'none';
-        ['box_num','box_superficie','box_num_lot'].forEach(name => {
-            const el = document.querySelector(`[name="${name}"]`);
-            if (el) el.value = '';
+        logProg.addEventListener('change', async function() {
+            resetSel(logSite, "-- Choisir d'abord un programme --");
+            badge('mb2','active');
+            const libelle = this.options[this.selectedIndex]?.text?.toUpperCase() || '';
+            const isPromo = libelle.includes('PROMOTIONNEL');
+            $('wrap_toggle_box').style.display = isPromo ? '' : 'none';
+            if (!isPromo) {
+                $('toggle_box').checked = false;
+                $('section_box').style.display = 'none';
+                ['box_num','box_superficie','box_num_lot'].forEach(name => {
+                    const el = document.querySelector(`[name="${name}"]`);
+                    if (el) el.value = '';
+                });
+            }
+            if (!this.value) return;
+            logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
+            const ok = await loadInto(`/api/souscripteur/sites/${logWilaya.value}/${this.value}`, logSite, 'mwrap_site',
+                (o,s) => { o.value=s.id; o.textContent=s.libelle; });
+            if (ok) { badge('mb2','done'); badge('mb3','active'); }
         });
-    }
-
-    if (!this.value) return;
-    logSite.innerHTML = '<option value="">-- Choisir un projet --</option>';
-    const ok = await loadInto(`/api/souscripteur/sites/${logWilaya.value}/${this.value}`, logSite, 'mwrap_site',
-        (o,s) => { o.value=s.id; o.textContent=s.libelle; });
-    if (ok) { badge('mb2','done'); badge('mb3','active'); }
-});
         logSite.addEventListener('change', function() { if (this.value) badge('mb3','done'); });
         if (setDefaultAlger(logWilaya)) logWilaya.dispatchEvent(new Event('change'));
     }
@@ -991,40 +1106,108 @@ document.addEventListener("DOMContentLoaded", function () {
     // ═══════════════════════════════════════════════════════════════════════
     // POPUP LOGEMENTS
     // ═══════════════════════════════════════════════════════════════════════
+    window._allLogements      = [];
+    window._filteredLogements = [];
+    window._currentPage       = 1;
+    window._perPage           = 12;
+    window._activeSiteId      = null;
+    window._histLogements     = [];
+    window._histLoaded        = false;
+    window._histPage          = 1;
+    const _histPerPage        = 12;
 
-    window._allLogements = []; window._filteredLogements = [];
-    window._currentPage = 1; window._perPage = 12; window._activeSiteId = null;
+    // ─── Ouverture modal — charge logements + historique en parallèle ─────
+    window._ouvrirLogementsCore = async function(siteId, libelle, programme, wilaya) {
+        window._activeSiteId = siteId;
+        window._currentPage  = 1;
 
-    window.ouvrirLogements = async function(siteId, libelle, programme, wilaya) {
-        window._activeSiteId = siteId; window._currentPage = 1;
         $('ml_title').innerHTML = `<i class="bi bi-houses-fill me-2"></i>${libelle}`;
         $('ml_meta').innerHTML  = `<span class="me-3"><i class="bi bi-grid me-1"></i>${programme}</span><span><i class="bi bi-map me-1"></i>${wilaya}</span>`;
-        $('ml_search').value = ''; $('ml_status').value = '';
-        $('ml_batiment').value = ''; $('ml_etage').value = ''; $('ml_etage').disabled = true;
+        $('ml_search').value    = '';
+        $('ml_status').value    = '';
+        $('ml_batiment').value  = '';
+        $('ml_etage').value     = '';
+        $('ml_etage').disabled  = true;
 
         new bootstrap.Modal($('modalLogementsSite'), {backdrop:true, keyboard:true}).show();
+
         $('ml_tbody').innerHTML = `<tr><td colspan="10" class="text-center py-5 text-muted">
             <div class="spinner-border text-primary mb-2" role="status"></div>
             <div style="font-size:.85rem">Chargement des logements...</div>
         </td></tr>`;
 
         try {
-            const json = await fetch(`/api/logements-site/${siteId}`).then(r => r.json());
-            window._allLogements = json.logements || [];
+            // ── Charger logements ET historique en parallèle ──────────────
+            const [jsonLogements, jsonHistorique] = await Promise.all([
+                fetch(`/api/logements-site/${siteId}`).then(r => r.json()),
+                fetch(`/api/logements-site/${siteId}/historique`).then(r => r.json()),
+            ]);
+
+            // ── Logements ─────────────────────────────────────────────────
+            window._allLogements = jsonLogements.logements || [];
+
             const bats = [...new Set(window._allLogements.map(l => l.num_batiment))].sort();
-            $('ml_batiment').innerHTML = '<option value="">Tous bâtiments</option>';
-            bats.forEach(b => {
-                const o = document.createElement('option'); o.value=b; o.textContent='Bât. '+b;
-                $('ml_batiment').appendChild(o);
+            ['ml_batiment'].forEach(selId => {
+                const sel = $(selId);
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Tous bâtiments</option>';
+                bats.forEach(b => {
+                    const o = document.createElement('option');
+                    o.value = b; o.textContent = 'Bât. ' + b;
+                    sel.appendChild(o);
+                });
             });
+
             mlAppliquerFiltres();
+
+            // ── Historique ────────────────────────────────────────────────
+            window._histLogements = Array.isArray(jsonHistorique) ? jsonHistorique : [];
+            window._histLoaded    = true;
+
+            // Badge mis à jour immédiatement
+            $('hist_badge').textContent = window._histLogements.length;
+
+            // Peupler le filtre bâtiment de l'historique
+            const histBats = [...new Set(window._histLogements.map(r => r.num_batiment))].sort();
+            const histBat  = $('hist_bat');
+            if (histBat) {
+                histBat.innerHTML = '<option value="">Tous bâtiments</option>';
+                histBats.forEach(b => {
+                    const o = document.createElement('option');
+                    o.value = b; o.textContent = 'Bât. ' + b;
+                    histBat.appendChild(o);
+                });
+            }
+
         } catch(e) {
+            console.error(e);
             $('ml_tbody').innerHTML = `<tr><td colspan="10" class="text-center py-4 text-danger">
                 <i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i>Erreur lors du chargement.
             </td></tr>`;
         }
     };
 
+    // ─── Wrapper public — réinitialise tout à chaque ouverture ───────────
+    window.ouvrirLogements = function(siteId, libelle, programme, wilaya) {
+        window._histLoaded    = false;
+        window._histLogements = [];
+        window._histPage      = 1;
+
+        const hBody = $('hist_tbody');
+        if (hBody) hBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted">
+            <i class="bi bi-arrow-repeat display-4 d-block mb-3" style="opacity:.3"></i>
+            <p class="small">Chargement en cours...</p>
+        </td></tr>`;
+
+        $('hist_badge').textContent = '0';
+        if ($('hist_search')) $('hist_search').value = '';
+        if ($('hist_bat'))    $('hist_bat').value    = '';
+
+        switchModalTab('logements');
+        window._ouvrirLogementsCore(siteId, libelle, programme, wilaya);
+    };
+
+    // ─── Helpers tableau logements ────────────────────────────────────────
     function statutBadge(flag) {
         return {
             0: '<span class="badge-status badge-libre">Libre</span>',
@@ -1049,7 +1232,8 @@ document.addEventListener("DOMContentLoaded", function () {
         $('ml_count').textContent     = `${total} logement(s)`;
         $('ml_page_info').textContent = total ? `Affichage ${debut+1}–${Math.min(debut+window._perPage,total)} sur ${total}` : '';
         $('ml_page_num').textContent  = pages > 1 ? `Page ${page} / ${pages}` : '';
-        $('ml_prev').disabled = page <= 1; $('ml_next').disabled = page >= pages;
+        $('ml_prev').disabled = page <= 1;
+        $('ml_next').disabled = page >= pages;
 
         if (!slice.length) {
             tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-muted">
@@ -1080,10 +1264,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     window.mlAppliquerFiltres = function() {
-        const search  = ($('ml_search').value  || '').toLowerCase().trim();
-        const batiment= $('ml_batiment').value;
-        const etage   = $('ml_etage').value;
-        const status  = $('ml_status').value;
+        const search   = ($('ml_search').value  || '').toLowerCase().trim();
+        const batiment = $('ml_batiment').value;
+        const etage    = $('ml_etage').value;
+        const status   = $('ml_status').value;
         window._filteredLogements = window._allLogements.filter(l => {
             if (batiment && l.num_batiment != batiment) return false;
             if (etage    && l.num_etage    != etage)    return false;
@@ -1095,9 +1279,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             return true;
         });
-        window._currentPage = 1; mlRendreTable();
+        window._currentPage = 1;
+        mlRendreTable();
     };
-    window.mlChangePage = function(dir) { window._currentPage += dir; mlRendreTable(); };
+
+    window.mlChangePage   = function(dir) { window._currentPage += dir; mlRendreTable(); };
     window.mlResetFiltres = function() {
         $('ml_search').value=''; $('ml_status').value='';
         $('ml_batiment').value=''; $('ml_etage').value=''; $('ml_etage').disabled=true;
@@ -1110,15 +1296,127 @@ document.addEventListener("DOMContentLoaded", function () {
     const mlBatiment = $('ml_batiment'), mlEtage = $('ml_etage');
     if (mlBatiment) {
         mlBatiment.addEventListener('change', function() {
-            mlEtage.innerHTML = '<option value="">Tous étages</option>'; mlEtage.disabled = true;
+            mlEtage.innerHTML = '<option value="">Tous étages</option>';
+            mlEtage.disabled  = true;
             if (this.value) {
-                const etages = [...new Set(window._allLogements.filter(l => l.num_batiment==this.value).map(l=>l.num_etage))].sort((a,b)=>a-b);
-                etages.forEach(e => { const o=document.createElement('option'); o.value=e; o.textContent='Ét. '+e; mlEtage.appendChild(o); });
+                const etages = [...new Set(
+                    window._allLogements
+                        .filter(l => l.num_batiment == this.value)
+                        .map(l => l.num_etage)
+                )].sort((a,b) => a-b);
+                etages.forEach(e => {
+                    const o = document.createElement('option');
+                    o.value = e; o.textContent = 'Ét. ' + e;
+                    mlEtage.appendChild(o);
+                });
                 mlEtage.disabled = false;
             }
             mlAppliquerFiltres();
         });
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ONGLETS MODAL
+    // ═══════════════════════════════════════════════════════════════════════
+    window.switchModalTab = function(tab) {
+        $('tab-lgt-btn').classList.toggle('active', tab === 'logements');
+        $('tab-hist-btn').classList.toggle('active', tab === 'historique');
+        $('panel-logements').style.display  = tab === 'logements'  ? '' : 'none';
+        $('panel-historique').style.display = tab === 'historique' ? '' : 'none';
+
+        // Si données déjà chargées, on re-rend directement sans refaire de requête
+        if (tab === 'historique' && window._histLoaded) {
+            renderHistorique();
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // HISTORIQUE REMPLACEMENTS
+    // ═══════════════════════════════════════════════════════════════════════
+    window.renderHistorique = function() {
+        const search = ($('hist_search')?.value || '').toLowerCase().trim();
+        const bat    = $('hist_bat')?.value || '';
+
+        const data = window._histLogements.filter(r => {
+            if (bat && r.num_batiment != bat) return false;
+            if (search) {
+                const hay = [
+                    r.ancien_nom, r.ancien_prenom,
+                    r.nouveau_nom, r.nouveau_prenom,
+                    r.ancien_nin, r.nouveau_nin,
+                    r.ancien_code, r.code_actuel
+                ].filter(Boolean).join(' ').toLowerCase();
+                if (!hay.includes(search)) return false;
+            }
+            return true;
+        });
+
+        const total = data.length;
+        const pages = Math.ceil(total / _histPerPage) || 1;
+        window._histPage = Math.max(1, Math.min(window._histPage, pages));
+        const debut = (window._histPage - 1) * _histPerPage;
+        const slice = data.slice(debut, debut + _histPerPage);
+
+        $('hist_pag_info').textContent = total
+            ? `${debut+1}–${Math.min(debut+_histPerPage,total)} sur ${total}`
+            : '';
+        $('hist_page_num').textContent = pages > 1 ? `Page ${window._histPage}/${pages}` : '';
+        $('hist_prev').disabled = window._histPage <= 1;
+        $('hist_next').disabled = window._histPage >= pages;
+
+        const flagBadge = f => ({
+            0: '<span class="badge-status badge-libre">Libre</span>',
+            1: '<span class="badge-status badge-inscrit">Inscrit</span>',
+            2: '<span class="badge-status badge-vendu">Soldé</span>',
+            3: '<span class="badge-status badge-desiste">Remplacé</span>',
+        }[f] ?? '');
+
+        const tbody = $('hist_tbody');
+        if (!slice.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-2 opacity-50"></i>
+                Aucun remplacement trouvé
+            </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = slice.map((r, i) => `
+            <tr>
+                <td class="text-muted">${debut+i+1}</td>
+                <td>
+                    <span style="background:#f1f5f9;border-radius:20px;padding:2px 9px;font-size:.75rem;display:inline-block">
+                        Bât.${r.num_batiment} · Ét.${r.num_etage} · P.${r.num_porte}
+                    </span>
+                    <div style="font-size:.7rem;color:#94a3b8;margin-top:2px">
+                        ${r.typologie ?? ''} ${r.num_lot ? '· Lot '+r.num_lot : ''}
+                    </div>
+                </td>
+                <td>
+                    <div style="font-weight:600;font-size:.82rem">${r.ancien_nom ?? ''} ${r.ancien_prenom ?? ''}</div>
+                    <div style="font-size:.7rem;color:#94a3b8">${r.ancien_nin ?? ''}</div>
+                    <span class="badge-ancien">Remplacé</span>
+                </td>
+                <td class="text-center text-muted"><i class="bi bi-arrow-right"></i></td>
+                <td>
+                    <div style="font-weight:600;font-size:.82rem">
+                        ${r.nouveau_nom ?? '<span class="text-muted fst-italic">—</span>'}
+                        ${r.nouveau_prenom ?? ''}
+                    </div>
+                    <div style="font-size:.7rem;color:#94a3b8">${r.nouveau_nin ?? ''}</div>
+                    <span class="badge-actuel">Actuel</span>
+                </td>
+                <td>
+                    <code style="font-size:.7rem;background:#f1f5f9;padding:1px 5px;border-radius:4px">
+                        ${r.code_actuel ?? r.ancien_code ?? '—'}
+                    </code>
+                </td>
+                <td style="font-size:.75rem;color:#94a3b8;white-space:nowrap">
+                    ${r.date_desistement ? r.date_desistement.substring(0,10) : '—'}
+                </td>
+                <td>${flagBadge(r.flag)}</td>
+            </tr>
+        `).join('');
+    };
 
     // ═══════════════════════════════════════════════════════════════════════
     // POPUP SOUSCRIPTEUR
@@ -1130,10 +1428,10 @@ document.addEventListener("DOMContentLoaded", function () {
             <span class="litem">Bât. ${logement.num_batiment}</span>
             <span class="litem">Ét. ${logement.num_etage}</span>
             <span class="litem">Porte ${logement.num_porte}</span>
-            ${logement.num_lot  ? `<span class="litem">Lot ${logement.num_lot}</span>`   : ''}
-            ${logement.typologie ? `<span class="litem">${logement.typologie}</span>`   : ''}
-            ${logement.surface   ? `<span class="litem">${logement.surface} m²</span>` : ''}
-            ${logement.box_num ? `<span class="litem"><i class="bi bi-p-square me-1"></i>Box ${logement.box_num}</span>` : ''}
+            ${logement.num_lot   ? `<span class="litem">Lot ${logement.num_lot}</span>`   : ''}
+            ${logement.typologie ? `<span class="litem">${logement.typologie}</span>`      : ''}
+            ${logement.surface   ? `<span class="litem">${logement.surface} m²</span>`    : ''}
+            ${logement.box_num   ? `<span class="litem"><i class="bi bi-p-square me-1"></i>Box ${logement.box_num}</span>` : ''}
         </div>`;
 
         if (!s) {
@@ -1148,10 +1446,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="info-value">${value || '<span class="text-muted fst-italic">N/A</span>'}</div>
             </div></div>`;
             $('souscripteur_body').innerHTML = recap + `<div class="row g-0">
-                ${row('Nom et prénom', [s.nom,s.prenom].filter(Boolean).join(' '))}
-                ${row('Nom et prénom (arabe)', [s.nom_arabe,s.prenom_arabe].filter(Boolean).join(' '))}
-                ${row('NIN', s.nin)}
-                ${row('Date de naissance', s.date_naissance)}
+                ${row('Nom et prénom',        [s.nom,s.prenom].filter(Boolean).join(' '))}
+                ${row('Nom et prénom (arabe)',[s.nom_arabe,s.prenom_arabe].filter(Boolean).join(' '))}
+                ${row('NIN',                  s.nin)}
+                ${row('Date de naissance',    s.date_naissance)}
             </div>`;
         }
         new bootstrap.Modal($('modalSouscripteur'), {backdrop:false}).show();
@@ -1162,7 +1460,8 @@ document.addEventListener("DOMContentLoaded", function () {
         modalSousElem.addEventListener('hidden.bs.modal', function() {
             document.querySelectorAll('.modal-backdrop').forEach((b,i) => { if (i>0) b.remove(); });
             document.body.classList.remove('modal-open');
-            document.body.style.overflow = ''; document.body.style.paddingRight = '';
+            document.body.style.overflow     = '';
+            document.body.style.paddingRight = '';
             const parentModal = $('modalLogementsSite');
             if (parentModal && parentModal.classList.contains('show')) {
                 document.body.classList.add('modal-open');
