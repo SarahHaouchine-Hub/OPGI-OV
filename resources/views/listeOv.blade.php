@@ -447,7 +447,7 @@ $tousOvsGeneres = $ovCreditReelFait && ($diffCredit <= 0 || $ovCreditDiffFait);
                                         @endif
 
                                     @elseif($peutGenerer)
-                                        @if($s->ovs->isEmpty() && Auth::user()->role !== 'dg')
+                                        @if($s->ovs->isEmpty() && Auth::user()->role !== 'dg' && $programme !== 'LPA')
                                             <span class="badge bg-secondary px-3 py-2" title="Réservé au DG">
                                                 <i class="bi bi-lock-fill me-1"></i> DG uniquement
                                             </span>

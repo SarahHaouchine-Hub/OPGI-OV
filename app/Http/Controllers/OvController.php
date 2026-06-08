@@ -118,14 +118,13 @@ class OvController extends Controller
                 ->with('error', $this->accessDeniedMessage());
         }
 
-        // ── Restriction : 1er OV réservé au DG ──────────────────────────────
-        if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv()) {
-            return redirect()->route('ov.index')
-                ->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
-        }
+
 
         $programme = $this->getProgrammeType($souscripteur);
-
+       if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv() && $programme !== 'LPA') {
+    return redirect()->route('ov.index')
+        ->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
+}
         return match ($programme) {
             'LPA' => $this->createLpa($souscripteur),
             'LSP' => $this->createLsp($souscripteur),
@@ -327,9 +326,9 @@ class OvController extends Controller
             return back()->with('error', $this->accessDeniedMessage());
         }
 
-        if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv()) {
-            return back()->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
-        }
+        // if ($this->isFirstOv($souscripteur) && !$this->userCanGenerateFirstOv()) {
+        //     return back()->with('error', 'La génération du premier ordre de versement est réservée au profil DG.');
+        // }
 
         $creditBancaire   = $souscripteur->creditBancaire ?? null;
         $ovsDoneNormaux   = $souscripteur->ovs->where('type_ov', null);
